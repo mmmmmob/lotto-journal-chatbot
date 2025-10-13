@@ -1,0 +1,78 @@
+################################################################################
+# 🔧 Core workspace ignores
+################################################################################
+
+# Dependency folders (pnpm / node)
+node_modules
+.pnpm-store
+
+# Build artifacts
+dist
+.next
+out
+coverage
+
+# Environment files (keep example only)
+.env
+.env.*
+!.env.example
+
+# Local lockfiles (use only root pnpm-lock.yaml)
+**/package-lock.json
+**/yarn.lock
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+################################################################################
+# 🧠 Framework-specific
+################################################################################
+
+# ─── Next.js (frontend) ───
+apps/web/.vercel
+apps/web/.next
+apps/web/out
+
+# ─── Elysia / Backend ───
+apps/api/dist
+
+# ─── Prisma (shared db) ───
+packages/db/prisma/migrations/
+packages/db/.env
+packages/db/generated/prisma
+
+################################################################################
+# 💻 System / Editor junk
+################################################################################
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.vscode/*
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+
+################################################################################
+# 🧪 Misc
+################################################################################
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.bak
+
+# Local testing files
+playground
