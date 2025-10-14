@@ -14,7 +14,7 @@
   },
   "scripts": {
     "generate": "prisma generate",
-    "migrate": "prisma migrate dev",
+    "migrate": "dotenv -e .env -- prisma migrate dev",
     "postinstall": "prisma generate",
     "validate": "prisma validate",
     "studio": "prisma studio"
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.21",
+    "dotenv-cli": "^10.0.0",
     "prettier-plugin-prisma": "^5.0.0",
     "prisma": "^6.17.1"
   }
