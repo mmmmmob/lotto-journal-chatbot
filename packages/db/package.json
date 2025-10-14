@@ -15,7 +15,9 @@
   "scripts": {
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "validate": "prisma validate",
+    "studio": "prisma studio"
   },
   "keywords": [],
   "author": "",

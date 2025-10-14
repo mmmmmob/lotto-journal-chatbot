@@ -7,7 +7,9 @@
     "dev:web": "pnpm -F @lotto/web dev",
     "dev:api": "pnpm -F @lotto/api dev",
     "db:generate": "pnpm -F @lotto/db generate",
-    "db:migrate": "pnpm -F @lotto/db migrate dev"
+    "db:migrate": "pnpm -F @lotto/db migrate",
+    "db:validate": "pnpm -F @lotto/db validate",
+    "db:studio": "pnpm -F @lotto/db studio"
   },
   "keywords": [],
   "author": "",
