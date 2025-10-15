@@ -5,6 +5,7 @@
 # Dependency folders (pnpm / node)
 node_modules
 .pnpm-store
+.turbo
 
 # Build artifacts
 dist

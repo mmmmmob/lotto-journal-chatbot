@@ -17,7 +17,9 @@
     "migrate": "dotenv -e .env -- prisma migrate dev",
     "postinstall": "prisma generate",
     "validate": "dotenv -e .env -- prisma validate",
-    "studio": "dotenv -e .env -- prisma studio"
+    "studio": "dotenv -e .env -- prisma studio",
+    "build": "echo \"(db has nothing to build)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit || true"
   },
   "keywords": [],
   "author": "",
