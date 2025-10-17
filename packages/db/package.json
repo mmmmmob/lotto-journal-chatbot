@@ -19,6 +19,7 @@
     "validate": "dotenv -e .env -- prisma validate",
     "studio": "dotenv -e .env -- prisma studio",
     "build": "echo \"(db has nothing to build)\"",
+    "lint": "pnpm -w exec eslint . --ext ts --ext js",
     "typecheck": "tsc -p tsconfig.json --noEmit || true"
   },
   "keywords": [],
