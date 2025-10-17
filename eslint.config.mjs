@@ -51,10 +51,7 @@ export default [
       },
     },
   },
-  ...compat.extends(
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-  ),
+  ...compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
   {
     files: nodeFiles,
     languageOptions: {
@@ -73,23 +70,21 @@ export default [
       },
     },
   },
-  ...nextCompat
-    .extends('next/core-web-vitals', 'next/typescript')
-    .map((config) => ({
-      ...config,
-      files: nextFiles,
-      settings: {
-        ...config.settings,
-        next: {
-          ...(config.settings?.next ?? {}),
-          rootDir: ['apps/web'],
-        },
+  ...nextCompat.extends('next/core-web-vitals', 'next/typescript').map((config) => ({
+    ...config,
+    files: nextFiles,
+    settings: {
+      ...config.settings,
+      next: {
+        ...(config.settings?.next ?? {}),
+        rootDir: ['apps/web'],
       },
-      rules: {
-        ...config.rules,
-        '@next/next/no-html-link-for-pages': 'off',
-      },
-    })),
+    },
+    rules: {
+      ...config.rules,
+      '@next/next/no-html-link-for-pages': 'off',
+    },
+  })),
   {
     files: ['apps/web/next-env.d.ts'],
     rules: {
