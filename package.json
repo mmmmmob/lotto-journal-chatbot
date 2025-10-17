@@ -8,6 +8,10 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install",
+    "lint-staged": "lint-staged",
     "db:generate": "pnpm -F @lotto/db generate",
     "db:migrate": "pnpm -F @lotto/db migrate",
     "db:validate": "pnpm -F @lotto/db validate",
@@ -23,7 +27,9 @@
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
     "eslint": "^9.16.0",
+    "husky": "^9.1.6",
     "globals": "^15.12.0",
+    "lint-staged": "^15.2.8",
     "prettier": "^3.3.3",
     "turbo": "^2.5.8"
   }
