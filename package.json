@@ -10,7 +10,6 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky install",
     "lint-staged": "lint-staged",
     "db:generate": "pnpm -F @lotto/db generate",
     "db:migrate:dev": "pnpm -F @lotto/db migrate:dev",
