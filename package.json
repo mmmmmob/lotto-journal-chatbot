@@ -13,7 +13,8 @@
     "prepare": "husky install",
     "lint-staged": "lint-staged",
     "db:generate": "pnpm -F @lotto/db generate",
-    "db:migrate": "pnpm -F @lotto/db migrate",
+    "db:migrate:dev": "pnpm -F @lotto/db migrate:dev",
+    "db:migrate:deploy": "pnpm -F @lotto/db migrate:deploy",
     "db:validate": "pnpm -F @lotto/db validate",
     "db:studio": "pnpm -F @lotto/db studio"
   },

@@ -5,6 +5,7 @@
       "persistent": true,
       "cache": false
     },
+    "generate": { "outputs": ["packages/db/node_modules/.prisma/**"] },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"]
