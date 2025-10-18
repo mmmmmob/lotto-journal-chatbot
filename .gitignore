@@ -12,6 +12,7 @@ dist
 .next
 out
 coverage
+*/tsconfig.tsbuildinfo
 
 # Environment files (keep example only)
 .env
