@@ -5,10 +5,11 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "allowArbitraryExtensions": true,
     "paths": {
-      "@db/*": ["packages/db/src/*"]
+      "@db/*": ["./packages/db/src/*"],
+      "@apps/api/*": ["./apps/api/src/*"],
+      "@apps/web/*": ["./apps/web/src/*"]
     },
     "types": ["node"]
   }

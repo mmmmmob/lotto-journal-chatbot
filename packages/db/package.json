@@ -27,13 +27,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.17.1",
-    "dotenv": "^16.4.5"
+    "@prisma/client": "^6.18.0",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
-    "@types/node": "^20.19.21",
+    "@types/node": "^22.18.12",
     "dotenv-cli": "^10.0.0",
     "prettier-plugin-prisma": "^5.0.0",
-    "prisma": "^6.17.1"
+    "prisma": "^6.18.0"
   }
 }
