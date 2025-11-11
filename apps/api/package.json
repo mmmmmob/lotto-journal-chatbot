@@ -1,26 +1,9 @@
 {
   "name": "@lotto/api",
   "version": "0.0.0",
-  "description": "",
-  "type": "module",
-  "private": "true",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --target bun --outdir dist",
-    "lint": "pnpm -w exec eslint . --ext ts --ext js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@lotto/db": "workspace:^0.0.0",
-    "elysia": "^1.4.12"
-  },
-  "devDependencies": {
-    "@types/node": "^22.18.12",
-    "tsx": "^4.20.6",
-    "typescript": "^5"
+    "dev": "make run",
+    "build": "make build"
   }
 }
