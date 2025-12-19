@@ -1,0 +1,143 @@
+// * explainations can be found at https://dbdocs.io/theppitak.m/Lotto-Journal
+
+// USERS + AUTHENTICATION DATA
+Table users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  username varchar [unique, not null]
+  email varchar [unique, not null]
+  password_hash varchar
+  status account_status [default: 'active']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table user_verifications {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [ref: > users.id]
+  otp_code varchar(6) [not null]
+  type verification_type [not null]
+  is_used boolean [default: false]
+  expired_at timestamp [not null]
+  created_at timestamp [default: `now()`]
+}
+
+Table user_auth_methods {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [ref: > users.id]
+  provider provider_service [not null]
+  provider_user_id varchar [not null] // store unique key for user from their provider
+  provider_email varchar // 
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  // make sure no duplicate row for each provider id
+  indexes {
+    (provider, provider_user_id) [unique]
+  }
+}
+
+Table user_profiles {
+  user_id uuid [pk, ref: - users.id] 
+  first_name varchar
+  last_name varchar
+  avatar_file_id uuid [ref: - files.id]
+  updated_at timestamp [default: `now()`]
+}
+
+// FILE DATA
+Table files {
+  id uuid [pk, default: `gen_random_uuid()`]
+  owner_id uuid [ref: > users.id] 
+  file_path varchar [unique, not null] 
+  file_type varchar
+  created_at timestamp [default: `now()`]
+}
+
+// LOTTERY DATA
+Table tickets {
+  id uuid [pk, default: `gen_random_uuid()`]
+  owner_id uuid [ref: > users.id]
+  draw_id uuid [ref: > draws.id]
+  type lottery_type
+  number varchar(6)
+  quantity int4
+  tickets_file_id uuid [ref: - files.id, null]
+  is_checked boolean [default: false]
+  created_at timestamp
+  updated_at timestamp [default: `now()`]
+}
+
+Table draws {
+  id uuid [pk, default: `gen_random_uuid()`]
+  draw_date date [unique, not null]
+  is_verified boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table draw_results {
+  id uuid [pk, default: `gen_random_uuid()`]
+  draw_id uuid [ref: > draws.id]
+  prize_category prize_type
+  winning_number varchar(6)
+  prize_amount int4
+
+  // prevent duplicate insert
+  indexes {
+  (draw_id, prize_category, winning_number) [unique]
+  }
+}
+
+Table user_winnings {
+  id uuid [pk]
+  ticket_id uuid [ref: > tickets.id]
+  draw_result_id uuid [ref: > draw_results.id]
+  prize_money int4
+  created_at timestamp
+
+  // prevent duplicate insert
+  indexes {
+    (ticket_id, draw_result_id) [unique]
+  }
+}
+
+
+// ENUM
+enum account_status {
+  active
+  pending
+  suspended
+}
+
+enum verification_type {
+  email_verification
+  password_reset
+}
+
+enum provider_service {
+  google
+  facebook
+  apple
+  local
+}
+
+enum lottery_type {
+  N3 // 3 digits
+  N6 // 6 digits
+}
+
+enum prize_type {
+  n6_first 
+  n6_second 
+  n6_third 
+  n6_fourth 
+  n6_fifth 
+  n6_last2 
+  n6_last3f 
+  n6_last3b 
+  n6_near_first
+  n3_straight_three 
+  n3_shuffle
+  n3_straight_two
+  n3_special
+}
