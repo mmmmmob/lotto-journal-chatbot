@@ -89,11 +89,12 @@ Table draw_results {
 }
 
 Table user_winnings {
-  id uuid [pk]
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [ref: > users.id]
   ticket_id uuid [ref: > tickets.id]
   draw_result_id uuid [ref: > draw_results.id]
   prize_money int4
-  created_at timestamp
+  created_at timestamp [default: `now()`]
 
   // prevent duplicate insert
   indexes {
