@@ -1,5 +1,9 @@
 run:
-	cd app && go tool air
+	@go tool air
 
 build:
-	go build -o dist/main app/main.go
+	@mkdir -p dist
+	@go build -o dist/main app/main.go
+
+clean:
+	@rm -rf tmp dist
