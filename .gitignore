@@ -78,3 +78,14 @@ temp
 
 # Local testing files
 playground
+
+################################################################################
+# 📚 Doc system
+################################################################################
+
+# Template folders — never commit core templates as project output
+_template/
+
+# Daily logs and summaries — local only
+doc/03-log/????/
+doc/05-summary/????/??/
