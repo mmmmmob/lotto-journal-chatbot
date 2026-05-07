@@ -4,13 +4,33 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:web": "pnpm -F @lotto/web dev",
-    "dev:api": "pnpm -F @lotto/api dev",
-    "db:generate": "pnpm -F @lotto/db generate",
-    "db:migrate": "pnpm -F @lotto/db migrate dev"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint-staged": "lint-staged",
+    "db:start": "pnpm --filter @lotto/api db:start",
+    "db:stop": "pnpm --filter @lotto/api db:stop",
+    "migrate:up": "pnpm --filter @lotto/api migrate:up",
+    "migrate:down": "pnpm --filter @lotto/api migrate:down",
+    "migrate:version": "pnpm --filter @lotto/api migrate:version"
   },
   "keywords": [],
-  "author": "",
+  "author": "Theppitak M.",
   "license": "ISC",
-  "packageManager": "pnpm@9.13.2+sha1.969cc200a41db98449afee1bfa7578b3ce6ff330"
+  "packageManager": "pnpm@10.23.0",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.16.0",
+    "globals": "^16.4.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.3.3",
+    "turbo": "^2.6.1"
+  }
 }
