@@ -21,10 +21,10 @@ All commands run from `apps/api/`.
 
 ### Database
 
-| Command         | What it does               |
-| --------------- | -------------------------- |
-| `make db-start` | Start PostgreSQL container |
-| `make db-stop`  | Stop PostgreSQL container  |
+| Command         | What it does                                                                |
+| --------------- | --------------------------------------------------------------------------- |
+| `make db-start` | Start PostgreSQL container                                                  |
+| `make db-stop`  | Stop PostgreSQL container (pause — data kept, restart with `make db-start`) |
 
 ### Migrations
 

@@ -27,7 +27,7 @@ db-start:
 	@docker compose --env-file ../../.env.local -f ../../docker-compose.yml up -d
 
 db-stop:
-	@docker compose -f ../../docker-compose.yml down
+	@docker compose -f ../../docker-compose.yml stop
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 

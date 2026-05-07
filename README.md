@@ -83,10 +83,10 @@ All `make` commands run from `apps/api/` — the `pnpm` shortcuts above call the
 
 ### Database
 
-| pnpm (root)     | make (apps/api) | What it does               |
-| --------------- | --------------- | -------------------------- |
-| `pnpm db:start` | `make db-start` | Start PostgreSQL container |
-| `pnpm db:stop`  | `make db-stop`  | Stop PostgreSQL container  |
+| pnpm (root)     | make (apps/api) | What it does                                                           |
+| --------------- | --------------- | ---------------------------------------------------------------------- |
+| `pnpm db:start` | `make db-start` | Start PostgreSQL container                                             |
+| `pnpm db:stop`  | `make db-stop`  | Stop PostgreSQL container (pause — data kept, restart with `db:start`) |
 
 ### Migrations
 
