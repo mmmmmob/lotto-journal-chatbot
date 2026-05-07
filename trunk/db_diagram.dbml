@@ -26,7 +26,7 @@ Table user_auth_methods {
   user_id uuid [ref: > users.id]
   provider provider_service [not null]
   provider_user_id varchar [not null] // store unique key for user from their provider
-  provider_email varchar // 
+  provider_email varchar //
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 
@@ -37,7 +37,7 @@ Table user_auth_methods {
 }
 
 Table user_profiles {
-  user_id uuid [pk, ref: - users.id] 
+  user_id uuid [pk, ref: - users.id]
   first_name varchar
   last_name varchar
   avatar_file_id uuid [ref: - files.id]
@@ -47,8 +47,8 @@ Table user_profiles {
 // FILE DATA
 Table files {
   id uuid [pk, default: `gen_random_uuid()`]
-  owner_id uuid [ref: > users.id] 
-  file_path varchar [unique, not null] 
+  owner_id uuid [ref: > users.id]
+  file_path varchar [unique, not null]
   file_type varchar
   created_at timestamp [default: `now()`]
 }
@@ -124,20 +124,20 @@ enum provider_service {
 
 enum lottery_type {
   N3 // 3 digits
-  N6 // 6 digits
+  L6 // 6 digits
 }
 
 enum prize_type {
-  n6_first 
-  n6_second 
-  n6_third 
-  n6_fourth 
-  n6_fifth 
-  n6_last2 
-  n6_last3f 
-  n6_last3b 
-  n6_near_first
-  n3_straight_three 
+  l6_first
+  l6_second
+  l6_third
+  l6_fourth
+  l6_fifth
+  l6_last2
+  l6_last3f
+  l6_last3b
+  l6_near_first
+  n3_straight_three
   n3_shuffle
   n3_straight_two
   n3_special

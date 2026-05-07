@@ -24,4 +24,4 @@ ADRs that are Accepted are source of truth for technical direction.
 
 | ID                                         | Title                                             | Status   | Date       | Supersedes |
 | ------------------------------------------ | ------------------------------------------------- | -------- | ---------- | ---------- |
-| [ADR-001](ADR-001-line-messaging-pivot.md) | Architecture Pivot: Web App vs LINE Messaging API | Proposed | 2026-04-30 | —          |
+| [ADR-001](ADR-001-line-messaging-pivot.md) | Architecture Pivot: Web App vs LINE Messaging API | Accepted | 2026-04-30 | —          |

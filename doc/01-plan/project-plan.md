@@ -5,9 +5,9 @@ Date started: 2026-04-30
 
 ## Source References
 
-- `doc/00-source/versions/v0.1/00-setup-placeholder.md` — setup baseline (no formal PRD yet)
-- `doc/07-decisions/ADR-001-line-messaging-pivot.md` — architecture pivot (Proposed)
-- `trunk/db_diagram.dbml` — existing data model
+- `doc/00-source/versions/v0.2/01-prd.md` — current PRD (LINE-based)
+- `doc/07-decisions/ADR-001-line-messaging-pivot.md` — architecture decision (Accepted)
+- `trunk/db_diagram.dbml` — existing data model (pre-migration 000002)
 
 ---
 
@@ -63,15 +63,13 @@ See ADR-001.
 
 ## Milestones
 
-| Milestone | Description                                                   | Source Reference | Status  |
-| --------- | ------------------------------------------------------------- | ---------------- | ------- |
-| M0        | Architecture decided + formal source docs written             | ADR-001          | Pending |
-| M1        | Core ticket flow: user identity + ticket submission + storage | v0.2 (after M0)  | Pending |
-| M2        | Draw result fetch: cronjob + external API + storage           | v0.2 (after M0)  | Pending |
-| M3        | Winner notification: comparison + delivery                    | v0.2 (after M0)  | Pending |
-| M4        | Hardening: testing, error handling, launch prep               | v0.2 (after M0)  | Pending |
-
-> M1–M4 details will be refined once ADR-001 is resolved and v0.2 source docs exist.
+| Milestone | Description                                               | Source Reference              | Status  |
+| --------- | --------------------------------------------------------- | ----------------------------- | ------- |
+| M0        | Architecture decided + formal source docs written         | ADR-001, v0.2/01-prd.md       | Done    |
+| M1        | User identity redesign + LINE webhook + ticket submission | v0.2/01-prd.md §3.1–3.2, §5.1 | Next    |
+| M2        | Cronjob: result fetch + comparison + win detection        | v0.2/01-prd.md §3.3, §6.2     | Pending |
+| M3        | Win notification via LINE push message                    | v0.2/01-prd.md §3.3, §6.1     | Pending |
+| M4        | Hardening: idempotency, error handling, testing, launch   | v0.2/01-prd.md §7             | Pending |
 
 ---
 
@@ -79,9 +77,8 @@ See ADR-001.
 
 ### Risks
 
-- **[HIGH] Architecture pivot unresolved:** The decision between web app and LINE Messaging
-  API fundamentally changes user identity, auth, and all client-facing flows.
-  M1+ cannot be planned in detail until ADR-001 is decided.
+- **[HIGH — RESOLVED] Architecture pivot:** ADR-001 Accepted. Option B (LINE Messaging API) chosen.
+  Entity register and PRD v0.2 updated accordingly.
 
 - **[HIGH] User identity migration:** Current DB schema uses email/password auth.
   If LINE pivot is chosen, the `users` table needs to be redesigned around `line_user_id`.

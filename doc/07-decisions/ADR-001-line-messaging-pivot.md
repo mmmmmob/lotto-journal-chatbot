@@ -1,9 +1,10 @@
 # ADR-001: Architecture Pivot — Web App vs LINE Messaging API
 
 **Date:** 2026-04-30
-**Status:** Proposed
+**Status:** Accepted
 **Proposed by:** AI session — 2026-04-30
-**Source Reference:** `doc/00-source/versions/v0.1/00-setup-placeholder.md`
+**Accepted by:** Project owner — 2026-04-30
+**Source Reference:** `doc/00-source/versions/v0.2/01-prd.md`
 **Related Tasks:** T-001
 
 ---
@@ -57,7 +58,7 @@ through a web form, and check results on the site (or receive email notification
 
 ---
 
-### Option B — Pivot to LINE Messaging API
+### Option B — Pivot to LINE Messaging API ✅ CHOSEN
 
 Replace the web frontend with LINE as the primary user interaction channel.
 Users interact entirely through the LINE chat interface:
@@ -92,41 +93,42 @@ A cronjob would still run on draw days to fetch results and trigger comparisons.
 
 ## Decision
 
-**⚠️ PENDING — Human decision required.**
+**Option B — LINE Messaging API pivot** was chosen.
 
-This ADR is in Proposed status. The team must decide between Option A and Option B.
+**Rationale:**
 
-Once decided, update this ADR's status to Accepted and record the rationale below.
-
-**Considerations to weigh:**
-
-- Target user demographic (Thai users → LINE penetration is very high)
-- Timeline and resource for frontend development (web app requires significant UI work)
-- Acceptable platform dependency risk
-- Current state of `apps/web` (it's a skeleton — reverting or removing is low-cost now)
+- LINE penetration in Thailand is extremely high; the target users (Thai lottery players)
+  are already on LINE, eliminating registration and installation friction entirely
+- The web app is currently a skeleton — the cost of removing it is minimal
+- The core lottery data model is already well-designed and survives the pivot unchanged
+- LINE push messages are a more reliable and visible notification channel for this use case
 
 ---
 
-## Consequences (to be filled in after decision)
+## Consequences
 
-**If Option A (keep web app):**
+**Immediate actions required:**
 
-- Continue building `apps/web` as a Next.js SPA
-- Complete the auth system (signup, login, OAuth)
-- Add ticket submission and result viewing pages
-- Design notification delivery (email or web push)
-- Entity register: keep all current entities active; no LINE integration
+1. **Remove `apps/web`** (T-006) — Next.js app is no longer the user-facing product
+2. **Redesign user identity** (T-004, T-007) — replace `users` table email/password schema
+   with `line_user_id`; drop `user_auth_methods` and `user_verifications` tables
+3. **Implement LINE webhook handler** (T-002, T-008) — handle webhook events from LINE platform
+4. **Implement cronjob** (T-003, T-010) — fetch results + compare + push notifications
 
-**If Option B (LINE Messaging API pivot):**
+**What stays unchanged:**
 
-- Remove or repurpose `apps/web`
-- Redesign `users` table: replace email/password with `line_user_id`
-- Deprecate `user_auth_methods` and `user_verifications` tables
-- Add LINE webhook handler to `apps/api`
-- Design message parsing: extract ticket numbers from LINE text messages
-- Design notification sender: LINE push message to winner's LINE user ID
-- Create new migration for user identity change
-- Entity register: add LINE Messaging API (integration); deprecate Next.js, OAuth providers
+- Go + Fiber backend framework
+- PostgreSQL database
+- `draws`, `tickets`, `draw_results`, `user_winnings`, `files` tables (unchanged)
+- `lottery_type` and `prize_type` enums
+
+**What is deprecated / removed:**
+
+- `apps/web` (Next.js) — to be removed
+- `user_auth_methods` table — removed in migration 000002
+- `user_verifications` table — removed in migration 000002
+- `provider_service` enum — removed in migration 000002
+- `verification_type` enum — removed in migration 000002
 
 ---
 
