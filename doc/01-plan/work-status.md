@@ -1,11 +1,12 @@
 <!-- AI-CONTEXT
 src: v0.2
 phase: M1
-direction: Remove apps/web, implement LINE webhook + ticket submission
-focus: [T-006, T-002, T-003]
-done: [T-000, T-001, T-005, T-008, T-004, T-007]
+direction: Implement LINE webhook handler + ticket submission flow
+focus: [T-002, T-003]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006]
+future: [T-009 LIFF — post-MVP]
 blocked: none
-next: T-006 (independent) > T-002 > T-003
+next: T-002 > T-003
 risk: none active
 adr: ADR-001
 read_more:
@@ -34,19 +35,20 @@ Last updated: 2026-04-30 (session 4)
 
 **Current phase:** M1 — Design & Build
 
-ADR-001 has been accepted (Option B). The project is now moving into M1:
+ADR-001 has been accepted (Option B). M1 work remaining:
 
-1. Remove `apps/web` (Next.js) — no longer the user-facing product (T-006)
-2. Redesign user identity: replace email/password with `line_user_id` via migration 000002 (T-004, T-007)
-3. Design and implement the LINE webhook handler and ticket submission flow (T-002)
+1. Design and implement the LINE webhook handler and ticket submission flow (T-002)
+2. Design the cronjob for lottery result fetch + comparison (T-003)
 
 The cronjob (M2) and win notification (M3) follow after M1 is stable.
+
+**Post-MVP direction:** A LIFF (LINE Front-end Framework) web app is planned to complement
+the chatbot. The monorepo structure is intentionally preserved for this. See T-009.
 
 ---
 
 ## Active Tasks
 
-- `T-006` — Remove apps/web Next.js app — todo (independent, ready to execute)
 - `T-002` — Design LINE Messaging API webhook handler — todo
 - `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
 
@@ -60,6 +62,7 @@ The cronjob (M2) and win notification (M3) follow after M1 is stable.
 - `T-008` — `trunk/glo_result.json` committed by owner (2026-04-30)
 - `T-004` — User identity schema designed; DBML updated; owner approved (2026-04-30)
 - `T-007` — Migration 000002 written (up + down); Go model + code updated; build passes (2026-04-30)
+- `T-006` — `apps/web` deleted; `turbo.json` + `pnpm-workspace.yaml` cleaned up (2026-04-30)
 
 ---
 
@@ -71,9 +74,16 @@ The cronjob (M2) and win notification (M3) follow after M1 is stable.
 
 ## Next Steps
 
-1. **T-006:** Remove `apps/web` from the monorepo (independent, no blockers)
-2. **T-002:** Design LINE webhook handler (verify signature, parse events, follow/unfollow/message)
-3. **T-003:** Design cronjob — `trunk/glo_result.json` now committed; ready to design
+1. **T-002:** Design LINE webhook handler (verify signature, parse events, follow/unfollow/message)
+2. **T-003:** Design cronjob — `trunk/glo_result.json` now committed; ready to design
+
+---
+
+## Future Direction
+
+- **T-009 — LIFF app (post-MVP):** A LIFF (LINE Front-end Framework) web app is planned to
+  complement the chatbot. Lives in `apps/liff`. Monorepo structure (Turbo, pnpm workspaces)
+  intentionally kept for this purpose. Task: design when post-MVP phase begins.
 
 ---
 

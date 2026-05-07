@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
 last_session: 2026-04-30 (session 4)
 tool: Claude (Sonnet 4.6)
-completed: [T-008 (by owner), T-004, T-007]
+completed: [T-008 (by owner), T-004, T-007, T-006]
 in_progress: []
 checkpoint: none
-next_from_last: T-006 > T-002 > T-003
-notes: T-004 designed and approved. T-007 complete — migration 000002 SQL written (up+down), User model updated, auth code removed, build passes. Active: T-006 T-002 T-003.
+next_from_last: T-002 > T-003
+notes: Full M1 setup complete. Migration 000002 done. apps/web removed. LIFF noted as T-009 post-MVP. Monorepo kept for LIFF. Only T-002 and T-003 remain active.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -28,23 +28,27 @@ _(Updated when milestones close — never archived)_
 
 ### 2026-04-30 — Session 4 — [Claude (Sonnet 4.6)]
 
-- **Session summary:** T-004 design completed. T-008 closed (owner confirmed glo_result.json committed).
+- **Session summary:** T-004 design completed. T-007 (migration 000002) written. T-006 (remove apps/web) done. LIFF planned as T-009 post-MVP. T-008 closed (glo_result.json committed by owner).
 - **Work done:**
-  - Analysed migration 000002 scope against PRD §5.1, §5.3 and 000001 SQL as ground truth
-  - Produced design doc: `doc/06-extensions/T-004-migration-002-design.md`
+  - Analysed migration 000002 scope; produced design doc `doc/06-extensions/T-004-migration-002-design.md`
   - Updated `trunk/db_diagram.dbml` to post-000002 target state
-  - Updated task board, work-status, and this log
+  - Written `000002_line_identity.up/down.sql`; updated `models/user.go`; removed auth code; build passes
+  - Deleted `apps/web`; cleaned `turbo.json` (removed generate/prisma tasks); cleaned `pnpm-workspace.yaml`
+  - Extended `Makefile` and `package.json` scripts (db:start, db:stop, migrate:\* targets)
+  - Updated README with pnpm-first setup guide
+  - Added T-009 (LIFF planning) to task board as post-MVP future task
+  - Added LIFF note to PRD v0.2 §8 (Out of Scope) — intentionally deferred, not abandoned
 - **Decisions resolved this session:**
   - `account_status` enum: DROP `pending`, ADD `inactive`, KEEP `active`+`suspended`
-    (no email auth flow; inactive = unfollowed; suspended = admin action)
-  - `account_status` approach: must drop+recreate (PostgreSQL has no `DROP VALUE`)
-  - `user_winnings.user_id` [FOUND-IN-PASSING]: missing from migration 000001 SQL despite
-    DBML and PRD referencing it — will be added in migration 000002
+  - `user_winnings.user_id` [FOUND-IN-PASSING]: added in migration 000002
+  - Monorepo structure kept intentionally — LIFF app will use `apps/liff` in future
 - **Tasks changed:**
-  - T-008: closed (done — committed by owner before session)
-  - T-004: moved to `design_validate` — awaiting owner sign-off
-  - T-007: scope note updated (references design doc; includes user_winnings.user_id fix)
-- **Awaiting owner action:** None — ready to start T-006 or T-002
+  - T-008: done (committed by owner)
+  - T-004: done (design approved)
+  - T-007: done (migration written, build passes)
+  - T-006: done (apps/web deleted, configs cleaned)
+  - T-009: added (future / post-MVP)
+- **Awaiting owner action:** None — ready to start T-002 or T-003
 - **Daily Log:** _(local only — not committed)_
 
 ---
