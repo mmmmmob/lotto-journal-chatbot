@@ -1,75 +1,79 @@
-# API Service Documentation
+# apps/api — Go API Service
 
-## Getting Started
+The backend service for Lotto Journal. Built with Go + Fiber.
 
-- Prerequisites for running the API
-- Installation steps specific to the API service
-- Environment variable setup for the API
+> **Setup and running instructions are in the [root README](../../README.md).**
+> This document covers API-specific development reference.
 
-## Running the API
+---
 
-- Starting the development server
-- Running in production mode
+## Make targets
 
-## Database Migration Guide
+All commands run from `apps/api/`.
 
-This document outlines the process for managing database migrations in this project. Follow these steps to ensure your database schema stays up-to-date and consistent across environments.
+### App
 
-### Migration Files
+| Command      | What it does                    |
+| ------------ | ------------------------------- |
+| `make run`   | Start API with hot reload (air) |
+| `make build` | Build binary to `dist/`         |
+| `make clean` | Remove `tmp/` and `dist/`       |
 
-- All migration files are located in the `migrations/` directory.
-- Each migration consists of an `.up.sql` file (for applying changes) and a corresponding `.down.sql` file (for rolling back).
+### Database
 
-### Running Migrations
+| Command         | What it does               |
+| --------------- | -------------------------- |
+| `make db-start` | Start PostgreSQL container |
+| `make db-stop`  | Stop PostgreSQL container  |
 
-1. **Ensure your database is running and accessible.**
-2. **Apply migrations:**
-   - Use your migration tool (e.g., `golang-migrate`, `goose`, or another) to apply all pending migrations.
-   - Example with `golang-migrate`:
+### Migrations
 
-     ```
-     cd /Users/theppitak/Coding/Playground/web-playground/lotto-journal/apps/api
-     migrate -path migrations -database <DB_URL> up
-     ```
+| Command                      | What it does                                        |
+| ---------------------------- | --------------------------------------------------- |
+| `make migrate-up`            | Apply all pending migrations                        |
+| `make migrate-up-one`        | Apply the next 1 migration only                     |
+| `make migrate-down`          | Roll back the last migration                        |
+| `make migrate-down-all`      | Roll back all migrations                            |
+| `make migrate-version`       | Show current schema version                         |
+| `make migrate-force N=<ver>` | Force-set version (use to recover from dirty state) |
 
-   - Make sure you run this command from the directory where the `migrations/` folder is located (usually the project root or `apps/api`). Adjust the path if running from elsewhere.
+---
 
-3. **Rollback migrations (if needed):**
-   - To undo the last migration:
+## Project structure
 
-     ```
-     migrate -path migrations -database <DB_URL> down 1
-     ```
+```
+apps/api/
+├── app/
+│   └── main.go              # Entry point
+├── internal/
+│   ├── config/              # Env config loader
+│   ├── database/            # DB connection
+│   ├── handler/             # HTTP handlers
+│   ├── models/              # GORM models
+│   ├── repository/          # DB access layer
+│   └── service/             # Business logic
+├── migrations/              # SQL migration files
+├── middlewares/             # Fiber middlewares
+├── Makefile
+└── go.mod
+```
 
-   - Again, ensure your working directory is correct so the `migrations/` path is valid.
+---
 
-### Creating New Migrations
+## Adding a new migration
 
-1. Create new `.up.sql` and `.down.sql` files in the `migrations/` directory.
-2. Name them with an incrementing prefix (e.g., `000002_add_table.up.sql` and `000002_add_table.down.sql`).
-3. Write the SQL statements for upgrading and downgrading the schema.
+1. Create two files in `migrations/` following the naming convention:
+   ```
+   000003_<description>.up.sql
+   000003_<description>.down.sql
+   ```
+2. Write the `up` SQL (schema change) and the `down` SQL (full reversal).
+3. Apply with `make migrate-up-one` and verify with `make migrate-version`.
+4. Always test the `down` migration too: `make migrate-down` then `make migrate-up-one`.
 
-### Tips
+### Migration history
 
-- Always test your migrations on a development database before applying to production.
-- Keep migration files under version control.
-
-## Testing
-
-- How to run tests for the API
-
-## API Endpoints
-
-- Overview or link to API documentation (e.g., Swagger/OpenAPI)
-
-## Troubleshooting
-
-- Common issues and solutions for the API service
-
-## Contributing
-
-- Contribution guidelines for the API repo
-
-## License
-
-- License information for the API service
+| Version | File                   | Description                                                                                      |
+| ------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
+| 000001  | `000001_init_schema`   | Initial schema — all tables, enums, indexes                                                      |
+| 000002  | `000002_line_identity` | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
