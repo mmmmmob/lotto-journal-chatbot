@@ -46,6 +46,14 @@ Key variables:
 pnpm db:start
 ```
 
+Wait until the container is healthy before running migrations:
+
+```shell
+docker ps --filter name=lotto-db --format "table {{.Names}}\t{{.Status}}"
+```
+
+You should see `healthy` in the status before proceeding.
+
 ### 3. Run migrations
 
 ```shell
