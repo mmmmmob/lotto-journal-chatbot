@@ -10,7 +10,12 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "db:start": "pnpm --filter @lotto/api db:start",
+    "db:stop": "pnpm --filter @lotto/api db:stop",
+    "migrate:up": "pnpm --filter @lotto/api migrate:up",
+    "migrate:down": "pnpm --filter @lotto/api migrate:down",
+    "migrate:version": "pnpm --filter @lotto/api migrate:version"
   },
   "keywords": [],
   "author": "Theppitak M.",

@@ -4,6 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "make run",
-    "build": "make build"
+    "build": "make build",
+    "db:start": "make db-start",
+    "db:stop": "make db-stop",
+    "migrate:up": "make migrate-up",
+    "migrate:up:one": "make migrate-up-one",
+    "migrate:down": "make migrate-down",
+    "migrate:down:all": "make migrate-down-all",
+    "migrate:version": "make migrate-version"
   }
 }
