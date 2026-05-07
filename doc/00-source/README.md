@@ -1,24 +1,21 @@
 # Source Documents — Lotto Journal
 
-## ⚠️ Status
+## Status
 
-**Formal source docs have not been created yet.**
-
-The content below describes the project goal as understood at setup time (2026-04-30).
-All planning documents reference `v0.1` until formal source docs are written.
-
-Create `v0.2` after the architecture pivot decision (ADR-001) is finalized.
+Formal source docs created 2026-04-30. Current version: **v0.2**.
+See `doc/00-source/versions/v0.2/01-prd.md`.
+Create `v0.3` when scope or architecture changes materially (see Source Version Policy below).
 
 ---
 
 ## Current Version
 
-- **`v0.1`** — Setup baseline. No formal PRD.
-- Files: `doc/00-source/versions/v0.1/00-setup-placeholder.md`
+- **`v0.2`** — LINE-based PRD (ADR-001 Accepted 2026-04-30)
+- Files: `doc/00-source/versions/v0.2/01-prd.md`
 
 ## Previous Versions
 
-_(none)_
+- **`v0.1`** — Setup baseline. `doc/00-source/versions/v0.1/00-setup-placeholder.md`
 
 ---
 
@@ -82,6 +79,7 @@ Use an **extension doc** (`doc/06-extensions/`) for:
 
 ## Version History
 
-| Version | Date       | Summary                                                               |
-| ------- | ---------- | --------------------------------------------------------------------- |
-| v0.1    | 2026-04-30 | Setup baseline — no formal PRD. Architecture pivot pending (ADR-001). |
+| Version | Date       | Summary                                                                                    |
+| ------- | ---------- | ------------------------------------------------------------------------------------------ |
+| v0.2    | 2026-04-30 | LINE-based PRD. ADR-001 accepted (Option B). User flows, data model, integrations defined. |
+| v0.1    | 2026-04-30 | Setup baseline — no formal PRD. Architecture pivot pending.                                |

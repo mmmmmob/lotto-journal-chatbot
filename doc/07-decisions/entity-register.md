@@ -1,7 +1,7 @@
 <!-- AI-CONTEXT
-entities_active: [Go, Fiber-v2, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, Next.js]
-entities_deprecated: []
-entities_proposed: [LINE-Messaging-API]
+entities_active: [Go, Fiber-v2, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, LINE-Messaging-API]
+entities_deprecated: [Next.js]
+entities_proposed: []
 last_updated: 2026-04-30
 -->
 
@@ -15,50 +15,46 @@ Last updated: 2026-04-30
 
 ## Active Entities
 
-| Entity     | Type       | Status | Since   | ADR     | Notes                                                                |
-| ---------- | ---------- | ------ | ------- | ------- | -------------------------------------------------------------------- |
-| Go         | tech       | active | 2026-04 | —       | Primary backend language; module: `lotto-journal/api`                |
-| Fiber v2   | dependency | active | 2026-04 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v2`)                |
-| PostgreSQL | tech       | active | 2026-04 | —       | Primary database                                                     |
-| GORM       | dependency | active | 2026-04 | —       | ORM for Go + PostgreSQL driver                                       |
-| go-migrate | dependency | active | 2026-04 | —       | Database migrations (`apps/api/migrations/`)                         |
-| pnpm       | tech       | active | 2026-04 | —       | Package manager; monorepo root                                       |
-| Turborepo  | tech       | active | 2026-04 | —       | Monorepo build orchestration                                         |
-| air        | dependency | active | 2026-04 | —       | Hot reload for Go during development                                 |
-| Next.js    | tech       | active | 2026-04 | ADR-001 | `apps/web` — under review; may be deprecated if LINE pivot is chosen |
+| Entity             | Type        | Status | Since   | ADR     | Notes                                                                     |
+| ------------------ | ----------- | ------ | ------- | ------- | ------------------------------------------------------------------------- |
+| Go                 | tech        | active | 2026-04 | —       | Primary backend language; module: `lotto-journal/api`                     |
+| Fiber v2           | dependency  | active | 2026-04 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v2`)                     |
+| PostgreSQL         | tech        | active | 2026-04 | —       | Primary database                                                          |
+| GORM               | dependency  | active | 2026-04 | —       | ORM for Go + PostgreSQL driver                                            |
+| go-migrate         | dependency  | active | 2026-04 | —       | Database migrations (`apps/api/migrations/`)                              |
+| pnpm               | tech        | active | 2026-04 | —       | Package manager; monorepo root                                            |
+| Turborepo          | tech        | active | 2026-04 | —       | Monorepo build orchestration                                              |
+| air                | dependency  | active | 2026-04 | —       | Hot reload for Go during development                                      |
+| LINE Messaging API | integration | active | 2026-04 | ADR-001 | Primary user interaction channel — webhook receiver + push message sender |
 
 ---
-
-## Proposed Entities (pending ADR decision)
-
-| Entity             | Type        | Status   | ADR     | Notes                                                 |
-| ------------------ | ----------- | -------- | ------- | ----------------------------------------------------- |
-| LINE Messaging API | integration | proposed | ADR-001 | Will become active if Option B (LINE pivot) is chosen |
 
 ---
 
 ## Deprecated / Removed Entities
 
-_(none yet)_
-
-| Entity | Type | Status | Since | Until | ADR | Replaced By |
-| ------ | ---- | ------ | ----- | ----- | --- | ----------- |
-| —      | —    | —      | —     | —     | —   | —           |
+| Entity  | Type | Status     | Since   | Until   | ADR     | Replaced By                                  |
+| ------- | ---- | ---------- | ------- | ------- | ------- | -------------------------------------------- |
+| Next.js | tech | deprecated | 2026-04 | 2026-04 | ADR-001 | LINE Messaging API (no web UI for end users) |
 
 ---
 
-## Notes on User Identity
+## DB Schema Notes (post-ADR-001)
 
-The existing `users` table in the database uses email/password + OAuth (`provider_service`
-enum: google, facebook, apple, local) and OTP verification (`user_verifications`).
+**Tables staying unchanged:** `draws`, `tickets`, `draw_results`, `user_winnings`, `files`
 
-If ADR-001 resolves to Option B (LINE pivot), the following entities become candidates
-for deprecation:
+**`users` table — to be redesigned in migration 000002:**
 
-- email/password auth pattern
-- OAuth provider integration
-- `user_verifications` table (OTP flow)
+- REMOVE: `username`, `email`, `password_hash`
+- ADD: `line_user_id varchar UNIQUE NOT NULL`
+- KEEP: `status`, `created_at`, `updated_at`
 
-And the following would be added:
+**Tables to be dropped in migration 000002:**
 
-- LINE user identity (`line_user_id`) as the primary user identifier
+- `user_auth_methods`
+- `user_verifications`
+
+**Enums to be dropped in migration 000002:**
+
+- `provider_service`
+- `verification_type`

@@ -29,6 +29,9 @@ func main() {
 		return c.SendString("OK")
 	})
 
+	// TODO(T-002): register LINE webhook handler here
+	// app.Post("/webhook", lineHandler.Handle)
+
 	// start server
 	app.Listen(cfg.PORT)
 }
