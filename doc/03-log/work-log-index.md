@@ -1,18 +1,19 @@
 <!-- AI-CONTEXT
-last_session: 2026-04-30
-tool: Human (direct PRD edit)
-completed: []
+last_session: 2026-04-30 (session 4)
+tool: Claude (Sonnet 4.6)
+completed: [T-008 (by owner), T-004, T-007]
+in_progress: []
 checkpoint: none
-next_from_last: T-008 T-004 T-007 T-006 T-002 T-003
-notes: PRD v0.2 placeholders resolved by owner. Two issues flagged: enum rename N6→L6 expands T-007 scope; trunk/glo_result.json missing (T-008 added).
-deep_context: none
+next_from_last: T-006 > T-002 > T-003
+notes: T-004 designed and approved. T-007 complete — migration 000002 SQL written (up+down), User model updated, auth code removed, build passes. Active: T-006 T-002 T-003.
+deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
 ---
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-04-30
+Last updated: 2026-04-30 (session 4)
 
 ---
 
@@ -25,7 +26,28 @@ _(Updated when milestones close — never archived)_
 
 ---
 
-### 2026-04-30 — Session 3 — [Human]
+### 2026-04-30 — Session 4 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-004 design completed. T-008 closed (owner confirmed glo_result.json committed).
+- **Work done:**
+  - Analysed migration 000002 scope against PRD §5.1, §5.3 and 000001 SQL as ground truth
+  - Produced design doc: `doc/06-extensions/T-004-migration-002-design.md`
+  - Updated `trunk/db_diagram.dbml` to post-000002 target state
+  - Updated task board, work-status, and this log
+- **Decisions resolved this session:**
+  - `account_status` enum: DROP `pending`, ADD `inactive`, KEEP `active`+`suspended`
+    (no email auth flow; inactive = unfollowed; suspended = admin action)
+  - `account_status` approach: must drop+recreate (PostgreSQL has no `DROP VALUE`)
+  - `user_winnings.user_id` [FOUND-IN-PASSING]: missing from migration 000001 SQL despite
+    DBML and PRD referencing it — will be added in migration 000002
+- **Tasks changed:**
+  - T-008: closed (done — committed by owner before session)
+  - T-004: moved to `design_validate` — awaiting owner sign-off
+  - T-007: scope note updated (references design doc; includes user_winnings.user_id fix)
+- **Awaiting owner action:** None — ready to start T-006 or T-002
+- **Daily Log:** _(local only — not committed)_
+
+---
 
 - **Session summary:** Owner filled in all `<NEEDS_CLARIFICATION>` placeholders in PRD v0.2
   by direct file edit. PRD status effectively complete (only microcopy deferred).
