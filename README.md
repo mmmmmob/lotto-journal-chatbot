@@ -32,13 +32,15 @@ cp .env.example .env.local
 
 Key variables:
 
-| Variable      | Used by        | Example value                                                                   |
-| ------------- | -------------- | ------------------------------------------------------------------------------- |
-| `DB_USERNAME` | docker-compose | `postgres`                                                                      |
-| `DB_PASSWORD` | docker-compose | `yourpassword`                                                                  |
-| `DB_NAME`     | docker-compose | `lotto_journal`                                                                 |
-| `DB_DSN`      | Go app         | `postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable` |
-| `PORT`        | Go app         | `:3000`                                                                         |
+| Variable                    | Used by        | Example value                                                                   |
+| --------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| `DB_USERNAME`               | docker-compose | `postgres`                                                                      |
+| `DB_PASSWORD`               | docker-compose | `yourpassword`                                                                  |
+| `DB_NAME`                   | docker-compose | `lotto_journal`                                                                 |
+| `DB_DSN`                    | Go app         | `postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable` |
+| `PORT`                      | Go app         | `:3000`                                                                         |
+| `LINE_CHANNEL_SECRET`       | Go app         | from LINE Developers console → Basic Settings                                   |
+| `LINE_CHANNEL_ACCESS_TOKEN` | Go app         | from LINE Developers console → Messaging API                                    |
 
 ### 2. Start the database
 
@@ -101,7 +103,8 @@ All `make` commands run from `apps/api/` — the `pnpm` shortcuts above call the
 
 ### Migration history
 
-| Version | File                   | Description                                                                                      |
-| ------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
-| 000001  | `000001_init_schema`   | Initial schema — all tables, enums, indexes                                                      |
-| 000002  | `000002_line_identity` | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| Version | File                    | Description                                                                                      |
+| ------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
+| 000001  | `000001_init_schema`    | Initial schema — all tables, enums, indexes                                                      |
+| 000002  | `000002_line_identity`  | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| 000003  | `000003_webhook_events` | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |

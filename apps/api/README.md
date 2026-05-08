@@ -64,8 +64,8 @@ apps/api/
 
 1. Create two files in `migrations/` following the naming convention:
    ```
-   000003_<description>.up.sql
-   000003_<description>.down.sql
+   000004_<description>.up.sql
+   000004_<description>.down.sql
    ```
 2. Write the `up` SQL (schema change) and the `down` SQL (full reversal).
 3. Apply with `make migrate-up-one` and verify with `make migrate-version`.
@@ -73,7 +73,8 @@ apps/api/
 
 ### Migration history
 
-| Version | File                   | Description                                                                                      |
-| ------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
-| 000001  | `000001_init_schema`   | Initial schema — all tables, enums, indexes                                                      |
-| 000002  | `000002_line_identity` | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| Version | File                    | Description                                                                                      |
+| ------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
+| 000001  | `000001_init_schema`    | Initial schema — all tables, enums, indexes                                                      |
+| 000002  | `000002_line_identity`  | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| 000003  | `000003_webhook_events` | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
