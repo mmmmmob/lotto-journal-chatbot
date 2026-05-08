@@ -8,8 +8,10 @@ import (
 )
 
 type Config struct {
-	DB_DSN string
-	PORT   string
+	DB_DSN                 string
+	PORT                   string
+	LineChannelSecret      string
+	LineChannelAccessToken string
 }
 
 func LoadConfig() *Config {
@@ -18,7 +20,9 @@ func LoadConfig() *Config {
 		log.Println("No .env file found, using system environment variables")
 	}
 	return &Config{
-		DB_DSN: os.Getenv("DB_DSN"),
-		PORT:   os.Getenv("PORT"),
+		DB_DSN:                 os.Getenv("DB_DSN"),
+		PORT:                   os.Getenv("PORT"),
+		LineChannelSecret:      os.Getenv("LINE_CHANNEL_SECRET"),
+		LineChannelAccessToken: os.Getenv("LINE_CHANNEL_ACCESS_TOKEN"),
 	}
 }

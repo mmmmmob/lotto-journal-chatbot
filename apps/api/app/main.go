@@ -1,37 +1,59 @@
 package main
 
 import (
-	"lotto-journal/api/internal/config"
-	"lotto-journal/api/internal/database"
-	"lotto-journal/api/middlewares"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+
+	"lotto-journal/api/internal/config"
+	"lotto-journal/api/internal/database"
+	"lotto-journal/api/internal/handler"
+	"lotto-journal/api/internal/repository"
+	"lotto-journal/api/internal/service"
+	"lotto-journal/api/middlewares"
 )
 
 func main() {
-	// load config
+	// Load config
 	cfg := config.LoadConfig()
 
-	// connect to database
+	// Connect to database
 	database.ConnectDatabase(cfg.DB_DSN)
+	db := database.DB
 
-	// create fiber instance
+	// LINE bot client
+	bot, err := messaging_api.NewMessagingApiAPI(cfg.LineChannelAccessToken)
+	if err != nil {
+		log.Fatalf("Failed to create LINE bot client: %v", err)
+	}
+
+	// Repositories
+	userRepo := repository.NewUserRepository(db)
+	drawRepo := repository.NewDrawRepository(db)
+	ticketRepo := repository.NewTicketRepository(db)
+	webhookRepo := repository.NewWebhookEventRepository(db)
+
+	// Services
+	userSvc := service.NewUserService(userRepo)
+	ticketSvc := service.NewTicketService(ticketRepo, drawRepo)
+
+	// Handlers
+	lineHandler := handler.NewLineHandler(
+		cfg.LineChannelSecret,
+		bot,
+		userSvc,
+		ticketSvc,
+		webhookRepo,
+	)
+
+	// Fiber app
 	app := fiber.New()
-
-	// run middlewares
 	app.Use(middlewares.Logging)
 
-	// api routes
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello! Lotto Journal!")
-	})
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
-	})
+	// Routes
+	app.Post("/webhook", lineHandler.Handle)
 
-	// TODO(T-002): register LINE webhook handler here
-	// app.Post("/webhook", lineHandler.Handle)
-
-	// start server
+	// Start server
 	app.Listen(cfg.PORT)
 }

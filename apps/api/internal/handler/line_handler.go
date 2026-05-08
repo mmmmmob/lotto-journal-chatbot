@@ -1,0 +1,249 @@
+package handler
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
+
+	"lotto-journal/api/internal/repository"
+	"lotto-journal/api/internal/service"
+)
+
+// LineHandler handles all LINE Messaging API webhook events.
+type LineHandler struct {
+	channelSecret string
+	bot           *messaging_api.MessagingApiAPI
+	userSvc       *service.UserService
+	ticketSvc     *service.TicketService
+	webhookRepo   *repository.WebhookEventRepository
+}
+
+func NewLineHandler(
+	channelSecret string,
+	bot *messaging_api.MessagingApiAPI,
+	userSvc *service.UserService,
+	ticketSvc *service.TicketService,
+	webhookRepo *repository.WebhookEventRepository,
+) *LineHandler {
+	return &LineHandler{
+		channelSecret: channelSecret,
+		bot:           bot,
+		userSvc:       userSvc,
+		ticketSvc:     ticketSvc,
+		webhookRepo:   webhookRepo,
+	}
+}
+
+// Handle is the Fiber route handler for POST /webhook.
+// It builds a synthetic *http.Request so the LINE SDK can verify the signature
+// and parse the event payload (the SDK expects net/http; Fiber uses fasthttp).
+func (h *LineHandler) Handle(c *fiber.Ctx) error {
+	req := &http.Request{
+		Method: "POST",
+		Header: http.Header{
+			"X-Line-Signature": []string{c.Get("X-Line-Signature")},
+			"Content-Type":     []string{"application/json"},
+		},
+		Body: io.NopCloser(bytes.NewReader(c.Body())),
+	}
+
+	cb, err := webhook.ParseRequest(h.channelSecret, req)
+	if err != nil {
+		if errors.Is(err, webhook.ErrInvalidSignature) {
+			log.Println("[webhook] invalid signature")
+			return c.Status(fiber.StatusBadRequest).SendString("invalid signature")
+		}
+		log.Printf("[webhook] parse error: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("failed to parse request")
+	}
+
+	for _, event := range cb.Events {
+		h.dispatch(event)
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+// dispatch deduplicates and routes a single LINE event to the appropriate handler.
+func (h *LineHandler) dispatch(event webhook.EventInterface) {
+	eventID := webhookEventID(event)
+	if eventID == "" {
+		log.Printf("[webhook] no webhookEventId on %T — skipping", event)
+		return
+	}
+
+	isNew, err := h.webhookRepo.MarkProcessed(eventID)
+	if err != nil {
+		log.Printf("[webhook] MarkProcessed %s: %v", eventID, err)
+		return
+	}
+	if !isNew {
+		log.Printf("[webhook] duplicate event %s — skipping", eventID)
+		return
+	}
+
+	switch e := event.(type) {
+	case webhook.FollowEvent:
+		h.handleFollow(e)
+	case webhook.UnfollowEvent:
+		h.handleUnfollow(e)
+	case webhook.MessageEvent:
+		h.handleMessage(e)
+	default:
+		log.Printf("[webhook] unhandled event type %T", event)
+	}
+}
+
+// --- event handlers ---
+
+func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
+	lineUserID := sourceUserID(e.Source)
+	if lineUserID == "" {
+		log.Println("[follow] no userId in source")
+		return
+	}
+
+	_, isNew, err := h.userSvc.FindOrCreate(lineUserID)
+	if err != nil {
+		log.Printf("[follow] FindOrCreate %s: %v", lineUserID, err)
+		return
+	}
+
+	if isNew {
+		log.Printf("[follow] new user created: %s", lineUserID)
+	} else {
+		log.Printf("[follow] existing user re-followed: %s", lineUserID)
+	}
+
+	welcome := "ยินดีต้อนรับสู่ Lotto Journal! 🎟️\n" +
+		"ส่งเลขสลากของคุณมาได้เลย เช่น 123456 หรือ 456\n" +
+		"ส่งหลายเลขได้ด้วย เช่น 123456 789012\n" +
+		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2"
+	h.replyText(e.ReplyToken, welcome)
+}
+
+func (h *LineHandler) handleUnfollow(e webhook.UnfollowEvent) {
+	lineUserID := sourceUserID(e.Source)
+	if lineUserID == "" {
+		log.Println("[unfollow] no userId in source")
+		return
+	}
+
+	if err := h.userSvc.Deactivate(lineUserID); err != nil {
+		log.Printf("[unfollow] Deactivate %s: %v", lineUserID, err)
+		return
+	}
+	log.Printf("[unfollow] user marked inactive: %s", lineUserID)
+	// No reply — LINE does not allow replying to unfollow events.
+}
+
+func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
+	// Only handle plain text messages; ignore stickers, images, etc.
+	textMsg, ok := e.Message.(webhook.TextMessageContent)
+	if !ok {
+		log.Printf("[message] non-text content %T — ignoring", e.Message)
+		return
+	}
+
+	lineUserID := sourceUserID(e.Source)
+	if lineUserID == "" {
+		log.Println("[message] no userId in source")
+		return
+	}
+
+	// Ensure the user record exists (edge case: message before follow event).
+	user, _, err := h.userSvc.FindOrCreate(lineUserID)
+	if err != nil {
+		log.Printf("[message] FindOrCreate %s: %v", lineUserID, err)
+		return
+	}
+
+	saved, invalid, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
+	if err != nil {
+		log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
+		h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
+		return
+	}
+
+	h.replyText(e.ReplyToken, buildReply(saved, invalid))
+}
+
+// --- helpers ---
+
+func (h *LineHandler) replyText(replyToken, text string) {
+	if _, err := h.bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+		ReplyToken: replyToken,
+		Messages: []messaging_api.MessageInterface{
+			messaging_api.TextMessage{Text: text},
+		},
+	}); err != nil {
+		log.Printf("[reply] error: %v", err)
+	}
+}
+
+// buildReply constructs the confirmation (or error) text for a ticket submission.
+func buildReply(saved []service.ParsedTicket, invalid []string) string {
+	if len(saved) == 0 && len(invalid) == 0 {
+		// No digit tokens found at all — unrecognised message.
+		return "ส่งเลขสลากของคุณมาได้เลย 🎟️\n" +
+			"ตัวอย่าง: 123456 หรือ 456\n" +
+			"ส่งหลายเลขได้ เช่น 123456 789012\n" +
+			"ระบุจำนวนตั๋วด้วย x เช่น 123456x2"
+	}
+
+	if len(saved) == 0 {
+		return fmt.Sprintf(
+			"ไม่พบเลขสลากที่ถูกต้อง ❌\nกรุณาส่งเลข 3 หรือ 6 หลักเท่านั้น\nเลขที่ไม่ถูกต้อง: %s",
+			strings.Join(invalid, ", "),
+		)
+	}
+
+	lines := []string{"บันทึกสลากเรียบร้อย ✅"}
+	for _, t := range saved {
+		if t.Quantity > 1 {
+			lines = append(lines, fmt.Sprintf("  • %s x%d (%s)", t.Number, t.Quantity, t.Type))
+		} else {
+			lines = append(lines, fmt.Sprintf("  • %s (%s)", t.Number, t.Type))
+		}
+	}
+	if len(invalid) > 0 {
+		lines = append(lines, fmt.Sprintf("\nเลขที่ไม่ถูกต้อง (ข้ามไป): %s", strings.Join(invalid, ", ")))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+// sourceUserID extracts the LINE userId from a SourceInterface.
+// Returns "" if the source is nil or is not a user source (e.g. group/room).
+func sourceUserID(src webhook.SourceInterface) string {
+	if src == nil {
+		return ""
+	}
+	if us, ok := src.(webhook.UserSource); ok {
+		return us.UserId
+	}
+	return ""
+}
+
+// webhookEventID extracts the webhookEventId string from a known event type.
+// Returns "" for any event type we don't explicitly handle.
+func webhookEventID(event webhook.EventInterface) string {
+	switch e := event.(type) {
+	case webhook.FollowEvent:
+		return e.WebhookEventId
+	case webhook.UnfollowEvent:
+		return e.WebhookEventId
+	case webhook.MessageEvent:
+		return e.WebhookEventId
+	default:
+		return ""
+	}
+}
