@@ -70,6 +70,71 @@ pnpm dev
 
 ---
 
+## API Testing (Bruno)
+
+The collection lives in `trunk/bruno/`. Open it in [Bruno](https://www.usebruno.com/) by choosing **Open Collection** and selecting that folder.
+
+### Requests
+
+| Folder | Request            | What it tests                                                                             |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------- |
+| REST   | Webhook - Follow   | User adds the bot as a friend → creates user record, sends welcome reply                  |
+| REST   | Webhook - Message  | User sends ticket numbers (e.g. `123456 x2, 789`) → parses and saves tickets              |
+| REST   | Webhook - Unfollow | User removes the bot → marks user `inactive`                                              |
+| REST   | Health             | Health check (not yet implemented — will return 404 for now)                              |
+| GLO    | Check Result       | Calls the Thai Government Lottery API directly — useful for inspecting the result payload |
+
+### One-time setup
+
+**1. Set the environment**
+
+In Bruno, select the **dev** environment (top-right dropdown). Then open **Configure** and set the secret variable:
+
+| Variable              | Value                                                             |
+| --------------------- | ----------------------------------------------------------------- |
+| `line_channel_secret` | Your channel secret from LINE Developers Console → Basic Settings |
+
+This value is stored locally by Bruno and never committed to git.
+
+**2. Make sure the API is running**
+
+```shell
+pnpm dev
+```
+
+The `endpoint_url` in the dev environment points to `http://localhost:3000` by default. Adjust if your `PORT` is different.
+
+### How the signature works
+
+Every webhook request has a pre-request script that automatically computes the `X-Line-Signature` header before sending:
+
+```js
+const crypto = require('crypto');
+const secret = bru.getEnvVar('line_channel_secret');
+const body = JSON.stringify(req.body);
+const signature = crypto.createHmac('sha256', secret).update(body).digest('base64');
+req.setHeader('X-Line-Signature', signature);
+```
+
+You don't need to compute the signature manually — just send the request.
+
+### Idempotency caveat
+
+Each request body contains a `webhookEventId`. On first send, this ID is written to the `webhook_events` table. Sending the **same request a second time** will be silently skipped (the deduplication is working correctly).
+
+To re-trigger processing, change the `webhookEventId` to any unique value before sending again.
+
+### `userId` and `destination` fields
+
+| Field                    | What it is                                        | Does our code use it?                            |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------------ |
+| `events[].source.userId` | The LINE user ID of the person who sent the event | **Yes** — used to find or create the user record |
+| `destination`            | Your bot's own LINE user ID                       | **No** — ignored by the handler                  |
+
+The sample bodies use a fake `userId` (`U1234567890abcdef…`). Because `FindOrCreate` is idempotent, re-running the same request always operates on the same test user record in your local DB.
+
+---
+
 ## Scripts reference
 
 All `pnpm` commands run from the **repo root**.
