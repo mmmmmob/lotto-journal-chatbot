@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-04-30 (session 4)
+last_session: 2026-05-08 (session 6)
 tool: Claude (Sonnet 4.6)
-completed: [T-008 (by owner), T-004, T-007, T-006]
+completed: [T-010, T-011]
 in_progress: []
 checkpoint: none
-next_from_last: T-002 > T-003
-notes: Full M1 setup complete. Migration 000002 done. apps/web removed. LIFF noted as T-009 post-MVP. Monorepo kept for LIFF. Only T-002 and T-003 remain active.
+next_from_last: T-003
+notes: T-010 done. Middleware (recover+requestid+Logging+timeout) implemented then immediately upgraded: fiber v2→v3 (v3.2.0) after deprecated timeout.New warning. T-011 done. GET /health with DB ping. Build passes. README + webhook-flow.md updated.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-04-30 (session 4)
+Last updated: 2026-05-08 (session 6)
 
 ---
 
@@ -23,6 +23,62 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-08 — Session 6 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-010 (middleware hardening) implemented, then immediately upgraded to Fiber v3 after the deprecated `timeout.New` warning surfaced. Fetched official Fiber v3 docs, migrated the full codebase from v2 → v3 (v3.2.0). T-011 (GET /health) implemented. Updated `apps/api/README.md` and `trunk/webhook-flow.md` to reflect new middleware stack and corrected a false LINE retry-interval claim. Build passes.
+- **Work done:**
+  - `internal/handler/health_handler.go`: created; `GET /health`; calls `db.DB().Ping()`; returns `{"status":"ok","db":"ok"}` (200) or `{"status":"degraded","db":"<err>"}` (503)
+  - `app/main.go`: wired `healthHandler`; registered `GET /health` (no timeout wrapper)
+  - `middlewares/log.go`: upgraded to log status code + request ID; `c.Locals("requestid")` → `requestid.FromContext(c)` (v3 API); handler sig `*fiber.Ctx` → `fiber.Ctx`
+  - `app/main.go`: `recoverer.New(EnableStackTrace: true)` globally; `requestid.New()` globally; `/webhook` wrapped with `timeout.New(handler, timeout.Config{Timeout: 25s})` (v3 race-free timeout); `log.Fatal(app.Listen(...))` (v3 always returns error); `recover` import aliased as `recoverer` (v3 idiom)
+  - `internal/handler/line_handler.go`: import `v2` → `v3`; handler sig `*fiber.Ctx` → `fiber.Ctx`
+  - `go.mod`: added `github.com/gofiber/fiber/v3 v3.2.0`; `go mod tidy` removed v2 entirely
+  - `apps/api/README.md`: added **Middleware stack** section (table + log format + timeout rationale with LINE redelivery reference)
+  - `trunk/webhook-flow.md`: updated Big Picture diagram (middleware chain shown); Step 1 (middleware registrations + timeout-wrapped route); Step 2 (handler sig); Step 5 (removed false "within 30 seconds" claim, linked LINE docs); Files Involved table
+- **Decisions resolved this session:**
+  - Fiber v3 replaces v2 — `timeout.New` in v3 is race-free via Abandon mechanism; no `NewWithContext` needed
+  - `requestid.FromContext(c)` is the v3 accessor — v3 drops the `ContextKey` config field
+  - `recover` middleware import aliased as `recoverer` to avoid shadowing the Go built-in
+  - LINE's webhook retry count/interval is not publicly disclosed — removed the false "30 seconds" claim from webhook-flow.md
+- **Tasks changed:**
+  - T-010: done (build passes, all middleware wired, Fiber v3)
+  - T-011: done (build passes)
+- **Awaiting owner action:** None
+- **Daily Log:** _(local only — not committed)_
+
+---
+
+### 2026-05-07 — Session 5 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-002 (LINE webhook handler) fully designed and implemented. LINE Bot SDK v8 added. All layers built from scratch (models, repos, services, handler). Migration 000003 added for idempotency. Build passes.
+- **Work done:**
+  - Added `github.com/line/line-bot-sdk-go/v8` (v8.20.0) to go.mod
+  - Created `migrations/000003_webhook_events.up/down.sql` — idempotency table
+  - Created `models/draw.go`, `models/ticket.go`, `models/webhook_event.go`
+  - Updated `repository/user_repository.go` — added `FindByLineUserID`, `FindOrCreate`, `UpdateStatus`
+  - Created `repository/draw_repository.go` — `FindByDate`, `FindOrCreate`
+  - Created `repository/ticket_repository.go` — `Create`
+  - Created `repository/webhook_event_repository.go` — atomic `MarkProcessed` (ON CONFLICT DO NOTHING)
+  - Created `service/user_service.go` — `FindOrCreate`, `Deactivate`
+  - Created `service/draw_service.go` — `NextDrawDate` (Bangkok time, 1st/16th logic), `FindOrCreateUpcoming`
+  - Created `service/ticket_service.go` — `ParseTicketInput` (commas+spaces, xN quantity, 3/6-digit validation), `SubmitTickets`
+  - Created `handler/line_handler.go` — Fiber→SDK bridge (synthetic `*http.Request`), `follow`/`unfollow`/`message` routing, reply builder
+  - Updated `config/config.go` — added `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`
+  - Updated `app/main.go` — wired all layers; registered `POST /webhook`
+- **Decisions resolved this session:**
+  - LINE SDK bridge pattern: build synthetic `*http.Request` from Fiber context to pass to `webhook.ParseRequest()`
+  - Idempotency: `webhook_events` table with `ON CONFLICT DO NOTHING` insert + `RowsAffected` check
+  - `NextDrawDate`: Bangkok time, candidates = [1st, 16th of current month, 1st of next month], first >= today
+  - `ParseTicketInput`: normalise commas→spaces, merge `\d+ x\d+` pattern, validate 3/6-digit only
+  - `UserSource` type assertion is value type (`webhook.UserSource`, not pointer)
+  - Microcopy: Thai language placeholder (PRD marks it TBD)
+- **Tasks changed:**
+  - T-002: done (build passes, all events handled)
+- **Awaiting owner action:** Run `make migrate-up` against the DB to apply migration 000003 before testing
+- **Daily Log:** _(local only — not committed)_
 
 ---
 

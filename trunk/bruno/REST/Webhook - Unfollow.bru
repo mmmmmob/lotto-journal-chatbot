@@ -1,0 +1,53 @@
+meta {
+  name: Webhook - Unfollow
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{endpoint_url}}/webhook
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  X-Line-Signature: will-be-set-by-pre-request-script
+}
+
+body:json {
+  {
+    "destination": "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "events": [
+      {
+        "type": "unfollow",
+        "webhookEventId": "01UNFOLLOW0000000000000001",
+        "deliveryContext": {
+          "isRedelivery": false
+        },
+        "timestamp": 1746691200000,
+        "source": {
+          "type": "user",
+          "userId": "U1234567890abcdef1234567890ab0001"
+        },
+        "mode": "active"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  // Compute X-Line-Signature = Base64(HMAC-SHA256(rawBody, channelSecret))
+  // so the server's signature verification passes locally.
+  // Requires line_channel_secret to be set in the active environment.
+  const crypto = require('crypto');
+  const secret = bru.getEnvVar('line_channel_secret');
+  const body = JSON.stringify(req.body, null, 2);
+  const signature = crypto.createHmac('sha256', secret).update(body).digest('base64');
+  req.setHeader('X-Line-Signature', signature);
+}
+
+settings {
+  encodeUrl: true
+  timeout: 30000
+}

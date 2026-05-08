@@ -7,7 +7,7 @@ Date started: 2026-04-30
 
 - `doc/00-source/versions/v0.2/01-prd.md` — current PRD (LINE-based)
 - `doc/07-decisions/ADR-001-line-messaging-pivot.md` — architecture decision (Accepted)
-- `trunk/db_diagram.dbml` — existing data model (pre-migration 000002)
+- `trunk/db_diagram.dbml` — data model (post-migration 000002)
 
 ---
 
@@ -24,9 +24,7 @@ Key flows:
 3. **Result check** — the system compares every user's tickets against the draw results
 4. **Win notification** — users whose tickets match are notified automatically
 
-**Architecture decision pending:** The user interaction layer (how users submit tickets
-and receive notifications) is being decided between web app and LINE Messaging API.
-See ADR-001.
+**Architecture:** LINE Messaging API (ADR-001 Accepted 2026-04-30 — Option B chosen).
 
 ---
 
@@ -34,7 +32,7 @@ See ADR-001.
 
 ### In Scope (MVP)
 
-- User identity and registration (channel TBD per ADR-001)
+- User identity and registration (LINE Messaging API per ADR-001)
 - Ticket submission: 6-digit and 3-digit lottery numbers
 - Draw management: tracking draw dates and status
 - Cronjob: scheduled fetch of official lottery results from external API
@@ -56,20 +54,20 @@ See ADR-001.
 
 - Go backend (Fiber) with business logic for ticket management, draw tracking, and result checking
 - Cronjob service (scheduled result fetch + comparison)
-- User notification delivery (LINE push message or web notification — per ADR-001)
+- User notification delivery (LINE push message)
 - PostgreSQL database with finalized schema (existing schema is a strong foundation)
 
 ---
 
 ## Milestones
 
-| Milestone | Description                                               | Source Reference              | Status  |
-| --------- | --------------------------------------------------------- | ----------------------------- | ------- |
-| M0        | Architecture decided + formal source docs written         | ADR-001, v0.2/01-prd.md       | Done    |
-| M1        | User identity redesign + LINE webhook + ticket submission | v0.2/01-prd.md §3.1–3.2, §5.1 | Next    |
-| M2        | Cronjob: result fetch + comparison + win detection        | v0.2/01-prd.md §3.3, §6.2     | Pending |
-| M3        | Win notification via LINE push message                    | v0.2/01-prd.md §3.3, §6.1     | Pending |
-| M4        | Hardening: idempotency, error handling, testing, launch   | v0.2/01-prd.md §7             | Pending |
+| Milestone | Description                                               | Source Reference              | Status      |
+| --------- | --------------------------------------------------------- | ----------------------------- | ----------- |
+| M0        | Architecture decided + formal source docs written         | ADR-001, v0.2/01-prd.md       | Done        |
+| M1        | User identity redesign + LINE webhook + ticket submission | v0.2/01-prd.md §3.1–3.2, §5.1 | In Progress |
+| M2        | Cronjob: result fetch + comparison + win detection        | v0.2/01-prd.md §3.3, §6.2     | Next        |
+| M3        | Win notification via LINE push message                    | v0.2/01-prd.md §3.3, §6.1     | Pending     |
+| M4        | Hardening: idempotency, error handling, testing, launch   | v0.2/01-prd.md §7             | Pending     |
 
 ---
 
@@ -80,9 +78,8 @@ See ADR-001.
 - **[HIGH — RESOLVED] Architecture pivot:** ADR-001 Accepted. Option B (LINE Messaging API) chosen.
   Entity register and PRD v0.2 updated accordingly.
 
-- **[HIGH] User identity migration:** Current DB schema uses email/password auth.
-  If LINE pivot is chosen, the `users` table needs to be redesigned around `line_user_id`.
-  This is a non-trivial migration if data already exists.
+- **[HIGH — RESOLVED] User identity migration:** Migration 000002 complete. `users` table redesigned
+  around `line_user_id`; auth tables and enums dropped.
 
 - **[MEDIUM] External API reliability:** The Thai Government Lottery Office API availability,
   response format, and uptime are not yet confirmed. A fallback strategy may be needed.

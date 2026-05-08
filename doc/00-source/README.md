@@ -52,9 +52,9 @@ when they win on official draw dates.
 | Component               | Status   | Notes                                                                  |
 | ----------------------- | -------- | ---------------------------------------------------------------------- |
 | `apps/api`              | Partial  | Fiber setup, basic signup handler (incomplete), DB connection          |
-| `apps/web`              | Skeleton | Next.js boilerplate only — under review for removal                    |
+| `apps/web`              | Removed  | Deleted in T-006 (ADR-001 — no web UI for end users)                   |
 | DB schema               | Complete | Full schema: users, tickets, draws, draw_results, user_winnings, files |
-| Migrations              | Complete | `000001_init_schema.up.sql`                                            |
+| Migrations              | Complete | `000001_init_schema`, `000002_line_identity`, `000003_webhook_events`  |
 | `trunk/db_diagram.dbml` | Complete | Full ER diagram                                                        |
 
 ---

@@ -30,12 +30,13 @@ Read these files **in order** at the start of every session — the first 3 each
 
 ## Source Version in Use
 
-Current: **`v0.1`** — ⚠️ No formal source docs yet. See `00-source/README.md`.
+Current: **`v0.2`** — LINE-based PRD. See `00-source/versions/v0.2/01-prd.md`.
 
-## Key Pending Decision
+## Current Status
 
-> ⚠️ **Architecture pivot under active consideration:** migrating user interaction
-> from the current web app to LINE Messaging API.
->
-> **No new implementation should start on user-facing features until
-> `07-decisions/ADR-001-line-messaging-pivot.md` is resolved.**
+**Phase:** M1 — Design & Build
+
+- ADR-001 accepted (Option B — LINE Messaging API pivot)
+- Migration 000002 and 000003 complete (LINE identity redesign + webhook idempotency)
+- Active tasks: T-003 (cronjob design) — T-002 complete
+- See `01-plan/work-status.md` for full detail
