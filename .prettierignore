@@ -1,13 +1,5 @@
 node_modules
 .turbo
 dist
-.next
-out
 coverage
 pnpm-lock.yaml
-
-# App-specific artifacts
-apps/web/.next
-apps/web/out
-apps/web/node_modules
-apps/api/dist

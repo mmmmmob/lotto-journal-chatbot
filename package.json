@@ -6,11 +6,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint-staged": "lint-staged",
     "db:start": "pnpm --filter @lotto/api db:start",
     "db:stop": "pnpm --filter @lotto/api db:stop",
     "migrate:up": "pnpm --filter @lotto/api migrate:up",
@@ -22,15 +19,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.33.4",
   "devDependencies": {
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.16.0",
-    "@typescript-eslint/eslint-plugin": "^8.21.0",
-    "@typescript-eslint/parser": "^8.21.0",
-    "eslint": "^9.16.0",
-    "globals": "^16.4.0",
-    "husky": "^9.1.6",
-    "lint-staged": "^16.2.6",
     "prettier": "^3.3.3",
-    "turbo": "^2.6.1"
+    "turbo": "^2.9.10"
   }
 }
