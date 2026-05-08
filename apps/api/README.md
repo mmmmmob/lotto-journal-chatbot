@@ -1,6 +1,6 @@
 # apps/api — Go API Service
 
-The backend service for Lotto Journal. Built with Go + Fiber.
+The backend service for Lotto Journal. Built with Go + [Fiber v3](https://github.com/gofiber/fiber).
 
 > **Setup and running instructions are in the [root README](../../README.md).**
 > This document covers API-specific development reference.
@@ -36,6 +36,43 @@ All commands run from `apps/api/`.
 | `make migrate-down-all`      | Roll back all migrations                            |
 | `make migrate-version`       | Show current schema version                         |
 | `make migrate-force N=<ver>` | Force-set version (use to recover from dirty state) |
+
+---
+
+## Middleware stack
+
+Global middleware runs on every request in this order:
+
+| Order | Middleware  | Scope           | Behaviour                                                                     |
+| ----- | ----------- | --------------- | ----------------------------------------------------------------------------- |
+| 1     | `recoverer` | Global          | Catches panics, returns 500; prints stack trace to stdout                     |
+| 2     | `requestid` | Global          | Generates a `X-Request-ID` UUID; accessible via `requestid.FromContext(c)`    |
+| 3     | `Logging`   | Global          | Logs `[METHOD] /path - STATUS - duration - req_id: UUID` after every response |
+| —     | `timeout`   | `/webhook` only | Returns 408 if the handler does not respond within **25 s**                   |
+
+#### Why does `/webhook` need a timeout?
+
+When the LINE Platform delivers a webhook and does **not** receive a `2xx` response (including
+no response at all), it treats the delivery as failed and **redelivers** the event — potentially
+multiple times. Without a timeout, a hanging handler (e.g. DB stall, downstream API stuck)
+produces two compounding problems:
+
+1. **Goroutine leak** — Fiber spawns a goroutine per request; a hung handler holds it open indefinitely.
+2. **Retry storm** — LINE keeps redelivering; each retry spawns another goroutine against the already-stalled server.
+
+The 25 s timeout guarantees the server always emits a response code (`200` on success, `408` on
+overrun). LINE receives the `408`, logs it, and does not add to the backlog. The `webhookEventId`
+idempotency table (migration 000003) prevents a redelivered event from being processed twice if
+the first attempt succeeded before the timeout fired.
+
+> **Note:** LINE's redelivery count and interval are not publicly disclosed and may change.
+> See [LINE docs — Redeliver a webhook that failed to be received](https://developers.line.biz/en/docs/messaging-api/receiving-messages/#redeliver-a-webhook-that-failed-to-be-received).
+
+Log line format:
+
+```
+[POST] /webhook - 200 - 1.234ms - req_id: 550e8400-e29b-41d4-a716-446655440000
+```
 
 ---
 

@@ -19,7 +19,11 @@ LINE Platform
 ┌─────────────────────────────────────────────────────┐
 │  Fiber app  (app/main.go)                           │
 │                                                     │
-│  app.Post("/webhook", lineHandler.Handle)           │
+│  Global middleware (every request):                 │
+│    recoverer → requestid → Logging                  │
+│                                                     │
+│  Route: POST /webhook                               │
+│    timeout.New(25 s) → lineHandler.Handle           │
 └───────────────────┬─────────────────────────────────┘
                     │
                     ▼
@@ -63,8 +67,24 @@ LINE Platform
 
 ## Step 1 — Register the Route (`app/main.go`)
 
+All requests pass through a global middleware chain before reaching any handler:
+
 ```go
-app.Post("/webhook", lineHandler.Handle)
+app.Use(recoverer.New(recoverer.Config{EnableStackTrace: true})) // panic → 500
+app.Use(requestid.New())                                         // assign X-Request-ID
+app.Use(middlewares.Logging)                                     // log after response
+```
+
+The `/webhook` route then wraps the handler in a **25 s timeout**. If the handler does
+not return within 25 seconds, Fiber abandons the context and immediately sends `408`.
+See [`apps/api/README.md`](../apps/api/README.md#why-does-webhook-need-a-timeout) for the
+full rationale (short version: LINE redelivers if no `2xx` arrives, so a hung handler
+causes a retry storm on an already-stalled server).
+
+```go
+app.Post("/webhook", timeout.New(lineHandler.Handle, timeout.Config{
+    Timeout: 25 * time.Second,
+}))
 ```
 
 `lineHandler` is built by wiring every layer together in `main.go`:
@@ -99,7 +119,7 @@ The handler never touches the DB. The service never touches HTTP. This is called
 ## Step 2 — Receive and Verify the Request (`Handle`)
 
 ```go
-func (h *LineHandler) Handle(c *fiber.Ctx) error {
+func (h *LineHandler) Handle(c fiber.Ctx) error {
     req := &http.Request{
         Method: "POST",
         Header: http.Header{
@@ -321,10 +341,12 @@ h.replyText(e.ReplyToken, buildReply(saved, invalid))
 return c.SendStatus(fiber.StatusOK)
 ```
 
-This is critical. LINE's platform **retries delivery** if it does not receive a `200 OK`
-within 30 seconds. The handler always returns `200` — even if an individual event
-fails internally (logged but not bubbled up). The deduplication in Step 3 prevents
-a retried event from being processed twice.
+This is critical. LINE's platform **redelivers** the webhook if it does not receive a `200 OK`
+(the retry count and interval are not publicly disclosed — see
+[LINE docs](https://developers.line.biz/en/docs/messaging-api/receiving-messages/#redeliver-a-webhook-that-failed-to-be-received)).
+The handler always returns `200` — even if an individual event fails internally (logged but
+not bubbled up). The 25 s timeout on the route guarantees a response is always emitted;
+the deduplication in Step 3 prevents a redelivered event from being processed twice.
 
 ---
 
@@ -363,16 +385,17 @@ LINE sends POST /webhook
 
 ## Files Involved
 
-| File                                              | Role                                                     |
-| ------------------------------------------------- | -------------------------------------------------------- |
-| `app/main.go`                                     | Wires all layers; registers `POST /webhook`              |
-| `internal/handler/line_handler.go`                | Receives request, verifies, routes events, sends replies |
-| `internal/service/user_service.go`                | Find-or-create user; deactivate on unfollow              |
-| `internal/service/ticket_service.go`              | Parse message text; save tickets                         |
-| `internal/service/draw_service.go`                | Calculate next draw date                                 |
-| `internal/repository/user_repository.go`          | `users` table — FindOrCreate, UpdateStatus               |
-| `internal/repository/draw_repository.go`          | `draws` table — FindOrCreate                             |
-| `internal/repository/ticket_repository.go`        | `tickets` table — Create                                 |
-| `internal/repository/webhook_event_repository.go` | `webhook_events` table — MarkProcessed                   |
-| `internal/config/config.go`                       | Loads `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN` |
-| `migrations/000003_webhook_events.up.sql`         | Creates the idempotency table                            |
+| File                                              | Role                                                                         |
+| ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `app/main.go`                                     | Wires all layers; registers global middleware + `POST /webhook` with timeout |
+| `middlewares/log.go`                              | Logs every request: method, path, status, duration, req_id                   |
+| `internal/handler/line_handler.go`                | Receives request, verifies, routes events, sends replies                     |
+| `internal/service/user_service.go`                | Find-or-create user; deactivate on unfollow                                  |
+| `internal/service/ticket_service.go`              | Parse message text; save tickets                                             |
+| `internal/service/draw_service.go`                | Calculate next draw date                                                     |
+| `internal/repository/user_repository.go`          | `users` table — FindOrCreate, UpdateStatus                                   |
+| `internal/repository/draw_repository.go`          | `draws` table — FindOrCreate                                                 |
+| `internal/repository/ticket_repository.go`        | `tickets` table — Create                                                     |
+| `internal/repository/webhook_event_repository.go` | `webhook_events` table — MarkProcessed                                       |
+| `internal/config/config.go`                       | Loads `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`                     |
+| `migrations/000003_webhook_events.up.sql`         | Creates the idempotency table                                                |

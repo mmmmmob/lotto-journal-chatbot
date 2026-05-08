@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 
@@ -45,7 +45,7 @@ func NewLineHandler(
 // Handle is the Fiber route handler for POST /webhook.
 // It builds a synthetic *http.Request so the LINE SDK can verify the signature
 // and parse the event payload (the SDK expects net/http; Fiber uses fasthttp).
-func (h *LineHandler) Handle(c *fiber.Ctx) error {
+func (h *LineHandler) Handle(c fiber.Ctx) error {
 	req := &http.Request{
 		Method: "POST",
 		Header: http.Header{
