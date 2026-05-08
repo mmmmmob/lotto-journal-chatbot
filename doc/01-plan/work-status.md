@@ -101,7 +101,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Risks and Notes
 
-- No active risks.
+- **Known: draws `FindOrCreate` race condition (non-blocking for MVP):** GORM's `FirstOrCreate` is not atomic — it does `SELECT` then `INSERT`. If two users submit tickets simultaneously and no draw row exists yet, both see no row and both attempt `INSERT`. The `UNIQUE` constraint on `draw_date` prevents duplicate rows, but the losing request gets a constraint violation error and the user receives an error reply with their ticket lost. At ≤100 users the probability is negligible. Fix when scaling: use `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)` in `repository/draw_repository.go`. The no-op DO UPDATE forces PostgreSQL to fire `RETURNING *` on conflict so GORM populates the struct ID correctly — no raw SQL needed.
 - **JS toolchain removed (session 7):** `.husky/`, `eslint.config.mjs`, `lint-staged.config.mjs`, `tsconfig.base.json` deleted. 8 dead devDeps removed from `package.json`. `turbo.json` trimmed to `dev`+`build` only. `.npmrc` Prisma line removed. `prettier` and `turbo` kept. Turbo updated `2.6.1`→`2.9.10`. 150 packages removed; lockfile resynced. CI/CD (T-015) will use Go toolchain directly.
 - **Fiber v3 (session 6):** Upgraded from v2.52.9 → v3.2.0. All handler signatures updated (`*fiber.Ctx` → `fiber.Ctx`). `go mod tidy` removed v2 entirely. No v2 references remain.
 - **Migration 000002 notes (for reference):**
