@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
 last_session: 2026-05-08 (session 6)
 tool: Claude (Sonnet 4.6)
-completed: [T-010]
+completed: [T-010, T-011]
 in_progress: []
 checkpoint: none
 next_from_last: T-003
-notes: T-010 done. Middleware (recover+requestid+Logging+timeout) implemented then immediately upgraded: fiber v2→v3 (v3.2.0) after deprecated timeout.New warning. Build passes. README + webhook-flow.md updated.
+notes: T-010 done. Middleware (recover+requestid+Logging+timeout) implemented then immediately upgraded: fiber v2→v3 (v3.2.0) after deprecated timeout.New warning. T-011 done. GET /health with DB ping. Build passes. README + webhook-flow.md updated.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -28,8 +28,10 @@ _(Updated when milestones close — never archived)_
 
 ### 2026-05-08 — Session 6 — [Claude (Sonnet 4.6)]
 
-- **Session summary:** T-010 (middleware hardening) implemented, then immediately upgraded to Fiber v3 after the deprecated `timeout.New` warning surfaced. Fetched official Fiber v3 docs, migrated the full codebase from v2 → v3 (v3.2.0). Updated `apps/api/README.md` and `trunk/webhook-flow.md` to reflect new middleware stack and corrected a false LINE retry-interval claim. Build passes.
+- **Session summary:** T-010 (middleware hardening) implemented, then immediately upgraded to Fiber v3 after the deprecated `timeout.New` warning surfaced. Fetched official Fiber v3 docs, migrated the full codebase from v2 → v3 (v3.2.0). T-011 (GET /health) implemented. Updated `apps/api/README.md` and `trunk/webhook-flow.md` to reflect new middleware stack and corrected a false LINE retry-interval claim. Build passes.
 - **Work done:**
+  - `internal/handler/health_handler.go`: created; `GET /health`; calls `db.DB().Ping()`; returns `{"status":"ok","db":"ok"}` (200) or `{"status":"degraded","db":"<err>"}` (503)
+  - `app/main.go`: wired `healthHandler`; registered `GET /health` (no timeout wrapper)
   - `middlewares/log.go`: upgraded to log status code + request ID; `c.Locals("requestid")` → `requestid.FromContext(c)` (v3 API); handler sig `*fiber.Ctx` → `fiber.Ctx`
   - `app/main.go`: `recoverer.New(EnableStackTrace: true)` globally; `requestid.New()` globally; `/webhook` wrapped with `timeout.New(handler, timeout.Config{Timeout: 25s})` (v3 race-free timeout); `log.Fatal(app.Listen(...))` (v3 always returns error); `recover` import aliased as `recoverer` (v3 idiom)
   - `internal/handler/line_handler.go`: import `v2` → `v3`; handler sig `*fiber.Ctx` → `fiber.Ctx`
@@ -43,6 +45,7 @@ _(Updated when milestones close — never archived)_
   - LINE's webhook retry count/interval is not publicly disclosed — removed the false "30 seconds" claim from webhook-flow.md
 - **Tasks changed:**
   - T-010: done (build passes, all middleware wired, Fiber v3)
+  - T-011: done (build passes)
 - **Awaiting owner action:** None
 - **Daily Log:** _(local only — not committed)_
 

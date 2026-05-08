@@ -3,7 +3,7 @@ src: v0.2
 phase: M1
 direction: Implement cronjob: lottery result fetch + comparison + push notification
 focus: [T-003]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011]
 future: [T-009 LIFF — post-MVP]
 blocked: none
 next: T-003
@@ -62,6 +62,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-004` — User identity schema designed; DBML updated; owner approved (2026-04-30)
 - `T-002` — LINE webhook handler implemented; build passes (2026-05-07)
 - `T-010` — Middleware: recover + requestid + enhanced logger + webhook timeout — done (2026-05-08)
+- `T-011` — GET /health implemented; DB ping; 200/503 JSON response (2026-05-08)
 - `T-007` — Migration 000002 written (up + down); Go model + code updated; build passes (2026-04-30)
 - `T-006` — `apps/web` deleted; `turbo.json` + `pnpm-workspace.yaml` cleaned up (2026-04-30)
 

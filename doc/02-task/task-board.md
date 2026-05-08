@@ -1,7 +1,7 @@
 <!-- AI-CONTEXT
-active: T-003(todo) T-011(todo)
+active: T-003(todo)
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011
 future: T-009(liff-planning post-MVP)
 priority_next: T-003
 src: v0.2
@@ -39,10 +39,9 @@ Last updated: 2026-05-08 (session 6)
 
 ## Current Tasks
 
-| ID    | Task                                                   | Type  | Source Reference                                            | Priority | Status | Notes                                                                                                                                                         |
-| ----- | ------------------------------------------------------ | ----- | ----------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------ |
-| T-003 | Design cronjob: lottery result fetch + comparison flow | chore | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2           | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES. |
-| T-011 | Implement GET /health endpoint                         | chore | doc/00-source/versions/v0.2/01-prd.md §4 [FOUND-IN-PASSING] | Low      | todo   | Liveness + DB readiness check. Response: `{"status":"ok                                                                                                       | degraded","db":"ok | <err>"}`. 200 if healthy, 503 if DB unreachable. No new deps — use `db.DB().Ping()`. |
+| ID    | Task                                                   | Type  | Source Reference                                  | Priority | Status | Notes                                                                                                                                                         |
+| ----- | ------------------------------------------------------ | ----- | ------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-003 | Design cronjob: lottery result fetch + comparison flow | chore | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES. |
 
 ---
 
@@ -66,6 +65,7 @@ Last updated: 2026-05-08 (session 6)
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-011 | Implement GET /health endpoint                               | 2026-05-08 | Build passes; DB ping via `db.DB().Ping()`; 200 ok / 503 degraded JSON response                                     |
 | T-010 | Add middleware: recover, requestid, enhanced logger, timeout | 2026-05-08 | Build passes; recover+requestid global; log upgraded (status+req_id); 25s timeout on /webhook; Fiber v2→v3 (v3.2.0) |
 | T-002 | Design + implement LINE webhook handler                      | 2026-05-07 | Build passes; all event types handled; idempotency via webhook_events table                                         |
 | T-000 | Documentation setup: doc/ structure created                  | 2026-04-30 | All required files created; bootstrap checklist passed                                                              |
