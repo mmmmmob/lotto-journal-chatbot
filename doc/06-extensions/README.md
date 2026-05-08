@@ -60,8 +60,6 @@ If undocumented code is found:
 
 ## Index
 
-_(No extension docs yet — add entries here as they are created)_
-
-| File | Title | Date | Status |
-| ---- | ----- | ---- | ------ |
-| —    | —     | —    | —      |
+| File                            | Title                              | Date       | Status |
+| ------------------------------- | ---------------------------------- | ---------- | ------ |
+| `T-004-migration-002-design.md` | Migration 000002 — Design Document | 2026-04-30 | done   |

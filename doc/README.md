@@ -37,6 +37,6 @@ Current: **`v0.2`** — LINE-based PRD. See `00-source/versions/v0.2/01-prd.md`.
 **Phase:** M1 — Design & Build
 
 - ADR-001 accepted (Option B — LINE Messaging API pivot)
-- Migration 000002 complete (LINE identity redesign)
-- Active tasks: T-002 (webhook handler), T-003 (cronjob design)
+- Migration 000002 and 000003 complete (LINE identity redesign + webhook idempotency)
+- Active tasks: T-003 (cronjob design) — T-002 complete
 - See `01-plan/work-status.md` for full detail

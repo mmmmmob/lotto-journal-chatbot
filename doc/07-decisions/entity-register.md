@@ -1,31 +1,32 @@
 <!-- AI-CONTEXT
-entities_active: [Go, Fiber-v2, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, LINE-Messaging-API]
+entities_active: [Go, Fiber-v2, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, LINE-Messaging-API, line-bot-sdk-go-v8]
 entities_deprecated: [Next.js]
 entities_proposed: []
-last_updated: 2026-04-30
+last_updated: 2026-05-07
 -->
 
 ---
 
 # Entity Register — Lotto Journal
 
-Last updated: 2026-04-30
+Last updated: 2026-05-07
 
 ---
 
 ## Active Entities
 
-| Entity             | Type        | Status | Since   | ADR     | Notes                                                                     |
-| ------------------ | ----------- | ------ | ------- | ------- | ------------------------------------------------------------------------- |
-| Go                 | tech        | active | 2026-04 | —       | Primary backend language; module: `lotto-journal/api`                     |
-| Fiber v2           | dependency  | active | 2026-04 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v2`)                     |
-| PostgreSQL         | tech        | active | 2026-04 | —       | Primary database                                                          |
-| GORM               | dependency  | active | 2026-04 | —       | ORM for Go + PostgreSQL driver                                            |
-| go-migrate         | dependency  | active | 2026-04 | —       | Database migrations (`apps/api/migrations/`)                              |
-| pnpm               | tech        | active | 2026-04 | —       | Package manager; monorepo root                                            |
-| Turborepo          | tech        | active | 2026-04 | —       | Monorepo build orchestration                                              |
-| air                | dependency  | active | 2026-04 | —       | Hot reload for Go during development                                      |
-| LINE Messaging API | integration | active | 2026-04 | ADR-001 | Primary user interaction channel — webhook receiver + push message sender |
+| Entity             | Type        | Status | Since   | ADR     | Notes                                                                                                 |
+| ------------------ | ----------- | ------ | ------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| Go                 | tech        | active | 2026-04 | —       | Primary backend language; module: `lotto-journal/api`                                                 |
+| Fiber v2           | dependency  | active | 2026-04 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v2`)                                                 |
+| PostgreSQL         | tech        | active | 2026-04 | —       | Primary database                                                                                      |
+| GORM               | dependency  | active | 2026-04 | —       | ORM for Go + PostgreSQL driver                                                                        |
+| go-migrate         | dependency  | active | 2026-04 | —       | Database migrations (`apps/api/migrations/`)                                                          |
+| pnpm               | tech        | active | 2026-04 | —       | Package manager; monorepo root                                                                        |
+| Turborepo          | tech        | active | 2026-04 | —       | Monorepo build orchestration                                                                          |
+| air                | dependency  | active | 2026-04 | —       | Hot reload for Go during development                                                                  |
+| line-bot-sdk-go v8 | dependency  | active | 2026-05 | ADR-001 | Official LINE Bot SDK for Go (`github.com/line/line-bot-sdk-go/v8`) — webhook parsing + messaging API |
+| LINE Messaging API | integration | active | 2026-04 | ADR-001 | Primary user interaction channel — webhook receiver + push message sender                             |
 
 ---
 
@@ -39,22 +40,26 @@ Last updated: 2026-04-30
 
 ---
 
-## DB Schema Notes (post-ADR-001)
+## DB Schema Notes (post-migration 000002)
 
-**Tables staying unchanged:** `draws`, `tickets`, `draw_results`, `user_winnings`, `files`
+**Tables unchanged:** `draws`, `tickets`, `draw_results`, `user_winnings`, `files`
 
-**`users` table — to be redesigned in migration 000002:**
+**`users` table — redesigned in migration 000002 (done):**
 
-- REMOVE: `username`, `email`, `password_hash`
-- ADD: `line_user_id varchar UNIQUE NOT NULL`
-- KEEP: `status`, `created_at`, `updated_at`
+- REMOVED: `username`, `email`, `password_hash`
+- ADDED: `line_user_id varchar UNIQUE NOT NULL`
+- KEPT: `status`, `created_at`, `updated_at`
 
-**Tables to be dropped in migration 000002:**
+**Tables dropped in migration 000002 (done):**
 
 - `user_auth_methods`
 - `user_verifications`
 
-**Enums to be dropped in migration 000002:**
+**Enums dropped in migration 000002 (done):**
 
 - `provider_service`
 - `verification_type`
+
+**New in migration 000003 (done):**
+
+- `webhook_events` table — idempotency store for LINE webhook event IDs

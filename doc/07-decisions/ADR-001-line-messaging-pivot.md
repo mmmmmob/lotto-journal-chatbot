@@ -113,7 +113,7 @@ A cronjob would still run on draw days to fetch results and trigger comparisons.
 2. **Redesign user identity** (T-004, T-007) — replace `users` table email/password schema
    with `line_user_id`; drop `user_auth_methods` and `user_verifications` tables
 3. **Implement LINE webhook handler** (T-002, T-008) — handle webhook events from LINE platform
-4. **Implement cronjob** (T-003, T-010) — fetch results + compare + push notifications
+4. **Implement cronjob** (T-003) — fetch results + compare + push notifications
 
 **What stays unchanged:**
 
