@@ -1,15 +1,15 @@
 <!-- AI-CONTEXT
-entities_active: [Go, Fiber-v2, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, LINE-Messaging-API, line-bot-sdk-go-v8]
-entities_deprecated: [Next.js]
+entities_active: [Go, Fiber-v3, PostgreSQL, GORM, go-migrate, pnpm, Turborepo, air, LINE-Messaging-API, line-bot-sdk-go-v8]
+entities_deprecated: [Next.js, Fiber-v2]
 entities_proposed: []
-last_updated: 2026-05-07
+last_updated: 2026-05-08
 -->
 
 ---
 
 # Entity Register — Lotto Journal
 
-Last updated: 2026-05-07
+Last updated: 2026-05-08
 
 ---
 
@@ -18,7 +18,7 @@ Last updated: 2026-05-07
 | Entity             | Type        | Status | Since   | ADR     | Notes                                                                                                 |
 | ------------------ | ----------- | ------ | ------- | ------- | ----------------------------------------------------------------------------------------------------- |
 | Go                 | tech        | active | 2026-04 | —       | Primary backend language; module: `lotto-journal/api`                                                 |
-| Fiber v2           | dependency  | active | 2026-04 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v2`)                                                 |
+| Fiber v3           | dependency  | active     | 2026-05 | —       | HTTP framework for Go (`github.com/gofiber/fiber/v3`) — upgraded from v2 in session 6            |
 | PostgreSQL         | tech        | active | 2026-04 | —       | Primary database                                                                                      |
 | GORM               | dependency  | active | 2026-04 | —       | ORM for Go + PostgreSQL driver                                                                        |
 | go-migrate         | dependency  | active | 2026-04 | —       | Database migrations (`apps/api/migrations/`)                                                          |
@@ -37,10 +37,11 @@ Last updated: 2026-05-07
 | Entity  | Type | Status     | Since   | Until   | ADR     | Replaced By                                  |
 | ------- | ---- | ---------- | ------- | ------- | ------- | -------------------------------------------- |
 | Next.js | tech | deprecated | 2026-04 | 2026-04 | ADR-001 | LINE Messaging API (no web UI for end users) |
+| Fiber v2 | dependency | deprecated | 2026-04 | 2026-05 | — | Upgraded to Fiber v3 (v3.2.0) in session 6 — `timeout.New` race-free fix |
 
 ---
 
-## DB Schema Notes (post-migration 000002)
+## DB Schema Notes (post-migration 000003)
 
 **Tables unchanged:** `draws`, `tickets`, `draw_results`, `user_winnings`, `files`
 

@@ -7,7 +7,7 @@ Date started: 2026-04-30
 
 - `doc/00-source/versions/v0.2/01-prd.md` — current PRD (LINE-based)
 - `doc/07-decisions/ADR-001-line-messaging-pivot.md` — architecture decision (Accepted)
-- `trunk/db_diagram.dbml` — data model (post-migration 000002)
+- `trunk/db_diagram.dbml` — data model (post-migration 000003)
 
 ---
 
@@ -81,14 +81,13 @@ Key flows:
 - **[HIGH — RESOLVED] User identity migration:** Migration 000002 complete. `users` table redesigned
   around `line_user_id`; auth tables and enums dropped.
 
-- **[MEDIUM] External API reliability:** The Thai Government Lottery Office API availability,
-  response format, and uptime are not yet confirmed. A fallback strategy may be needed.
+- **[MEDIUM — RESOLVED] External API reliability:** GLO API endpoint confirmed (`POST https://www.glo.or.th/api/lottery/getLatestLottery`). Response format documented in `trunk/glo_result.json`. Retry strategy (5 retries) defined in PRD v0.2 §6.2. Implementation pending (T-003).
 
-- **[MEDIUM] LINE Messaging API limits:** LINE has rate limits and webhook verification
-  requirements. These need to be understood before designing the integration.
+- **[MEDIUM — RESOLVED] LINE Messaging API limits:** Webhook handler implemented (T-002). Signature verification, idempotency (`webhook_events` table), and 25s timeout middleware all in place.
 
-- **[LOW] apps/web removal:** If the LINE pivot is chosen, the Next.js app may be removed.
-  This is low risk as it's currently a skeleton with no production traffic.
+- **[LOW — RESOLVED] apps/web removal:** Completed in T-006 (2026-04-30). `apps/web` deleted; monorepo structure kept for future LIFF (T-009).
+
+- **[LOW] draws `FindOrCreate` race condition:** Non-blocking for MVP (≤100 users). Fix tracked in T-017.
 
 ### Assumptions
 

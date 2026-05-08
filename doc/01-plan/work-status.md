@@ -7,7 +7,7 @@ done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011]
 future: [T-009 LIFF — post-MVP]
 blocked: T-014(needs T-013) T-015(needs T-014)
 next: T-003
-risk: none active
+risk: draws-race-condition(non-blocking, see T-017)
 adr: ADR-001
 read_more:
   prd: doc/00-source/versions/v0.2/01-prd.md
@@ -58,6 +58,8 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-013` — Infra prep: Dockerfile + fly.toml + env secrets mapping — todo
 - `T-014` — First production deploy to Fly.io + Neon wiring — todo (blocked by T-013)
 - `T-015` — GitHub Actions CI/CD pipeline — todo (blocked by T-014)
+- `T-016` — Bug: ticket parsing breaks when x has surrounding spaces — todo
+- `T-017` — Improvement: atomic draws upsert via GORM clause.OnConflict — todo (low priority, do before scaling)
 
 ---
 
