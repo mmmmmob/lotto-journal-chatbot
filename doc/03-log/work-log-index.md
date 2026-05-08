@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-07 (session 5)
+last_session: 2026-05-08 (session 6)
 tool: Claude (Sonnet 4.6)
-completed: [T-002]
+completed: [T-010]
 in_progress: []
 checkpoint: none
 next_from_last: T-003
-notes: T-002 done. LINE webhook handler fully implemented. LINE SDK v8 added. Migration 000003 (webhook_events). All layers wired. Build passes.
+notes: T-010 done. Middleware (recover+requestid+Logging+timeout) implemented then immediately upgraded: fiber v2→v3 (v3.2.0) after deprecated timeout.New warning. Build passes. README + webhook-flow.md updated.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-07 (session 5)
+Last updated: 2026-05-08 (session 6)
 
 ---
 
@@ -23,6 +23,28 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-08 — Session 6 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-010 (middleware hardening) implemented, then immediately upgraded to Fiber v3 after the deprecated `timeout.New` warning surfaced. Fetched official Fiber v3 docs, migrated the full codebase from v2 → v3 (v3.2.0). Updated `apps/api/README.md` and `trunk/webhook-flow.md` to reflect new middleware stack and corrected a false LINE retry-interval claim. Build passes.
+- **Work done:**
+  - `middlewares/log.go`: upgraded to log status code + request ID; `c.Locals("requestid")` → `requestid.FromContext(c)` (v3 API); handler sig `*fiber.Ctx` → `fiber.Ctx`
+  - `app/main.go`: `recoverer.New(EnableStackTrace: true)` globally; `requestid.New()` globally; `/webhook` wrapped with `timeout.New(handler, timeout.Config{Timeout: 25s})` (v3 race-free timeout); `log.Fatal(app.Listen(...))` (v3 always returns error); `recover` import aliased as `recoverer` (v3 idiom)
+  - `internal/handler/line_handler.go`: import `v2` → `v3`; handler sig `*fiber.Ctx` → `fiber.Ctx`
+  - `go.mod`: added `github.com/gofiber/fiber/v3 v3.2.0`; `go mod tidy` removed v2 entirely
+  - `apps/api/README.md`: added **Middleware stack** section (table + log format + timeout rationale with LINE redelivery reference)
+  - `trunk/webhook-flow.md`: updated Big Picture diagram (middleware chain shown); Step 1 (middleware registrations + timeout-wrapped route); Step 2 (handler sig); Step 5 (removed false "within 30 seconds" claim, linked LINE docs); Files Involved table
+- **Decisions resolved this session:**
+  - Fiber v3 replaces v2 — `timeout.New` in v3 is race-free via Abandon mechanism; no `NewWithContext` needed
+  - `requestid.FromContext(c)` is the v3 accessor — v3 drops the `ContextKey` config field
+  - `recover` middleware import aliased as `recoverer` to avoid shadowing the Go built-in
+  - LINE's webhook retry count/interval is not publicly disclosed — removed the false "30 seconds" claim from webhook-flow.md
+- **Tasks changed:**
+  - T-010: done (build passes, all middleware wired, Fiber v3)
+- **Awaiting owner action:** None
+- **Daily Log:** _(local only — not committed)_
 
 ---
 
