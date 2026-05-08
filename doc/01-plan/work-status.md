@@ -102,6 +102,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 ## Risks and Notes
 
 - No active risks.
+- **JS toolchain removed (session 7):** `.husky/`, `eslint.config.mjs`, `lint-staged.config.mjs`, `tsconfig.base.json` deleted. 8 dead devDeps removed from `package.json`. `turbo.json` trimmed to `dev`+`build` only. `.npmrc` Prisma line removed. `prettier` and `turbo` kept. Turbo updated `2.6.1`→`2.9.10`. 150 packages removed; lockfile resynced. CI/CD (T-015) will use Go toolchain directly.
 - **Fiber v3 (session 6):** Upgraded from v2.52.9 → v3.2.0. All handler signatures updated (`*fiber.Ctx` → `fiber.Ctx`). `go mod tidy` removed v2 entirely. No v2 references remain.
 - **Migration 000002 notes (for reference):**
   - `account_status` was drop+recreated (PostgreSQL has no `DROP VALUE`)
