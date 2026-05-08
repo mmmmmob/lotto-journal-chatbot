@@ -1,7 +1,7 @@
 # Migration 000002 — Design Document
 
 **Task:** T-004
-**Status:** design_validate
+**Status:** done (migration 000002 implemented and verified — 2026-04-30)
 **Source reference:** `doc/00-source/versions/v0.2/01-prd.md` §5.1, §5.3
 **Ground truth (pre-migration state):** `apps/api/migrations/000001_init_schema.up.sql`
 **Target schema:** `trunk/db_diagram.dbml` (post-migration 000002)

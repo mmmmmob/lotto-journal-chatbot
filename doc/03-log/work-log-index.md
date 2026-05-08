@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-04-30 (session 4)
+last_session: 2026-05-07 (session 5)
 tool: Claude (Sonnet 4.6)
-completed: [T-008 (by owner), T-004, T-007, T-006]
+completed: [T-002]
 in_progress: []
 checkpoint: none
-next_from_last: T-002 > T-003
-notes: Full M1 setup complete. Migration 000002 done. apps/web removed. LIFF noted as T-009 post-MVP. Monorepo kept for LIFF. Only T-002 and T-003 remain active.
+next_from_last: T-003
+notes: T-002 done. LINE webhook handler fully implemented. LINE SDK v8 added. Migration 000003 (webhook_events). All layers wired. Build passes.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-04-30 (session 4)
+Last updated: 2026-05-07 (session 5)
 
 ---
 
@@ -23,6 +23,37 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-07 — Session 5 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-002 (LINE webhook handler) fully designed and implemented. LINE Bot SDK v8 added. All layers built from scratch (models, repos, services, handler). Migration 000003 added for idempotency. Build passes.
+- **Work done:**
+  - Added `github.com/line/line-bot-sdk-go/v8` (v8.20.0) to go.mod
+  - Created `migrations/000003_webhook_events.up/down.sql` — idempotency table
+  - Created `models/draw.go`, `models/ticket.go`, `models/webhook_event.go`
+  - Updated `repository/user_repository.go` — added `FindByLineUserID`, `FindOrCreate`, `UpdateStatus`
+  - Created `repository/draw_repository.go` — `FindByDate`, `FindOrCreate`
+  - Created `repository/ticket_repository.go` — `Create`
+  - Created `repository/webhook_event_repository.go` — atomic `MarkProcessed` (ON CONFLICT DO NOTHING)
+  - Created `service/user_service.go` — `FindOrCreate`, `Deactivate`
+  - Created `service/draw_service.go` — `NextDrawDate` (Bangkok time, 1st/16th logic), `FindOrCreateUpcoming`
+  - Created `service/ticket_service.go` — `ParseTicketInput` (commas+spaces, xN quantity, 3/6-digit validation), `SubmitTickets`
+  - Created `handler/line_handler.go` — Fiber→SDK bridge (synthetic `*http.Request`), `follow`/`unfollow`/`message` routing, reply builder
+  - Updated `config/config.go` — added `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`
+  - Updated `app/main.go` — wired all layers; registered `POST /webhook`
+- **Decisions resolved this session:**
+  - LINE SDK bridge pattern: build synthetic `*http.Request` from Fiber context to pass to `webhook.ParseRequest()`
+  - Idempotency: `webhook_events` table with `ON CONFLICT DO NOTHING` insert + `RowsAffected` check
+  - `NextDrawDate`: Bangkok time, candidates = [1st, 16th of current month, 1st of next month], first >= today
+  - `ParseTicketInput`: normalise commas→spaces, merge `\d+ x\d+` pattern, validate 3/6-digit only
+  - `UserSource` type assertion is value type (`webhook.UserSource`, not pointer)
+  - Microcopy: Thai language placeholder (PRD marks it TBD)
+- **Tasks changed:**
+  - T-002: done (build passes, all events handled)
+- **Awaiting owner action:** Run `make migrate-up` against the DB to apply migration 000003 before testing
+- **Daily Log:** _(local only — not committed)_
 
 ---
 

@@ -1,12 +1,12 @@
 <!-- AI-CONTEXT
 src: v0.2
 phase: M1
-direction: Implement LINE webhook handler + ticket submission flow
-focus: [T-002, T-003]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006]
+direction: Implement cronjob: lottery result fetch + comparison + push notification
+focus: [T-003]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002]
 future: [T-009 LIFF — post-MVP]
 blocked: none
-next: T-002 > T-003
+next: T-003
 risk: none active
 adr: ADR-001
 read_more:
@@ -15,14 +15,14 @@ read_more:
   architecture: doc/07-decisions/README.md
   entities: doc/07-decisions/entity-register.md
   source_current: doc/00-source/versions/v0.2/
-updated: 2026-04-30
+updated: 2026-05-07
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-04-30 (session 4)
+Last updated: 2026-05-07 (session 5)
 
 ## Source References
 
@@ -37,7 +37,7 @@ Last updated: 2026-04-30 (session 4)
 
 ADR-001 has been accepted (Option B). M1 work remaining:
 
-1. Design and implement the LINE webhook handler and ticket submission flow (T-002)
+1. ~~Design and implement the LINE webhook handler and ticket submission flow (T-002)~~ **Done**
 2. Design the cronjob for lottery result fetch + comparison (T-003)
 
 The cronjob (M2) and win notification (M3) follow after M1 is stable.
@@ -49,7 +49,6 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Active Tasks
 
-- `T-002` — Design LINE Messaging API webhook handler — todo
 - `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
 
 ---
@@ -61,6 +60,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-005` — Formal source docs written: PRD v0.2 created (2026-04-30)
 - `T-008` — `trunk/glo_result.json` committed by owner (2026-04-30)
 - `T-004` — User identity schema designed; DBML updated; owner approved (2026-04-30)
+- `T-002` — LINE webhook handler implemented; build passes (2026-05-07)
 - `T-007` — Migration 000002 written (up + down); Go model + code updated; build passes (2026-04-30)
 - `T-006` — `apps/web` deleted; `turbo.json` + `pnpm-workspace.yaml` cleaned up (2026-04-30)
 
@@ -74,8 +74,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Next Steps
 
-1. **T-002:** Design LINE webhook handler (verify signature, parse events, follow/unfollow/message)
-2. **T-003:** Design cronjob — `trunk/glo_result.json` now committed; ready to design
+1. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; ready to implement
 
 ---
 
