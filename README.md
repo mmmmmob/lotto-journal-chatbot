@@ -81,7 +81,7 @@ The collection lives in `trunk/bruno/`. Open it in [Bruno](https://www.usebruno.
 | REST   | Webhook - Follow   | User adds the bot as a friend → creates user record, sends welcome reply                  |
 | REST   | Webhook - Message  | User sends ticket numbers (e.g. `123456 x2, 789`) → parses and saves tickets              |
 | REST   | Webhook - Unfollow | User removes the bot → marks user `inactive`                                              |
-| REST   | Health             | Health check (not yet implemented — will return 404 for now)                              |
+| REST   | Health             | `GET /health` — liveness + DB readiness; `200` ok / `503` degraded                        |
 | GLO    | Check Result       | Calls the Thai Government Lottery API directly — useful for inspecting the result payload |
 
 ### One-time setup

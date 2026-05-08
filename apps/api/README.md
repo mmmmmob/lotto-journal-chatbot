@@ -39,6 +39,15 @@ All commands run from `apps/api/`.
 
 ---
 
+## Routes
+
+| Method | Path       | Handler         | Timeout | Description                                        |
+| ------ | ---------- | --------------- | ------- | -------------------------------------------------- |
+| `POST` | `/webhook` | `LineHandler`   | 25 s    | LINE webhook receiver — all chatbot events         |
+| `GET`  | `/health`  | `HealthHandler` | none    | Liveness + DB readiness; `200` ok / `503` degraded |
+
+---
+
 ## Middleware stack
 
 Global middleware runs on every request in this order:

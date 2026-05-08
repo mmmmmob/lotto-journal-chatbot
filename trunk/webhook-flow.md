@@ -82,6 +82,8 @@ full rationale (short version: LINE redelivers if no `2xx` arrives, so a hung ha
 causes a retry storm on an already-stalled server).
 
 ```go
+app.Get("/health", healthHandler.Handle)  // no timeout — DB ping is sub-millisecond
+
 app.Post("/webhook", timeout.New(lineHandler.Handle, timeout.Config{
     Timeout: 25 * time.Second,
 }))

@@ -43,6 +43,7 @@ func main() {
 	ticketSvc := service.NewTicketService(ticketRepo, drawRepo)
 
 	// Handlers
+	healthHandler := handler.NewHealthHandler(db)
 	lineHandler := handler.NewLineHandler(
 		cfg.LineChannelSecret,
 		bot,
@@ -63,6 +64,8 @@ func main() {
 	app.Use(middlewares.Logging)
 
 	// Routes
+	app.Get("/health", healthHandler.Handle)
+
 	// timeout.New wraps the handler: if it does not return within 25 s, Fiber responds 408.
 	// Applied only to /webhook — other routes (e.g. /health) have no artificial deadline.
 	app.Post("/webhook", timeout.New(lineHandler.Handle, timeout.Config{
