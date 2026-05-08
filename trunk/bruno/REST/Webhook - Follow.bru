@@ -43,7 +43,7 @@ script:pre-request {
   // Requires line_channel_secret to be set in the active environment.
   const crypto = require('crypto');
   const secret = bru.getEnvVar('line_channel_secret');
-  const body = JSON.stringify(req.body);
+  const body = JSON.stringify(req.body, null, 2);
   const signature = crypto.createHmac('sha256', secret).update(body).digest('base64');
   req.setHeader('X-Line-Signature', signature);
 }
