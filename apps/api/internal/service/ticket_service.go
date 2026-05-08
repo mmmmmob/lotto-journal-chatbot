@@ -13,6 +13,15 @@ import (
 	"lotto-journal/api/internal/repository"
 )
 
+var (
+	// spaceXRe normalises "digits <space> xN" → "digitsxN" (e.g. "123456 x2" → "123456x2").
+	spaceXRe = regexp.MustCompile(`(?i)(\d+)\s+x(\d+)`)
+	// numXRe matches a normalised quantity token (e.g. "123456x2").
+	numXRe = regexp.MustCompile(`(?i)^(\d+)x(\d+)$`)
+	// numOnlyRe matches a plain digit-only token.
+	numOnlyRe = regexp.MustCompile(`^\d+$`)
+)
+
 // ParsedTicket holds one parsed ticket entry from a LINE message.
 type ParsedTicket struct {
 	Number   string
@@ -52,13 +61,9 @@ func ParseTicketInput(text string) ([]ParsedTicket, []string) {
 	text = strings.ReplaceAll(text, ",", " ")
 
 	// Merge "digits <space> xN" into "digitsxN" so a space before 'x' is allowed.
-	spaceXRe := regexp.MustCompile(`(?i)(\d+)\s+x(\d+)`)
 	text = spaceXRe.ReplaceAllString(text, "$1x$2")
 
 	tokens := strings.Fields(text)
-
-	numXRe := regexp.MustCompile(`(?i)^(\d+)x(\d+)$`)
-	numOnlyRe := regexp.MustCompile(`^\d+$`)
 
 	var tickets []ParsedTicket
 	var invalid []string

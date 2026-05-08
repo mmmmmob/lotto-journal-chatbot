@@ -7,9 +7,10 @@ import (
 	"lotto-journal/api/internal/repository"
 )
 
-// bangkokLoc is used for draw-date calculations. Thai lottery draw days are
-// announced in Bangkok time (Asia/Bangkok, UTC+7).
-const bangkokTZ = "Asia/Bangkok"
+// bangkokLoc is the fixed UTC+7 timezone used for all draw-date calculations.
+// Using time.FixedZone avoids loading the OS timezone database, which may be
+// absent in minimal container images (e.g. scratch, distroless).
+var bangkokLoc = time.FixedZone("ICT", 7*60*60)
 
 type DrawService struct {
 	repo *repository.DrawRepository
@@ -23,15 +24,14 @@ func NewDrawService(repo *repository.DrawRepository) *DrawService {
 // expressed in Bangkok time. Candidates are evaluated in order; the first one
 // that is >= today (Bangkok) is returned.
 func NextDrawDate(now time.Time) time.Time {
-	loc, _ := time.LoadLocation(bangkokTZ)
-	bkk := now.In(loc)
-	today := time.Date(bkk.Year(), bkk.Month(), bkk.Day(), 0, 0, 0, 0, loc)
+	bkk := now.In(bangkokLoc)
+	today := time.Date(bkk.Year(), bkk.Month(), bkk.Day(), 0, 0, 0, 0, bangkokLoc)
 
 	candidates := []time.Time{
-		time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, loc),
-		time.Date(today.Year(), today.Month(), 16, 0, 0, 0, 0, loc),
+		time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, bangkokLoc),
+		time.Date(today.Year(), today.Month(), 16, 0, 0, 0, 0, bangkokLoc),
 		// time.Date with Month+1 overflows safely (e.g. December+1 = January next year)
-		time.Date(today.Year(), today.Month()+1, 1, 0, 0, 0, 0, loc),
+		time.Date(today.Year(), today.Month()+1, 1, 0, 0, 0, 0, bangkokLoc),
 	}
 
 	for _, d := range candidates {

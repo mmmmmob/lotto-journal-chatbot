@@ -76,7 +76,9 @@ func (h *LineHandler) Handle(c fiber.Ctx) error {
 func (h *LineHandler) dispatch(event webhook.EventInterface) {
 	eventID := webhookEventID(event)
 	if eventID == "" {
-		log.Printf("[webhook] no webhookEventId on %T — skipping", event)
+		// webhookEventID only extracts IDs for event types we support.
+		// Anything else (postback, join, leave, …) is unsupported and skipped.
+		log.Printf("[webhook] unsupported event type %T — skipping", event)
 		return
 	}
 
@@ -97,8 +99,7 @@ func (h *LineHandler) dispatch(event webhook.EventInterface) {
 		h.handleUnfollow(e)
 	case webhook.MessageEvent:
 		h.handleMessage(e)
-	default:
-		log.Printf("[webhook] unhandled event type %T", event)
+		// No default: unsupported types never reach here — webhookEventID returns "" for them.
 	}
 }
 
@@ -120,6 +121,11 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 	if isNew {
 		log.Printf("[follow] new user created: %s", lineUserID)
 	} else {
+		// User was previously inactive (unfollowed) — restore active status.
+		if err := h.userSvc.Reactivate(lineUserID); err != nil {
+			log.Printf("[follow] Reactivate %s: %v", lineUserID, err)
+			// Non-fatal: still send the welcome reply even if reactivation fails.
+		}
 		log.Printf("[follow] existing user re-followed: %s", lineUserID)
 	}
 
@@ -233,8 +239,8 @@ func sourceUserID(src webhook.SourceInterface) string {
 	return ""
 }
 
-// webhookEventID extracts the webhookEventId string from a known event type.
-// Returns "" for any event type we don't explicitly handle.
+// webhookEventID extracts the webhookEventId from the event types we support.
+// Returns "" for all other types — dispatch will log and skip those.
 func webhookEventID(event webhook.EventInterface) string {
 	switch e := event.(type) {
 	case webhook.FollowEvent:

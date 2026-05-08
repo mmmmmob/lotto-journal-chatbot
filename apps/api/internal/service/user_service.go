@@ -23,3 +23,9 @@ func (s *UserService) FindOrCreate(lineUserID string) (*models.User, bool, error
 func (s *UserService) Deactivate(lineUserID string) error {
 	return s.repo.UpdateStatus(lineUserID, "inactive")
 }
+
+// Reactivate sets the user's status back to active.
+// Called when a previously inactive user re-follows the LINE Official Account.
+func (s *UserService) Reactivate(lineUserID string) error {
+	return s.repo.UpdateStatus(lineUserID, "active")
+}
