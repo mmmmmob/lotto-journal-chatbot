@@ -1,5 +1,5 @@
 <!-- AI-CONTEXT
-active: T-003(todo)
+active: T-003(todo) T-011(todo)
 blocked: none
 done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010
 future: T-009(liff-planning post-MVP)
@@ -39,9 +39,10 @@ Last updated: 2026-05-08 (session 6)
 
 ## Current Tasks
 
-| ID    | Task                                                   | Type  | Source Reference                                  | Priority | Status | Notes                                                                                                                                                         |
-| ----- | ------------------------------------------------------ | ----- | ------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-003 | Design cronjob: lottery result fetch + comparison flow | chore | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES. |
+| ID    | Task                                                   | Type  | Source Reference                                            | Priority | Status | Notes                                                                                                                                                         |
+| ----- | ------------------------------------------------------ | ----- | ----------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------ |
+| T-003 | Design cronjob: lottery result fetch + comparison flow | chore | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2           | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES. |
+| T-011 | Implement GET /health endpoint                         | chore | doc/00-source/versions/v0.2/01-prd.md §4 [FOUND-IN-PASSING] | Low      | todo   | Liveness + DB readiness check. Response: `{"status":"ok                                                                                                       | degraded","db":"ok | <err>"}`. 200 if healthy, 503 if DB unreachable. No new deps — use `db.DB().Ping()`. |
 
 ---
 
