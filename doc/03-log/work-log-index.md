@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-08 (session 7)
+last_session: 2026-05-08 (session 8)
 tool: Claude (Sonnet 4.6)
-completed: []
+completed: [T-012]
 in_progress: []
 checkpoint: none
 next_from_last: T-003
-notes: Session 7 was planning + housekeeping only. Added T-012/T-013/T-014/T-015/T-016 to task board. Removed dead JS toolchain (husky, eslint, lint-staged, tsconfig.base.json). Cleaned package.json, turbo.json, .prettierignore, .npmrc. Turbo updated 2.6.1→2.9.10. 150 packages removed.
+notes: T-012 done. TicketRepository.List, TicketService.ListTickets, isTicketListCmd, buildTicketListReply all implemented. Keyword "โพย". Build passes. Guided session — owner wrote the code.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-08 (session 7)
+Last updated: 2026-05-08 (session 8)
 
 ---
 
@@ -23,6 +23,27 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-08 — Session 8 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-012 (list upcoming draw tickets) implemented in a guided learning session — owner wrote all the code. Build passes.
+- **Work done:**
+  - `internal/repository/ticket_repository.go`: added `List(drawId, ownerID uuid.UUID) ([]*models.Ticket, error)` — queries tickets by `owner_id` AND `draw_id` via GORM `Where` + `Find`
+  - `internal/service/ticket_service.go`: added `ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error)` — resolves upcoming draw via `FindOrCreate`, delegates to `ticketRepo.List`
+  - `internal/handler/line_handler.go`: added `isTicketListCmd(text string) bool` helper (keyword: "โพย"); added `buildTicketListReply(tickets []*models.Ticket) string` with early-return empty state; wired both into `handleMessage` if/else routing
+- **Decisions resolved this session:**
+  - Ticket list lives in `TicketRepository`, not `DrawRepository` — single responsibility
+  - Service resolves draw internally (same pattern as `SubmitTickets`) — caller only needs `ownerID`
+  - `FindOrCreate` used instead of `FindByDate` — handles case where no draw exists yet (returns empty list, not error)
+  - Keyword detection is a small helper, not inline — cleaner `handleMessage`
+  - Separate `buildTicketListReply` instead of extending `buildReply` — different input shape (`[]*models.Ticket` vs `[]ParsedTicket`)
+  - Empty ticket list: early return before building `lines` slice — clean, no header shown
+- **Tasks changed:**
+  - T-012: done (build passes)
+- **Awaiting owner action:** ~~Test via LINE bot with keyword "โพย"~~ — tested and passed
+- **Daily Log:** _(local only — not committed)_
 
 ---
 

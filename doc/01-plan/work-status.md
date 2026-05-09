@@ -1,8 +1,8 @@
 <!-- AI-CONTEXT
 src: v0.2
 phase: M1
-direction: Implement cronjob + ticket summary feature + deploy to production
-focus: [T-003, T-012, T-013]
+direction: Implement cronjob + deploy to production
+focus: [T-003, T-013]
 done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011]
 future: [T-009 LIFF — post-MVP]
 blocked: T-014(needs T-013) T-015(needs T-014)
@@ -22,7 +22,7 @@ updated: 2026-05-08
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-05-08 (session 7)
+Last updated: 2026-05-08 (session 8)
 
 ## Source References
 
@@ -39,7 +39,7 @@ ADR-001 has been accepted (Option B). M1 work remaining:
 
 1. ~~Design and implement the LINE webhook handler and ticket submission flow (T-002)~~ **Done**
 2. Design the cronjob for lottery result fetch + comparison (T-003)
-3. Feature: list upcoming draw tickets summary (T-012) — new addition
+3. Feature: list upcoming draw tickets summary (T-012) — **Done**
 
 The cronjob (M2) and win notification (M3) follow after M1 is stable.
 
@@ -54,7 +54,6 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 ## Active Tasks
 
 - `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
-- `T-012` — Feature: list upcoming draw tickets (summary on demand) — todo
 - `T-013` — Infra prep: Dockerfile + fly.toml + env secrets mapping — todo
 - `T-014` — First production deploy to Fly.io + Neon wiring — todo (blocked by T-013)
 - `T-015` — GitHub Actions CI/CD pipeline — todo (blocked by T-014)
@@ -73,6 +72,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-002` — LINE webhook handler implemented; build passes (2026-05-07)
 - `T-010` — Middleware: recover + requestid + enhanced logger + webhook timeout — done (2026-05-08)
 - `T-011` — GET /health implemented; DB ping; 200/503 JSON response (2026-05-08)
+- `T-012` — Feature: list upcoming draw tickets — done (2026-05-08)
 - `T-007` — Migration 000002 written (up + down); Go model + code updated; build passes (2026-04-30)
 - `T-006` — `apps/web` deleted; `turbo.json` + `pnpm-workspace.yaml` cleaned up (2026-04-30)
 
@@ -88,8 +88,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 ## Next Steps
 
 1. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; middleware hardened; ready to implement
-2. **T-012:** Feature — list upcoming draw tickets; small scope, can be done alongside or after T-003
-3. **T-013 → T-014 → T-015:** Deployment chain — Dockerfile first, then manual Fly.io deploy, then wire up GitHub Actions CI/CD
+2. **T-013 → T-014 → T-015:** Deployment chain — Dockerfile first, then manual Fly.io deploy, then wire up GitHub Actions CI/CD
 
 ---
 
