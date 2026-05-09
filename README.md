@@ -7,6 +7,22 @@ automatically notified via LINE when any of their tickets win a prize.
 
 ---
 
+## Bot Commands
+
+All interaction happens inside the LINE chat with the bot.
+
+| Message sent         | What happens                                                              |
+| -------------------- | ------------------------------------------------------------------------- |
+| `123456`             | Records one L6 ticket for the upcoming draw                               |
+| `456`                | Records one N3 ticket for the upcoming draw                               |
+| `123456 x3`          | Records 3 copies of the same L6 ticket                                    |
+| `123456, 789012`     | Records two tickets in one message (comma or space separated)             |
+| `โพย`               | Lists all tickets you have registered for the current upcoming draw       |
+| Follow bot           | Creates your account; sends welcome message                               |
+| Unfollow bot         | Marks your account inactive; ticket history is preserved                  |
+
+---
+
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
