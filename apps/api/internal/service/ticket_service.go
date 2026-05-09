@@ -128,3 +128,13 @@ func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedT
 
 	return parsed, invalid, nil
 }
+
+// ListTickets find the nearest draw date from current time and call List method on ticketRepo to return list of tickets user holds
+func (s *TicketService) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error) {
+	draw, err := s.drawRepo.FindOrCreate(NextDrawDate(time.Now()))
+	if err != nil {
+		return nil, fmt.Errorf("resolve upcoming draw: %w", err)
+	}
+	tickets, err := s.ticketRepo.List(draw.ID, ownerID)
+	return tickets, err
+}

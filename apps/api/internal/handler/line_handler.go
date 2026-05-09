@@ -13,6 +13,7 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 
+	"lotto-journal/api/internal/models"
 	"lotto-journal/api/internal/repository"
 	"lotto-journal/api/internal/service"
 )
@@ -129,10 +130,11 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 		log.Printf("[follow] existing user re-followed: %s", lineUserID)
 	}
 
-	welcome := "ยินดีต้อนรับสู่ Lotto Journal! 🎟️\n" +
-		"ส่งเลขสลากของคุณมาได้เลย เช่น 123456 หรือ 456\n" +
-		"ส่งหลายเลขได้ด้วย เช่น 123456 789012\n" +
-		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2"
+	welcome := "🎟️ ยินดีต้อนรับสู่ Lotto Journal! \n" +
+		"ตัวอย่าง: 123456 หรือ 456\n" +
+		"ส่งหลายเลขได้ เช่น 123456 789012\n" +
+		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
+		"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
 	h.replyText(e.ReplyToken, welcome)
 }
 
@@ -172,14 +174,23 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 		return
 	}
 
-	saved, invalid, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
-	if err != nil {
-		log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
-		h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
-		return
+	if isTicketListCmd(textMsg.Text) {
+		userTickets, err := h.ticketSvc.ListTickets(user.ID)
+		if err != nil {
+			log.Printf("[message] error retrieving %s tickets: %v", user.ID, err)
+			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
+			return
+		}
+		h.replyText(e.ReplyToken, buildTicketListReply(userTickets))
+	} else {
+		saved, invalid, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
+		if err != nil {
+			log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
+			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
+			return
+		}
+		h.replyText(e.ReplyToken, buildReply(saved, invalid))
 	}
-
-	h.replyText(e.ReplyToken, buildReply(saved, invalid))
 }
 
 // --- helpers ---
@@ -199,10 +210,11 @@ func (h *LineHandler) replyText(replyToken, text string) {
 func buildReply(saved []service.ParsedTicket, invalid []string) string {
 	if len(saved) == 0 && len(invalid) == 0 {
 		// No digit tokens found at all — unrecognised message.
-		return "ส่งเลขสลากของคุณมาได้เลย 🎟️\n" +
+		return "🎟️ ส่งเลขสลากของคุณมาได้เลย\n\n" +
 			"ตัวอย่าง: 123456 หรือ 456\n" +
 			"ส่งหลายเลขได้ เช่น 123456 789012\n" +
-			"ระบุจำนวนตั๋วด้วย x เช่น 123456x2"
+			"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
+			"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
 	}
 
 	if len(saved) == 0 {
@@ -237,6 +249,28 @@ func sourceUserID(src webhook.SourceInterface) string {
 		return us.UserId
 	}
 	return ""
+}
+
+// Return if message sent is command for "List all tickets" or not
+func isTicketListCmd(text string) bool {
+	return text == "โพย"
+}
+
+func buildTicketListReply(tickets []*models.Ticket) string {
+	if len(tickets) == 0 {
+		return "คุณยังไม่ได้บันทึกสลากในงวดนี้"
+	}
+
+	lines := []string{"สลากที่คุณบันทึกไว้ในงวดนี้ 📝"}
+
+	for _, t := range tickets {
+		if t.Quantity > 1 {
+			lines = append(lines, fmt.Sprintf("  • %s x%d (%s)", t.Number, t.Quantity, t.Type))
+		} else {
+			lines = append(lines, fmt.Sprintf("  • %s (%s)", t.Number, t.Type))
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // webhookEventID extracts the webhookEventId from the event types we support.
