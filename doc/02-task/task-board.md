@@ -1,7 +1,7 @@
 <!-- AI-CONTEXT
 active: T-003(todo)
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019
 future: T-009(liff-planning post-MVP)
 priority_next: T-003
 src: v0.2
@@ -84,6 +84,7 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-019 | UX: loading indicator + personalized follow welcome [FOUND-IN-PASSING] | 2026-05-11 | Added `ShowLoadingAnimation` call in `handleMessage` (5s, clamped to LINE constraints); follow welcome now fetches profile display name via `GetProfile` and personalizes greeting; added tests for welcome message builder; `pnpm test:api` and `pnpm build` pass |
 | T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | 2026-05-11 | Replaced `FirstOrCreate` in `internal/repository/draw_repository.go` with atomic `Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`; eliminates SELECT+INSERT race; `pnpm test:api` and `pnpm build` pass |
 | T-015 | GitHub Actions CI/CD pipeline                               | 2026-05-11 | `.github/workflows/deploy.yml` implemented; owner added repository secret `FLY_API_TOKEN`; first GitHub Actions run confirmed green (PR checks + deploy on `main`) |
 | T-018 | Improve list command parsing for spaced/Unicode input [FOUND-IN-PASSING] | 2026-05-11 | Updated `isTicketListCmd` to normalize internal/Unicode spaces (including zero-width chars), so variants like `โ พย` and `โ\u200Bพย` match; added `internal/handler/line_handler_test.go`; `pnpm test:api` and `pnpm build` pass |

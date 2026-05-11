@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
 last_session: 2026-05-11 (session 14)
 tool: GPT-5.3-Codex
-completed: [T-017]
+completed: [T-017, T-019]
 in_progress: []
 checkpoint: draw upsert now atomic
 next_from_last: T-003
-notes: Replaced DrawRepository.FirstOrCreate path with GORM OnConflict upsert to remove SELECT+INSERT race on draws.draw_date under concurrent submissions. test:api and build pass.
+notes: Replaced DrawRepository.FirstOrCreate with OnConflict upsert and added UX improvements [FOUND-IN-PASSING]: loading indicator + personalized follow welcome using profile name. test:api and build pass.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -28,18 +28,25 @@ _(Updated when milestones close — never archived)_
 
 ### 2026-05-11 — Session 14 — [GPT-5.3-Codex]
 
-- **Session summary:** T-017 completed. Draw creation path is now atomic and race-safe under concurrent ticket submissions.
+- **Session summary:** T-017 completed. Draw creation path is now atomic and race-safe under concurrent ticket submissions. Additional UX improvements were also delivered in this same session (T-019 [FOUND-IN-PASSING]).
 - **Root cause:** `FirstOrCreate` issues `SELECT` then `INSERT`; with two simultaneous requests and no existing draw row, both can observe "not found" and both attempt insert. One loses on unique `draw_date`, causing an avoidable error path.
 - **Work done:**
   - `internal/repository/draw_repository.go`:
     - Replaced `Where(...).FirstOrCreate(&draw)` with atomic upsert:
       - `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`
     - Added inline note explaining no-op update purpose (forces PostgreSQL `RETURNING` on conflict so GORM populates model fields)
+  - `internal/handler/line_handler.go` [FOUND-IN-PASSING]:
+    - Added LINE loading indicator via `ShowLoadingAnimation` while handling text messages
+    - Added follow-event personalization: fetch LINE profile via `GetProfile` and include display name in welcome message
+    - Added guard logic for loading duration (min 5s, max 60s, 5-second increments)
+  - `internal/handler/line_handler_test.go`:
+    - Added tests for `buildWelcomeMessage` (with/without display name)
 - **Validation evidence:**
   - `pnpm test:api` passed
   - `pnpm build` passed
 - **Tasks changed:**
   - T-017: done
+  - T-019 [FOUND-IN-PASSING]: done
 - **Next priority:** T-003 (cronjob design)
 - **Daily Log:** _(local only — not committed)_
 

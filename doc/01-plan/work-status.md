@@ -3,7 +3,7 @@ src: v0.2
 phase: M1
 direction: Implement cronjob + production hardening
 focus: [T-003]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019]
 future: [T-009 LIFF — post-MVP]
 blocked: none
 next: T-003
@@ -66,6 +66,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-002` — LINE webhook handler implemented; build passes (2026-05-07)
 - `T-010` — Middleware: recover + requestid + enhanced logger + webhook timeout — done (2026-05-08)
 - `T-011` — GET /health implemented; DB ping; 200/503 JSON response (2026-05-08)
+- `T-019` — UX: loading indicator + personalized follow welcome [FOUND-IN-PASSING] — done (2026-05-11)
 - `T-017` — Improvement: atomic draws upsert via GORM clause.OnConflict — done (2026-05-11)
 - `T-015` — GitHub Actions CI/CD pipeline implemented and verified green — done (2026-05-11)
 - `T-018` — Improve list command parsing for spaced/Unicode input [FOUND-IN-PASSING] — done (2026-05-11)
@@ -107,6 +108,7 @@ None currently.
 - **T-018 [FOUND-IN-PASSING] (session 11):** `isTicketListCmd` now normalizes internal/Unicode spaces and zero-width characters so command variants like `โ พย`, `โ\u00A0พย`, and `โ\u200Bพย` correctly map to `โพย`. Unit tests added in `internal/handler/line_handler_test.go`.
 - **T-015 completed (session 13):** `.github/workflows/deploy.yml` is active. Owner added repository secret `FLY_API_TOKEN` and confirmed first successful GitHub Actions run (PR checks + deploy on `main`).
 - **T-017 completed (session 14):** `DrawRepository.FindOrCreate` now uses atomic `INSERT ... ON CONFLICT` via GORM `Clauses(clause.OnConflict...)` instead of `FirstOrCreate`, removing the SELECT+INSERT race window under concurrent submissions.
+- **T-019 [FOUND-IN-PASSING] (session 14):** Improved chat UX by adding LINE loading indicator (`ShowLoadingAnimation`) while processing text messages and personalized follow welcome using LINE profile display name (`GetProfile`).
 - **JS toolchain removed (session 7):** `.husky/`, `eslint.config.mjs`, `lint-staged.config.mjs`, `tsconfig.base.json` deleted. 8 dead devDeps removed from `package.json`. `turbo.json` trimmed to `dev`+`build` only. `.npmrc` Prisma line removed. `prettier` and `turbo` kept. Turbo updated `2.6.1`→`2.9.10`. 150 packages removed; lockfile resynced. CI/CD (T-015) will use Go toolchain directly.
 - **Fiber v3 (session 6):** Upgraded from v2.52.9 → v3.2.0. All handler signatures updated (`*fiber.Ctx` → `fiber.Ctx`). `go mod tidy` removed v2 entirely. No v2 references remain.
 - **Migration 000002 notes (for reference):**
