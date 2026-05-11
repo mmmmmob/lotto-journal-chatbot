@@ -165,7 +165,8 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	}
 
 	// Best-effort loading indicator to show user we're processing the request.
-	h.showLoading(lineUserID, 5)
+	// Run asynchronously so a slow LINE API call does not add webhook latency.
+	go h.showLoading(lineUserID, 5)
 
 	// Ensure the user record exists (edge case: message before follow event).
 	user, _, err := h.userSvc.FindOrCreate(lineUserID)
