@@ -261,14 +261,21 @@ existing row and the `follow` handler can re-activate them if needed.
 
 **Trigger:** User sends a text message.
 
-Before routing, the handler starts a best-effort loading animation in a separate goroutine:
+Before routing, the handler starts a best-effort loading animation in a separate goroutine with local panic recovery:
 
 ```go
-go h.showLoading(lineUserID, 5)
+go func(chatID string) {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Printf("[loading] panic recovered: %v", r)
+        }
+    }()
+    h.showLoading(chatID, 5)
+}(lineUserID)
 ```
 
-This keeps webhook latency low — if the loading API call is slow or fails, ticket processing can continue.
-The loading call is non-critical (errors are logged only), then the handler checks whether the message is a recognised command keyword and routes accordingly.
+This keeps webhook latency low — if the loading API call is slow, fails, or panics, ticket processing can continue.
+The loading path is non-critical (errors are logged), then the handler checks whether the message is a recognised command keyword and routes accordingly.
 
 ### 4c-0: Route by keyword
 
@@ -430,7 +437,7 @@ LINE sends POST /webhook
     │       │       └── UserService.Deactivate(lineUserId)
     │       │
     │               └── message event (text)
-    │                       ├── go showLoading(lineUserId, 5) [best-effort, async]
+    │                       ├── go showLoading(lineUserId, 5) [best-effort, async, panic-recovered]
     │                       ├── UserService.FindOrCreate(lineUserId)
     │                       ├── isTicketListCmd?
     │                       │       ├── yes → TicketService.ListTickets(userId)
