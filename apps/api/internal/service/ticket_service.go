@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 
@@ -14,8 +15,9 @@ import (
 )
 
 var (
-	// spaceXRe normalises "digits <space> xN" → "digitsxN" (e.g. "123456 x2" → "123456x2").
-	spaceXRe = regexp.MustCompile(`(?i)(\d+)\s+x(\d+)`)
+	// spaceXRe normalises "digits [space] x [space] N" → "digitsxN"
+	// (e.g. "123456 x2", "123456x 2", or "123456 x 2" → "123456x2").
+	spaceXRe = regexp.MustCompile(`(?i)(\d+)\s*x\s*(\d+)`)
 	// numXRe matches a normalised quantity token (e.g. "123456x2").
 	numXRe = regexp.MustCompile(`(?i)^(\d+)x(\d+)$`)
 	// numOnlyRe matches a plain digit-only token.
@@ -57,11 +59,10 @@ func NewTicketService(
 // Returns (validTickets, invalidTokens). Non-digit text tokens are skipped
 // silently so that Thai text in the same message does not trigger an error.
 func ParseTicketInput(text string) ([]ParsedTicket, []string) {
-	// Normalise: commas → spaces
-	text = strings.ReplaceAll(text, ",", " ")
+	text = normalizeTicketText(text)
 
-	// Merge "digits <space> xN" into "digitsxN" so a space before 'x' is allowed.
-	text = spaceXRe.ReplaceAllString(text, "$1x$2")
+	// Merge "digits <space> x <space> N" into "digitsxN" so spaces around 'x' are allowed.
+	text = spaceXRe.ReplaceAllString(text, "${1}x${2}")
 
 	tokens := strings.Fields(text)
 
@@ -98,6 +99,27 @@ func ParseTicketInput(text string) ([]ParsedTicket, []string) {
 	}
 
 	return tickets, invalid
+}
+
+// normalizeTicketText prepares message text for parser regexes.
+//
+// It converts:
+//   - commas to spaces (token separators)
+//   - any Unicode whitespace to ASCII space
+//   - common non-ASCII multiplication chars to ASCII 'x'
+func normalizeTicketText(text string) string {
+	text = strings.ReplaceAll(text, ",", " ")
+
+	return strings.Map(func(r rune) rune {
+		switch {
+		case unicode.IsSpace(r):
+			return ' '
+		case r == '×' || r == '✕' || r == 'ｘ' || r == 'Ｘ':
+			return 'x'
+		default:
+			return r
+		}
+	}, text)
 }
 
 // SubmitTickets parses the message text, resolves (or creates) the upcoming draw,

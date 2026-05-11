@@ -1,11 +1,11 @@
 {
   "name": "lotto-journal",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "Lotto Journal as LINE Messaging API and LIFF in a monorepo structure",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "test:api": "pnpm --filter @lotto/api exec go test ./...",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:start": "pnpm --filter @lotto/api db:start",
@@ -14,7 +14,7 @@
     "migrate:down": "pnpm --filter @lotto/api migrate:down",
     "migrate:version": "pnpm --filter @lotto/api migrate:version"
   },
-  "keywords": [],
+  "private": true,
   "author": "Theppitak M.",
   "license": "ISC",
   "packageManager": "pnpm@10.33.4",
