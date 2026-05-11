@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gofiber/fiber/v3"
@@ -165,17 +167,27 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	}
 
 	// Best-effort loading indicator to show user we're processing the request.
-	// Run asynchronously so a slow LINE API call does not add webhook latency.
-	// Recover panic inside the spawned goroutine so one background failure
-	// cannot crash the whole process.
-	go func(chatID string) {
+	// Delay the indicator slightly and cancel it for fast paths so users don't
+	// see a 5-second spinner for quick replies.
+	processingDone := make(chan struct{})
+	defer close(processingDone)
+	go func(chatID string, done <-chan struct{}) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("[loading] panic recovered: %v", r)
+				log.Printf("[loading] panic recovered: %v\n%s", r, debug.Stack())
 			}
 		}()
-		h.showLoading(chatID, 5)
-	}(lineUserID)
+
+		timer := time.NewTimer(700 * time.Millisecond)
+		defer timer.Stop()
+
+		select {
+		case <-done:
+			return
+		case <-timer.C:
+			h.showLoading(chatID, 5)
+		}
+	}(lineUserID, processingDone)
 
 	// Ensure the user record exists (edge case: message before follow event).
 	user, _, err := h.userSvc.FindOrCreate(lineUserID)
