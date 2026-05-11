@@ -7,7 +7,7 @@ done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-0
 future: [T-009 LIFF — post-MVP]
 blocked: none
 next: T-003
-risk: draws-race-condition(non-blocking, see T-017)
+risk: none
 adr: ADR-001
 read_more:
   prd: doc/00-source/versions/v0.2/01-prd.md
