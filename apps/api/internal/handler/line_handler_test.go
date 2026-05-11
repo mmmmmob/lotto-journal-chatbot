@@ -1,6 +1,9 @@
 package handler
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestIsTicketListCmd(t *testing.T) {
 	tests := []struct {
@@ -27,4 +30,26 @@ func TestIsTicketListCmd(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuildWelcomeMessage(t *testing.T) {
+	t.Run("with display name", func(t *testing.T) {
+		msg := buildWelcomeMessage("Ploy")
+		if !strings.Contains(msg, "สวัสดีคุณ Ploy") {
+			t.Fatalf("expected personalized greeting, got %q", msg)
+		}
+		if !strings.Contains(msg, "ยินดีต้อนรับสู่ Lotto Journal") {
+			t.Fatalf("expected welcome body, got %q", msg)
+		}
+	})
+
+	t.Run("without display name", func(t *testing.T) {
+		msg := buildWelcomeMessage("")
+		if !strings.Contains(msg, "สวัสดี!") {
+			t.Fatalf("expected generic greeting, got %q", msg)
+		}
+		if !strings.Contains(msg, "ยินดีต้อนรับสู่ Lotto Journal") {
+			t.Fatalf("expected welcome body, got %q", msg)
+		}
+	})
 }
