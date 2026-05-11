@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"time"
 	"unicode"
@@ -173,7 +174,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	go func(chatID string, done <-chan struct{}) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("[loading] panic recovered: %v", r)
+				log.Printf("[loading] panic recovered: %v\n%s", r, debug.Stack())
 			}
 		}()
 
