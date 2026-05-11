@@ -1,12 +1,12 @@
 <!-- AI-CONTEXT
 src: v0.2
 phase: M1
-direction: Implement cronjob + deploy to production
-focus: [T-003, T-013]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011]
+direction: Implement cronjob + production hardening
+focus: [T-015, T-003]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014]
 future: [T-009 LIFF — post-MVP]
-blocked: T-014(needs T-013) T-015(needs T-014)
-next: T-003
+blocked: none
+next: T-015
 risk: draws-race-condition(non-blocking, see T-017)
 adr: ADR-001
 read_more:
@@ -15,14 +15,14 @@ read_more:
   architecture: doc/07-decisions/README.md
   entities: doc/07-decisions/entity-register.md
   source_current: doc/00-source/versions/v0.2/
-updated: 2026-05-08
+updated: 2026-05-11
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-05-08 (session 8)
+Last updated: 2026-05-11 (session 10)
 
 ## Source References
 
@@ -43,8 +43,8 @@ ADR-001 has been accepted (Option B). M1 work remaining:
 
 The cronjob (M2) and win notification (M3) follow after M1 is stable.
 
-**Deployment plan added:** T-013 → T-014 → T-015 form a sequential chain to get the app live
-on Fly.io with Neon Postgres and automated GitHub Actions deploys. See task board Env Map section.
+**Deployment chain status:** T-013 and T-014 are complete (infra prep + first production deploy to Fly.io/Neon).
+Next step is T-015 to automate main-branch deployment via GitHub Actions.
 
 **Post-MVP direction:** A LIFF (LINE Front-end Framework) web app is planned to complement
 the chatbot. The monorepo structure is intentionally preserved for this. See T-009.
@@ -53,10 +53,8 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Active Tasks
 
+- `T-015` — GitHub Actions CI/CD pipeline — todo
 - `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
-- `T-013` — Infra prep: Dockerfile + fly.toml + env secrets mapping — todo
-- `T-014` — First production deploy to Fly.io + Neon wiring — todo (blocked by T-013)
-- `T-015` — GitHub Actions CI/CD pipeline — todo (blocked by T-014)
 - `T-016` — Bug: ticket parsing breaks when x has surrounding spaces — todo
 - `T-017` — Improvement: atomic draws upsert via GORM clause.OnConflict — todo (low priority, do before scaling)
 
@@ -72,6 +70,8 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 - `T-002` — LINE webhook handler implemented; build passes (2026-05-07)
 - `T-010` — Middleware: recover + requestid + enhanced logger + webhook timeout — done (2026-05-08)
 - `T-011` — GET /health implemented; DB ping; 200/503 JSON response (2026-05-08)
+- `T-014` — First production deploy to Fly.io + Neon wiring — done (2026-05-11)
+- `T-013` — Infra prep: Dockerfile + fly.toml + env secrets mapping — done (2026-05-09)
 - `T-012` — Feature: list upcoming draw tickets — done (2026-05-08)
 - `T-007` — Migration 000002 written (up + down); Go model + code updated; build passes (2026-04-30)
 - `T-006` — `apps/web` deleted; `turbo.json` + `pnpm-workspace.yaml` cleaned up (2026-04-30)
@@ -80,15 +80,15 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Blocked Tasks
 
-- `T-014` — waiting on T-013 (Dockerfile + fly.toml must exist first)
-- `T-015` — waiting on T-014 (needs live Fly.io app + FLY_API_TOKEN)
+None currently.
 
 ---
 
 ## Next Steps
 
-1. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; middleware hardened; ready to implement
-2. **T-013 → T-014 → T-015:** Deployment chain — Dockerfile first, then manual Fly.io deploy, then wire up GitHub Actions CI/CD
+1. **T-015:** Add GitHub Actions CI/CD for main branch deploys (`FLY_API_TOKEN` secret, PR checks, deploy on push to `main`)
+2. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; middleware hardened; ready to implement
+3. **T-016:** Fix ticket parsing bug around `x` with surrounding spaces + add unit tests
 
 ---
 
@@ -102,6 +102,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Risks and Notes
 
+- **LINE channel separation + production go-live (session 10):** Dedicated dev and production LINE channels are now both in use. Production webhook points to Fly.io app URL; end-to-end test (LINE message → DB insert in Neon) passed. Keep credentials isolated per channel and never mix them.
 - **Known: draws `FindOrCreate` race condition (non-blocking for MVP):** GORM's `FirstOrCreate` is not atomic — it does `SELECT` then `INSERT`. If two users submit tickets simultaneously and no draw row exists yet, both see no row and both attempt `INSERT`. The `UNIQUE` constraint on `draw_date` prevents duplicate rows, but the losing request gets a constraint violation error and the user receives an error reply with their ticket lost. At ≤100 users the probability is negligible. Fix when scaling: use `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)` in `repository/draw_repository.go`. The no-op DO UPDATE forces PostgreSQL to fire `RETURNING *` on conflict so GORM populates the struct ID correctly — no raw SQL needed.
 - **JS toolchain removed (session 7):** `.husky/`, `eslint.config.mjs`, `lint-staged.config.mjs`, `tsconfig.base.json` deleted. 8 dead devDeps removed from `package.json`. `turbo.json` trimmed to `dev`+`build` only. `.npmrc` Prisma line removed. `prettier` and `turbo` kept. Turbo updated `2.6.1`→`2.9.10`. 150 packages removed; lockfile resynced. CI/CD (T-015) will use Go toolchain directly.
 - **Fiber v3 (session 6):** Upgraded from v2.52.9 → v3.2.0. All handler signatures updated (`*fiber.Ctx` → `fiber.Ctx`). `go mod tidy` removed v2 entirely. No v2 references remain.

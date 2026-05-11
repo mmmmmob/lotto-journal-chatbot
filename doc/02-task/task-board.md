@@ -1,18 +1,18 @@
 <!-- AI-CONTEXT
-active: T-003(todo) T-013(todo) T-014(todo,blocked:T-013) T-015(todo,blocked:T-014) T-016(todo) T-017(todo)
-blocked: T-014(needs T-013) T-015(needs T-014)
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012
+active: T-003(todo) T-015(todo) T-016(todo) T-017(todo)
+blocked: none
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014
 future: T-009(liff-planning post-MVP)
-priority_next: T-003
+priority_next: T-015
 src: v0.2
-updated: 2026-05-08
+updated: 2026-05-11
 -->
 
 ---
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-05-08 (session 8)
+Last updated: 2026-05-11 (session 10)
 
 ## Rules
 
@@ -42,10 +42,7 @@ Last updated: 2026-05-08 (session 8)
 | ID    | Task                                                     | Type        | Source Reference                                  | Priority | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-003 | Design cronjob: lottery result fetch + comparison flow   | chore       | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES.                                                                                                                                                                                                                                                                                                                                                               |
-
-| T-013 | Infra prep: Dockerfile + fly.toml + env secrets mapping  | chore/infra | —                                                 | High     | todo   | Multi-stage Dockerfile for Go API. fly.toml (app name, region, health check path). Document and apply env var assignment: Fly.io secrets vs GitHub Actions secrets (see Env Map section below). Prerequisite for T-014.                                                                                                                                                                                                                                                                                                     |
-| T-014 | First production deploy to Fly.io + Neon wiring          | chore/infra | —                                                 | High     | todo   | Blocked by T-013. Steps: fly launch, fly secrets set (DATABASE_URL + LINE secrets), run migrations against Neon, update LINE Developer Console webhook URL to Fly.io app URL, verify GET /health, smoke-test bot end-to-end.                                                                                                                                                                                                                                                                                                |
-| T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | todo   | Blocked by T-014. .github/workflows/deploy.yml: build + go vet + go test on every PR; auto-deploy to Fly.io on push to main via flyctl deploy --remote-only. Only one GitHub Actions secret needed: FLY_API_TOKEN.                                                                                                                                                                                                                                                                                                          |
+| T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | todo   | Ready now. `.github/workflows/deploy.yml`: build + go vet + go test on every PR; auto-deploy to Fly.io on push to main via `flyctl deploy --remote-only`. Only one GitHub Actions secret needed: `FLY_API_TOKEN`. No staging Fly.io app — dev is local + Cloudflare tunnel, production is Fly.io only. Neon DB branching (per-PR isolated DB) deferred until DB-dependent integration tests exist. |
 | T-016 | Bug: ticket parsing breaks when x has surrounding spaces | bug         | apps/api/internal/service/ticket_service.go       | Medium   | todo   | Two broken cases observed in production test: (1) "144333 x2" — spaceXRe normalisation silently fails; "2" appears as lone invalid token instead of qty. (2) "122222 x 3" — space on BOTH sides of x; number saves correctly but "3" becomes invalid token. Fix: change spaceXRe to allow optional whitespace after x — `(\d+)\s+x\s*(\d+)`. Also investigate whether LINE sends non-ASCII space or non-ASCII x (×) character, which would defeat the current regex entirely. Add unit tests for both cases before closing. |
 | T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | improvement | doc/01-plan/work-status.md (Risks and Notes)      | Low      | todo   | Replace `FirstOrCreate` in `repository/draw_repository.go` with `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`. Eliminates the SELECT+INSERT race condition. No raw SQL needed. Non-blocking for MVP (≤100 users) — do before scaling. |
 
@@ -57,14 +54,18 @@ Last updated: 2026-05-08 (session 8)
 
 | Secret / Env Var          | Value source                       | Stored in              | Why                                                              |
 | ------------------------- | ---------------------------------- | ---------------------- | ---------------------------------------------------------------- |
-| DATABASE_URL              | Neon dashboard → Connection string | Fly.io secrets         | Runtime DB connection; never in code or GitHub                   |
-| LINE_CHANNEL_SECRET       | LINE Developer Console             | Fly.io secrets         | Runtime webhook signature verification                           |
-| LINE_CHANNEL_ACCESS_TOKEN | LINE Developer Console             | Fly.io secrets         | Runtime push/reply API calls                                     |
+| DB_DSN                    | Neon dashboard → Connection string | Fly.io secrets         | Runtime DB connection key used by current Go config loader        |
+| LINE_CHANNEL_SECRET       | Production LINE channel            | Fly.io secrets         | Runtime webhook signature verification — production channel only |
+| LINE_CHANNEL_ACCESS_TOKEN | Production LINE channel            | Fly.io secrets         | Runtime push/reply API calls — production channel only           |
 | APP_ENV                   | Hardcoded value: production        | fly.toml [env] section | Non-secret; safe to commit                                       |
 | FLY_API_TOKEN             | Fly.io dashboard → Access Tokens   | GitHub Actions secret  | Only needed by CI/CD to run flyctl deploy; never touches the app |
 
+> **LINE channels:** Keep two separate channels under the same LINE provider.
+> Dev channel webhook = Cloudflare tunnel URL (local). Production channel webhook = Fly.io URL.
+> Each channel has its own secret + access token. Never mix them.
+>
 > **Neon itself** stores no secrets — it IS the database. Copy the connection string from the
-> Neon dashboard and paste it as the DATABASE_URL Fly.io secret. Done.
+> Neon dashboard and paste it as the DB_DSN Fly.io secret. Done.
 
 ---
 
@@ -78,10 +79,7 @@ Last updated: 2026-05-08 (session 8)
 
 ## Blocked Tasks
 
-| ID    | Task                                            | Reason                          | Waiting On | Notes                                   |
-| ----- | ----------------------------------------------- | ------------------------------- | ---------- | --------------------------------------- |
-| T-014 | First production deploy to Fly.io + Neon wiring | Dockerfile + fly.toml not ready | T-013      | Unblock by completing T-013             |
-| T-015 | GitHub Actions CI/CD pipeline                   | No live Fly.io app yet          | T-014      | Needs FLY_API_TOKEN from live app first |
+None currently.
 
 ---
 
@@ -89,6 +87,8 @@ Last updated: 2026-05-08 (session 8)
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-014 | First production deploy to Fly.io + Neon wiring             | 2026-05-11 | Owner confirmed Fly deploy complete with 1 machine; Neon schema migrations applied; production LINE webhook wired; smoke-test ticket message stored in Neon DB |
+| T-013 | Infra prep: Dockerfile + fly.toml + env secrets mapping     | 2026-05-09 | `Dockerfile`, `fly.toml`, `.dockerignore` created; env mapping fixed to use `DB_DSN`; `pnpm build` passes |
 | T-012 | Feature: list upcoming draw tickets (summary on demand)      | 2026-05-08 | Build passes; keyword "โพย" routes to ListTickets; empty state handled; TicketRepository.List + TicketService.ListTickets + buildTicketListReply implemented |
 | T-011 | Implement GET /health endpoint                               | 2026-05-08 | Build passes; DB ping via db.DB().Ping(); 200 ok / 503 degraded JSON response |
 | T-010 | Add middleware: recover, requestid, enhanced logger, timeout | 2026-05-08 | Build passes; recover+requestid global; log upgraded (status+req_id); 25s timeout on /webhook; Fiber v2→v3 (v3.2.0) |
