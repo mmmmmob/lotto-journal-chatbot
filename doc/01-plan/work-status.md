@@ -22,7 +22,7 @@ updated: 2026-05-11
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-05-11 (session 11)
+Last updated: 2026-05-11 (session 12)
 
 ## Source References
 
@@ -53,7 +53,7 @@ the chatbot. The monorepo structure is intentionally preserved for this. See T-0
 
 ## Active Tasks
 
-- `T-015` — GitHub Actions CI/CD pipeline — todo
+- `T-015` — GitHub Actions CI/CD pipeline — review (workflow added, awaiting first GitHub run)
 - `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
 - `T-017` — Improvement: atomic draws upsert via GORM clause.OnConflict — todo (low priority, do before scaling)
 
@@ -87,7 +87,7 @@ None currently.
 
 ## Next Steps
 
-1. **T-015:** Add GitHub Actions CI/CD for main branch deploys (`FLY_API_TOKEN` secret, PR checks, deploy on push to `main`)
+1. **T-015:** Add `FLY_API_TOKEN` repository secret and verify first GitHub Actions run (`pull_request` checks + `main` deploy)
 2. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; middleware hardened; ready to implement
 3. **T-017:** Improve draw upsert atomicity (`OnConflict`) before scale-up
 
@@ -106,6 +106,7 @@ None currently.
 - **LINE channel separation + production go-live (session 10):** Dedicated dev and production LINE channels are now both in use. Production webhook points to Fly.io app URL; end-to-end test (LINE message → DB insert in Neon) passed. Keep credentials isolated per channel and never mix them.
 - **T-016 bugfix applied (session 11):** Ticket parser now correctly handles `144333 x2` and `122222 x 3`. Root cause was regex replacement tokenization (`$1x$2` in Go replacement syntax); fixed to `${1}x${2}`. Parser now also normalizes Unicode whitespace and common non-ASCII x variants (`×`, `ｘ`, `Ｘ`, `✕`). Unit tests added in `internal/service/ticket_service_test.go`.
 - **T-018 [FOUND-IN-PASSING] (session 11):** `isTicketListCmd` now normalizes internal/Unicode spaces and zero-width characters so command variants like `โ พย`, `โ\u00A0พย`, and `โ\u200Bพย` correctly map to `โพย`. Unit tests added in `internal/handler/line_handler_test.go`.
+- **T-015 workflow added (session 12):** `.github/workflows/deploy.yml` now runs `go vet`, `go test`, and `go build` on PRs to `main`, and deploys to Fly.io on push to `main` via `flyctl deploy --remote-only`. Requires repository secret `FLY_API_TOKEN` to pass deploy job.
 - **Known: draws `FindOrCreate` race condition (non-blocking for MVP):** GORM's `FirstOrCreate` is not atomic — it does `SELECT` then `INSERT`. If two users submit tickets simultaneously and no draw row exists yet, both see no row and both attempt `INSERT`. The `UNIQUE` constraint on `draw_date` prevents duplicate rows, but the losing request gets a constraint violation error and the user receives an error reply with their ticket lost. At ≤100 users the probability is negligible. Fix when scaling: use `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)` in `repository/draw_repository.go`. The no-op DO UPDATE forces PostgreSQL to fire `RETURNING *` on conflict so GORM populates the struct ID correctly — no raw SQL needed.
 - **JS toolchain removed (session 7):** `.husky/`, `eslint.config.mjs`, `lint-staged.config.mjs`, `tsconfig.base.json` deleted. 8 dead devDeps removed from `package.json`. `turbo.json` trimmed to `dev`+`build` only. `.npmrc` Prisma line removed. `prettier` and `turbo` kept. Turbo updated `2.6.1`→`2.9.10`. 150 packages removed; lockfile resynced. CI/CD (T-015) will use Go toolchain directly.
 - **Fiber v3 (session 6):** Upgraded from v2.52.9 → v3.2.0. All handler signatures updated (`*fiber.Ctx` → `fiber.Ctx`). `go mod tidy` removed v2 entirely. No v2 references remain.
