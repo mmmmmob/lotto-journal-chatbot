@@ -40,14 +40,17 @@ LINE Platform
           ▼         ▼          ▼
        follow   unfollow   message (text)
           │         │          │
-          ▼         ▼          ▼
-     UserService  User     TicketService
-     FindOrCreate Deactivate ParseAndSubmit
-          │                   │
-          ▼                   ▼
-    UserRepository       DrawRepository
-    (users table)      + TicketRepository
-                       (draws + tickets)
+          │         │    ┌─────┴──────────────┐
+          │         │    │ isTicketListCmd?   │
+          │         │    └──────┬─────────────┘
+          │         │        yes│          no│
+          │         │           ▼            ▼
+          ▼         ▼     TicketService  TicketService
+     UserService  User    ListTickets    SubmitTickets
+     FindOrCreate Deactivate    │            │
+          │                     ▼            ▼
+    UserRepository         DrawRepository + TicketRepository
+    (users table)          (draws + tickets tables)
           │                   │
           └─────────┬─────────┘
                     ▼
@@ -254,7 +257,51 @@ existing row and the `follow` handler can re-activate them if needed.
 
 ---
 
-## Step 4c — `message` Event (ticket submission)
+## Step 4c — `message` Event
+
+**Trigger:** User sends a text message.
+
+The handler first checks whether the message is a recognised command keyword, then routes accordingly.
+
+### 4c-0: Route by keyword
+
+```go
+if isTicketListCmd(textMsg.Text) {
+    // → list tickets for upcoming draw
+} else {
+    // → parse and submit tickets
+}
+```
+
+`isTicketListCmd` is a simple equality check: `text == "โพย"`.
+Anything that is not a recognised command is treated as a ticket submission attempt.
+
+---
+
+### 4c — List tickets command (`โพย`)
+
+```go
+userTickets, err := h.ticketSvc.ListTickets(user.ID)
+h.replyText(e.ReplyToken, buildTicketListReply(userTickets))
+```
+
+`ListTickets` resolves the upcoming draw (same `FindOrCreate` logic as submission)
+then fetches all tickets for that draw and user:
+
+```sql
+SELECT * FROM tickets WHERE owner_id = $1 AND draw_id = $2;
+```
+
+`buildTicketListReply` formats the result:
+
+| Situation          | Reply                                                |
+| ------------------ | ---------------------------------------------------- |
+| Has tickets        | `"สลากที่คุณบันทึกไว้ในงวดนี้ 📝\n  • 123456 x2 (L6)"` |
+| No tickets yet     | `"คุณยังไม่ได้บันทึกสลากในงวดนี้"`                    |
+
+---
+
+### 4c — Ticket submission (any other text)
 
 **Trigger:** User sends a text message, e.g. `"123456 x2, 789"`.
 
@@ -372,13 +419,18 @@ LINE sends POST /webhook
     │       ├── unfollow event
     │       │       └── UserService.Deactivate(lineUserId)
     │       │
-    │       └── message event (text)
-    │               ├── UserService.FindOrCreate(lineUserId)
-    │               ├── TicketService.SubmitTickets(userId, text)
-    │               │       ├── ParseTicketInput(text)
-    │               │       ├── DrawRepo.FindOrCreate(nextDrawDate)
-    │               │       └── TicketRepo.Create(ticket) × N
-    │               └── ReplyMessage(confirmationText)
+    │               └── message event (text)
+    │                       ├── UserService.FindOrCreate(lineUserId)
+    │                       ├── isTicketListCmd?
+    │                       │       ├── yes → TicketService.ListTickets(userId)
+    │                       │       │               ├── DrawRepo.FindOrCreate(nextDrawDate)
+    │                       │       │               └── TicketRepo.List(drawId, userId)
+    │                       │       │           ReplyMessage(ticketListText)
+    │                       │       └── no  → TicketService.SubmitTickets(userId, text)
+    │                       │                       ├── ParseTicketInput(text)
+    │                       │                       ├── DrawRepo.FindOrCreate(nextDrawDate)
+    │                       │                       └── TicketRepo.Create(ticket) × N
+    │                       │           ReplyMessage(confirmationText)
     │
     └── return 200 OK
 ```
@@ -397,7 +449,7 @@ LINE sends POST /webhook
 | `internal/service/draw_service.go`                | Calculate next draw date                                                     |
 | `internal/repository/user_repository.go`          | `users` table — FindOrCreate, UpdateStatus                                   |
 | `internal/repository/draw_repository.go`          | `draws` table — FindOrCreate                                                 |
-| `internal/repository/ticket_repository.go`        | `tickets` table — Create                                                     |
+| `internal/repository/ticket_repository.go`        | `tickets` table — `Create`, `List`                                           |
 | `internal/repository/webhook_event_repository.go` | `webhook_events` table — MarkProcessed                                       |
 | `internal/config/config.go`                       | Loads `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`                     |
 | `migrations/000003_webhook_events.up.sql`         | Creates the idempotency table                                                |

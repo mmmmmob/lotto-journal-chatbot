@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Node / monorepo workspace cache
+node_modules
+.pnpm-store
+.turbo
+
+# Docs and non-runtime assets
+doc
+trunk
+
+# Environment files (never send to Docker build context)
+.env
+.env.*
+
+# Local artifacts
+**/tmp
+**/dist
+**/.turbo
+**/*.log
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store

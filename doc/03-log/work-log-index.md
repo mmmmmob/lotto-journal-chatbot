@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-08 (session 6)
-tool: Claude (Sonnet 4.6)
-completed: [T-010, T-011]
+last_session: 2026-05-11 (session 10)
+tool: GPT-5.3-Codex
+completed: [T-014]
 in_progress: []
 checkpoint: none
-next_from_last: T-003
-notes: T-010 done. Middleware (recover+requestid+Logging+timeout) implemented then immediately upgraded: fiber v2→v3 (v3.2.0) after deprecated timeout.New warning. T-011 done. GET /health with DB ping. Build passes. README + webhook-flow.md updated.
+next_from_last: T-015
+notes: Production deployment completed by owner. Fly app running with 1 machine in sin, Neon schema migrations applied, production LINE webhook configured, and end-to-end ticket submission verified in Neon DB.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-08 (session 6)
+Last updated: 2026-05-11 (session 10)
 
 ---
 
@@ -23,6 +23,109 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-11 — Session 10 — [GPT-5.3-Codex]
+
+- **Session summary:** T-014 (first production deploy to Fly.io + Neon wiring) completed by owner. App is live and verified end-to-end.
+- **Work done (owner-confirmed):**
+  - Deployed production app to Fly.io (`lotto-journal-api`)
+  - Running footprint set to **1 machine** in `sin` (cost-aware MVP setup)
+  - Production Neon database connected via `DB_DSN`
+  - Applied schema migrations to Neon successfully
+  - Configured production LINE webhook to Fly app URL
+  - Smoke-tested by sending ticket numbers in LINE; rows appeared in Neon DB explorer
+- **Operational notes captured this session:**
+  - Production deployment becomes the base target for upcoming T-015 CI/CD (`main` branch deploy)
+  - T-015 is now unblocked and promoted to next priority
+- **Tasks changed:**
+  - T-014: done
+  - T-015: unblocked / ready
+- **Awaiting owner action:** Start T-015 implementation (`.github/workflows/deploy.yml` + `FLY_API_TOKEN` secret)
+- **Daily Log:** _(local only — not committed)_
+
+---
+
+### 2026-05-09 — Session 9 — [GPT-5.3-Codex]
+
+- **Session summary:** T-013 (infra prep) completed. Production deployment scaffolding is now in-repo and T-014 is unblocked.
+- **Work done:**
+  - Added root `Dockerfile` (multi-stage): builds `apps/api/app/main.go` to a static binary and runs it in a minimal Alpine runtime image as non-root user
+  - Added root `fly.toml`: app config with `primary_region = "sin"`, Docker build source, `APP_ENV=production`, `PORT=:8080`, `internal_port = 8080`, and `/health` HTTP service check
+  - Added root `.dockerignore` to reduce build context size and exclude secrets/local artifacts
+  - Updated `doc/02-task/task-board.md`:
+    - T-013 marked `done`
+    - T-014 steps updated to use `DB_DSN` secret key (instead of `DATABASE_URL`)
+    - Env Map changed to `DB_DSN`
+    - Blocked table updated (T-014 unblocked)
+    - Added T-013 completion evidence row
+  - Updated `doc/01-plan/work-status.md` to reflect T-013 completion and T-014 as infra priority
+- **Decisions resolved this session:**
+  - Keep application config unchanged for DB connection key (`DB_DSN`) as requested by owner
+  - Fly non-secret runtime env values committed in `fly.toml`; secrets remain external (`fly secrets set`)
+- **Validation evidence:**
+  - `pnpm build` passed successfully (`turbo run build` → `@lotto/api make build`)
+- **Tasks changed:**
+  - T-013: done
+  - T-014: unblocked
+- **Awaiting owner action:** Execute T-014 deployment steps on Fly.io + Neon with production LINE channel credentials
+- **Daily Log:** _(local only — not committed)_
+
+---
+
+### 2026-05-08 — Session 8 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** T-012 (list upcoming draw tickets) implemented in a guided learning session — owner wrote all the code. Build passes.
+- **Work done:**
+  - `internal/repository/ticket_repository.go`: added `List(drawId, ownerID uuid.UUID) ([]*models.Ticket, error)` — queries tickets by `owner_id` AND `draw_id` via GORM `Where` + `Find`
+  - `internal/service/ticket_service.go`: added `ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error)` — resolves upcoming draw via `FindOrCreate`, delegates to `ticketRepo.List`
+  - `internal/handler/line_handler.go`: added `isTicketListCmd(text string) bool` helper (keyword: "โพย"); added `buildTicketListReply(tickets []*models.Ticket) string` with early-return empty state; wired both into `handleMessage` if/else routing
+- **Decisions resolved this session:**
+  - Ticket list lives in `TicketRepository`, not `DrawRepository` — single responsibility
+  - Service resolves draw internally (same pattern as `SubmitTickets`) — caller only needs `ownerID`
+  - `FindOrCreate` used instead of `FindByDate` — handles case where no draw exists yet (returns empty list, not error)
+  - Keyword detection is a small helper, not inline — cleaner `handleMessage`
+  - Separate `buildTicketListReply` instead of extending `buildReply` — different input shape (`[]*models.Ticket` vs `[]ParsedTicket`)
+  - Empty ticket list: early return before building `lines` slice — clean, no header shown
+- **Tasks changed:**
+  - T-012: done (build passes)
+- **Awaiting owner action:** ~~Test via LINE bot with keyword "โพย"~~ — tested and passed
+- **Post-session owner actions:**
+  - Created dedicated dev LINE channel (separate from future production channel); updated local `.env` with new `LINE_CHANNEL_SECRET` and `LINE_CHANNEL_ACCESS_TOKEN` — dev/prod channel separation in place ahead of T-014
+- **Daily Log:** _(local only — not committed)_
+
+---
+
+### 2026-05-08 — Session 7 — [Claude (Sonnet 4.6)]
+
+- **Session summary:** Planning and housekeeping session. No feature code written. Added 5 new tasks to the board (T-012 to T-016). Removed the entire dead JS toolchain left over from the pre-pivot web app era. Upgraded turbo.
+- **Work done:**
+  - `doc/02-task/task-board.md`: added T-012 (ticket summary feature), T-013 (Dockerfile + fly.toml + env map), T-014 (first Fly.io deploy), T-015 (GitHub Actions CI/CD), T-016 (ticket parsing bug); added Env Map section documenting which secrets go to Fly.io vs GitHub Actions
+  - `doc/01-plan/work-status.md`: added T-012 to T-016 to active tasks and next steps
+  - Deleted `.husky/` — pre-commit hook + all husky internals (no JS/TS to lint)
+  - Deleted `eslint.config.mjs` — was targeting deleted `apps/web` + non-existent JS files in Go API
+  - Deleted `lint-staged.config.mjs` — no `*.{js,jsx,ts,tsx}` files exist
+  - Deleted `tsconfig.base.json` — no TypeScript anywhere in the project
+  - `package.json`: removed 8 devDeps (`@eslint/eslintrc`, `@eslint/js`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `eslint`, `globals`, `husky`, `lint-staged`); removed scripts `lint`, `typecheck`, `lint-staged`; kept `prettier`, `turbo`, `format`, `format:check`
+  - `turbo.json`: removed `lint` and `typecheck` tasks; kept `dev` and `build`
+  - `.prettierignore`: removed `apps/web` and `.next` / `out` references
+  - `.npmrc`: removed `package-build-deps=@prisma/client,@prisma/engines,prisma` (Prisma left with apps/web); kept `save-workspace-protocol=true`
+  - `turbo` updated `2.6.1` → `2.9.10`; `pnpm install` run — 150 packages removed, lockfile resynced
+- **Decisions resolved this session:**
+  - Dead JS toolchain removed — no JS/TS source files remain; CI/CD (T-015) will use Go tools directly (`go build`, `go vet`, `go test`)
+  - `prettier` kept — useful for doc/yaml/markdown formatting; `format:check` can be added to CI cheaply
+  - `turbo` + `pnpm-workspace.yaml` kept — monorepo shell intentionally preserved for future LIFF app (T-009)
+  - `save-workspace-protocol=true` kept in `.npmrc` — correct pnpm default for workspaces, relevant when LIFF lands
+  - Env Map added to task board as a permanent reference (not a task): Fly.io secrets hold runtime vars; GitHub Actions holds only `FLY_API_TOKEN`; Neon itself holds no secrets
+- **Tasks changed:**
+  - T-012: added (todo)
+  - T-013: added (todo)
+  - T-014: added (todo, blocked by T-013)
+  - T-015: added (todo, blocked by T-014)
+  - T-016: added (todo — two broken parsing cases documented with screenshot evidence)
+- **Awaiting owner action:** None
+- **Daily Log:** _(local only — not committed)_
 
 ---
 

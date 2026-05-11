@@ -1,6 +1,6 @@
 // * explanations can be found at https://dbdocs.io/theppitak.m/Lotto-Journal
-// * schema version: post-migration 000002 (target state)
-// * ground truth for current DB state: apps/api/migrations/000001_init_schema.up.sql
+// * schema version: post-migration 000003 (target state)
+// * ground truth for current DB state: apps/api/migrations/ (all 000001–000003)
 
 // USERS
 Table users {
@@ -9,6 +9,12 @@ Table users {
   status account_status [default: 'active']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
+}
+
+// WEBHOOK IDEMPOTENCY
+Table webhook_events {
+  event_id varchar [pk]           // LINE webhookEventId — exact once processing
+  processed_at timestamp [not null, default: `now()`]
 }
 
 // FILE DATA

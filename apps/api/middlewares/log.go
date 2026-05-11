@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -17,6 +18,11 @@ func Logging(c fiber.Ctx) error {
 
 	reqID := requestid.FromContext(c)
 	status := c.Response().StatusCode()
+
+	// Suppress Fly platform health-check noise while keeping user/manual /health logs.
+	if strings.HasPrefix(c.OriginalURL(), "/health") && strings.EqualFold(c.Get("X-Health-Check"), "fly") {
+		return err
+	}
 
 	fmt.Printf("[%s] %s - %d - %s - req_id: %s\n",
 		c.Method(), c.OriginalURL(), status, duration, reqID)
