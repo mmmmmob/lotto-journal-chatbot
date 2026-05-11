@@ -261,7 +261,14 @@ existing row and the `follow` handler can re-activate them if needed.
 
 **Trigger:** User sends a text message.
 
-The handler first checks whether the message is a recognised command keyword, then routes accordingly.
+Before routing, the handler starts a best-effort loading animation in a separate goroutine:
+
+```go
+go h.showLoading(lineUserID, 5)
+```
+
+This keeps webhook latency low — if the loading API call is slow or fails, ticket processing can continue.
+The loading call is non-critical (errors are logged only), then the handler checks whether the message is a recognised command keyword and routes accordingly.
 
 ### 4c-0: Route by keyword
 
@@ -273,7 +280,8 @@ if isTicketListCmd(textMsg.Text) {
 }
 ```
 
-`isTicketListCmd` is a simple equality check: `text == "โพย"`.
+`isTicketListCmd` normalizes surrounding/internal whitespace (including Unicode and zero-width spaces)
+before matching the command keyword `โพย`.
 Anything that is not a recognised command is treated as a ticket submission attempt.
 
 ---
@@ -343,9 +351,11 @@ draw, err := s.drawRepo.FindOrCreate(NextDrawDate(time.Now()))
 (the Thai Government Lottery draw days). The draw record is found or created:
 
 ```sql
-SELECT * FROM draws WHERE draw_date = $1;
--- if not found:
-INSERT INTO draws (draw_date) VALUES ($1);
+INSERT INTO draws (draw_date)
+VALUES ($1)
+ON CONFLICT (draw_date)
+DO UPDATE SET draw_date = EXCLUDED.draw_date
+RETURNING *;
 ```
 
 ### 4c-4: Save tickets
@@ -420,6 +430,7 @@ LINE sends POST /webhook
     │       │       └── UserService.Deactivate(lineUserId)
     │       │
     │               └── message event (text)
+    │                       ├── go showLoading(lineUserId, 5) [best-effort, async]
     │                       ├── UserService.FindOrCreate(lineUserId)
     │                       ├── isTicketListCmd?
     │                       │       ├── yes → TicketService.ListTickets(userId)
