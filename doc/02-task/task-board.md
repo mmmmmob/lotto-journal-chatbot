@@ -1,7 +1,7 @@
 <!-- AI-CONTEXT
-active: T-003(todo) T-015(todo) T-016(todo) T-017(todo)
+active: T-003(todo) T-015(todo) T-017(todo)
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018
 future: T-009(liff-planning post-MVP)
 priority_next: T-015
 src: v0.2
@@ -12,7 +12,7 @@ updated: 2026-05-11
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-05-11 (session 10)
+Last updated: 2026-05-11 (session 11)
 
 ## Rules
 
@@ -43,7 +43,6 @@ Last updated: 2026-05-11 (session 10)
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-003 | Design cronjob: lottery result fetch + comparison flow   | chore       | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES.                                                                                                                                                                                                                                                                                                                                                               |
 | T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | todo   | Ready now. `.github/workflows/deploy.yml`: build + go vet + go test on every PR; auto-deploy to Fly.io on push to main via `flyctl deploy --remote-only`. Only one GitHub Actions secret needed: `FLY_API_TOKEN`. No staging Fly.io app — dev is local + Cloudflare tunnel, production is Fly.io only. Neon DB branching (per-PR isolated DB) deferred until DB-dependent integration tests exist. |
-| T-016 | Bug: ticket parsing breaks when x has surrounding spaces | bug         | apps/api/internal/service/ticket_service.go       | Medium   | todo   | Two broken cases observed in production test: (1) "144333 x2" — spaceXRe normalisation silently fails; "2" appears as lone invalid token instead of qty. (2) "122222 x 3" — space on BOTH sides of x; number saves correctly but "3" becomes invalid token. Fix: change spaceXRe to allow optional whitespace after x — `(\d+)\s+x\s*(\d+)`. Also investigate whether LINE sends non-ASCII space or non-ASCII x (×) character, which would defeat the current regex entirely. Add unit tests for both cases before closing. |
 | T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | improvement | doc/01-plan/work-status.md (Risks and Notes)      | Low      | todo   | Replace `FirstOrCreate` in `repository/draw_repository.go` with `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`. Eliminates the SELECT+INSERT race condition. No raw SQL needed. Non-blocking for MVP (≤100 users) — do before scaling. |
 
 ---
@@ -87,6 +86,8 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-018 | Improve list command parsing for spaced/Unicode input [FOUND-IN-PASSING] | 2026-05-11 | Updated `isTicketListCmd` to normalize internal/Unicode spaces (including zero-width chars), so variants like `โ พย` and `โ\u200Bพย` match; added `internal/handler/line_handler_test.go`; `pnpm test:api` and `pnpm build` pass |
+| T-016 | Bug: ticket parsing breaks when x has surrounding spaces     | 2026-05-11 | Fixed `spaceXRe` + replacement to `${1}x${2}`; added Unicode normalization for non-ASCII spaces and `×/ｘ`; added `internal/service/ticket_service_test.go` covering `144333 x2`, `122222 x 3`, and Unicode variants; `go test ./...` and `pnpm build` pass |
 | T-014 | First production deploy to Fly.io + Neon wiring             | 2026-05-11 | Owner confirmed Fly deploy complete with 1 machine; Neon schema migrations applied; production LINE webhook wired; smoke-test ticket message stored in Neon DB |
 | T-013 | Infra prep: Dockerfile + fly.toml + env secrets mapping     | 2026-05-09 | `Dockerfile`, `fly.toml`, `.dockerignore` created; env mapping fixed to use `DB_DSN`; `pnpm build` passes |
 | T-012 | Feature: list upcoming draw tickets (summary on demand)      | 2026-05-08 | Build passes; keyword "โพย" routes to ListTickets; empty state handled; TicketRepository.List + TicketService.ListTickets + buildTicketListReply implemented |

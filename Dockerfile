@@ -11,7 +11,7 @@ RUN go mod download
 
 # Copy API source and build
 COPY apps/api/ ./
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/lotto-api app/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/lotto-api app/main.go
 
 FROM alpine:3.22 AS runner
 

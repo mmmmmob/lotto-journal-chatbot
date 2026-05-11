@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"unicode"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
@@ -251,9 +252,21 @@ func sourceUserID(src webhook.SourceInterface) string {
 	return ""
 }
 
-// Return if message sent is command for "List all tickets" or not
+// Return if message sent is command for "List all tickets" or not.
+// Accepts extra spaces (including internal/Unicode spaces), e.g. "โ พย".
 func isTicketListCmd(text string) bool {
-	return text == "โพย"
+	normalized := strings.Map(func(r rune) rune {
+		switch {
+		case unicode.IsSpace(r):
+			return -1
+		case r == '\u200B' || r == '\u200C' || r == '\u200D' || r == '\uFEFF':
+			return -1
+		default:
+			return r
+		}
+	}, strings.TrimSpace(text))
+
+	return normalized == "โพย"
 }
 
 func buildTicketListReply(tickets []*models.Ticket) string {

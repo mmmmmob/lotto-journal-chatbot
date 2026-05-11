@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-11 (session 10)
+last_session: 2026-05-11 (session 11)
 tool: GPT-5.3-Codex
-completed: [T-014]
+completed: [T-016, T-018]
 in_progress: []
 checkpoint: none
 next_from_last: T-015
-notes: Production deployment completed by owner. Fly app running with 1 machine in sin, Neon schema migrations applied, production LINE webhook configured, and end-to-end ticket submission verified in Neon DB.
+notes: T-016 fixed and T-018 [FOUND-IN-PASSING] captured. Parser now handles spaces around x and Unicode whitespace/x variants; replacement fixed from `$1x$2` to `${1}x${2}`. List command parser now normalizes internal/Unicode spaces for `โพย`. Added unit tests in ticket_service_test.go and line_handler_test.go. go test ./... and pnpm build pass.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-11 (session 10)
+Last updated: 2026-05-11 (session 11)
 
 ---
 
@@ -23,6 +23,37 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-11 — Session 11 — [GPT-5.3-Codex]
+
+- **Session summary:** T-016 completed. Fixed ticket parsing bug for quantity syntax with spaces around `x` and added parser tests. Also fixed list-command recognition for spaced/Unicode `โพย` input as T-018 [FOUND-IN-PASSING].
+- **Root cause:** In Go regex replacement strings, `$1x$2` is parsed as `${1x}${2}` (invalid first capture reference), which dropped the main number and left only the quantity digit as a standalone token (e.g. `2`, `3`) marked invalid.
+- **Work done:**
+  - `internal/service/ticket_service.go`:
+    - Updated `spaceXRe` to allow optional whitespace after `x`: `(?i)(\d+)\s+x\s*(\d+)`
+    - Fixed merge replacement string from `$1x$2` to `${1}x${2}`
+    - Added `normalizeTicketText()` to normalize:
+      - commas to spaces
+      - Unicode whitespace to ASCII space
+      - common non-ASCII x characters (`×`, `✕`, `ｘ`, `Ｘ`) to `x`
+  - Added `internal/service/ticket_service_test.go` with unit tests covering:
+    - `144333 x2`
+    - `122222 x 3`
+    - Unicode variants such as `123456×2`, `123456\u00A0×\u00A02`, and `456ｘ4`
+  - `internal/handler/line_handler.go` [FOUND-IN-PASSING]: updated `isTicketListCmd` to normalize internal/Unicode whitespace and zero-width characters before matching `โพย`
+  - Added `internal/handler/line_handler_test.go` to cover command variants:
+    - `โพย`, `  โพย  `, `โ พย`, `โ\u00A0พย`, `โ\u200Bพย`
+    - and negative cases (`ขอโพย`, `โพยครับ`)
+- **Validation evidence:**
+  - `pnpm --filter @lotto/api exec go test ./...` passed
+  - `pnpm build` passed
+- **Tasks changed:**
+  - T-016: done
+  - T-018 [FOUND-IN-PASSING]: done
+- **Awaiting owner action:** Proceed with T-015 (GitHub Actions CI/CD pipeline)
+- **Daily Log:** _(local only — not committed)_
 
 ---
 
