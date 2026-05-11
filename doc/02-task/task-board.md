@@ -1,5 +1,5 @@
 <!-- AI-CONTEXT
-active: T-003(todo) T-015(todo) T-017(todo)
+active: T-003(todo) T-015(review) T-017(todo)
 blocked: none
 done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018
 future: T-009(liff-planning post-MVP)
@@ -12,7 +12,7 @@ updated: 2026-05-11
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-05-11 (session 11)
+Last updated: 2026-05-11 (session 12)
 
 ## Rules
 
@@ -42,7 +42,7 @@ Last updated: 2026-05-11 (session 11)
 | ID    | Task                                                     | Type        | Source Reference                                  | Priority | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-003 | Design cronjob: lottery result fetch + comparison flow   | chore       | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES.                                                                                                                                                                                                                                                                                                                                                               |
-| T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | todo   | Ready now. `.github/workflows/deploy.yml`: build + go vet + go test on every PR; auto-deploy to Fly.io on push to main via `flyctl deploy --remote-only`. Only one GitHub Actions secret needed: `FLY_API_TOKEN`. No staging Fly.io app — dev is local + Cloudflare tunnel, production is Fly.io only. Neon DB branching (per-PR isolated DB) deferred until DB-dependent integration tests exist. |
+| T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | review | Implemented `.github/workflows/deploy.yml` with PR checks (`go vet`, `go test`, `go build`) and deploy on push to `main` via `flyctl deploy --remote-only`. Awaiting owner to add repo secret `FLY_API_TOKEN` and verify first green run on GitHub Actions. |
 | T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | improvement | doc/01-plan/work-status.md (Risks and Notes)      | Low      | todo   | Replace `FirstOrCreate` in `repository/draw_repository.go` with `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`. Eliminates the SELECT+INSERT race condition. No raw SQL needed. Non-blocking for MVP (≤100 users) — do before scaling. |
 
 ---

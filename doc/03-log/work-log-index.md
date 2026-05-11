@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-11 (session 11)
+last_session: 2026-05-11 (session 12)
 tool: GPT-5.3-Codex
-completed: [T-016, T-018]
-in_progress: []
-checkpoint: none
+completed: []
+in_progress: [T-015(review)]
+checkpoint: .github/workflows/deploy.yml added
 next_from_last: T-015
-notes: T-016 fixed and T-018 [FOUND-IN-PASSING] captured. Parser now handles spaces around x and Unicode whitespace/x variants; replacement fixed from `$1x$2` to `${1}x${2}`. List command parser now normalizes internal/Unicode spaces for `โพย`. Added unit tests in ticket_service_test.go and line_handler_test.go. go test ./... and pnpm build pass.
+notes: Added GitHub Actions workflow for PR checks (go vet/test/build) and main-branch Fly deploy. Waiting for owner to add FLY_API_TOKEN secret and verify first GitHub run.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-11 (session 11)
+Last updated: 2026-05-11 (session 12)
 
 ---
 
@@ -23,6 +23,26 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-11 — Session 12 — [GPT-5.3-Codex]
+
+- **Session summary:** T-015 implementation added (CI/CD workflow), moved to `review` pending first GitHub run.
+- **Work done:**
+  - Added `.github/workflows/deploy.yml`:
+    - Trigger: `pull_request` to `main` and `push` to `main`
+    - CI job in `apps/api`: `go mod download`, `go vet ./...`, `go test ./...`, `go build`
+    - Deploy job (push to main only): `flyctl deploy --remote-only --config fly.toml -a lotto-journal-api`
+    - Deploy auth via `secrets.FLY_API_TOKEN`
+  - Updated task tracking docs to reflect T-015 `review` status and owner follow-up requirement.
+- **Validation evidence:**
+  - `pnpm test:api` passed
+  - `pnpm build` passed
+- **Tasks changed:**
+  - T-015: `todo` → `review`
+- **Awaiting owner action:** Add repository secret `FLY_API_TOKEN` and verify first successful workflow run (PR checks and `main` deploy).
+- **Daily Log:** _(local only — not committed)_
 
 ---
 
