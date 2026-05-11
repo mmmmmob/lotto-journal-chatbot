@@ -166,6 +166,15 @@ In LINE Developers Console (production channel):
 
 ---
 
+## Versioning and Release
+
+For release process details, use:
+
+- `doc/04-way-of-work/versioning-policy.md` — SemVer policy (`MAJOR.MINOR.PATCH`)
+- `doc/04-way-of-work/release-checklist.md` — step-by-step release checklist
+
+---
+
 ## API Testing (Bruno)
 
 The collection lives in `trunk/bruno/`. Open it in [Bruno](https://www.usebruno.com/) by choosing **Open Collection** and selecting that folder.
