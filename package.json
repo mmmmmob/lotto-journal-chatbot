@@ -1,6 +1,6 @@
 {
   "name": "lotto-journal",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Lotto Journal as LINE Messaging API and LIFF in a monorepo structure",
   "scripts": {
     "dev": "turbo run dev",
