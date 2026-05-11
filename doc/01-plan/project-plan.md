@@ -87,7 +87,7 @@ Key flows:
 
 - **[LOW — RESOLVED] apps/web removal:** Completed in T-006 (2026-04-30). `apps/web` deleted; monorepo structure kept for future LIFF (T-009).
 
-- **[LOW] draws `FindOrCreate` race condition:** Non-blocking for MVP (≤100 users). Fix tracked in T-017.
+- **[LOW — RESOLVED] draws `FindOrCreate` race condition:** Fixed in T-017. `DrawRepository.FindOrCreate` now uses atomic `INSERT ... ON CONFLICT` to remove the SELECT+INSERT race window.
 
 ### Assumptions
 

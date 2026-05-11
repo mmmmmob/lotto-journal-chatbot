@@ -33,7 +33,7 @@ _(Updated when milestones close — never archived)_
 - **Work done:**
   - `internal/repository/draw_repository.go`:
     - Replaced `Where(...).FirstOrCreate(&draw)` with atomic upsert:
-      - `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`
+      - `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.AssignmentColumns([]string{"draw_date"})}).Create(&draw)`
     - Added inline note explaining no-op update purpose (forces PostgreSQL `RETURNING` on conflict so GORM populates model fields)
   - `internal/handler/line_handler.go` [FOUND-IN-PASSING]:
     - Added LINE loading indicator via `ShowLoadingAnimation` while handling text messages

@@ -165,7 +165,17 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	}
 
 	// Best-effort loading indicator to show user we're processing the request.
-	h.showLoading(lineUserID, 5)
+	// Run asynchronously so a slow LINE API call does not add webhook latency.
+	// Recover panic inside the spawned goroutine so one background failure
+	// cannot crash the whole process.
+	go func(chatID string) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[loading] panic recovered: %v", r)
+			}
+		}()
+		h.showLoading(chatID, 5)
+	}(lineUserID)
 
 	// Ensure the user record exists (edge case: message before follow event).
 	user, _, err := h.userSvc.FindOrCreate(lineUserID)

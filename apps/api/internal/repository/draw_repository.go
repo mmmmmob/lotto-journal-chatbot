@@ -37,10 +37,8 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 
 	result := r.db.Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "draw_date"}},
-		DoUpdates: clause.Assignments(map[string]interface{}{
-			// no-op update to force PostgreSQL RETURNING on conflict
-			"draw_date": gorm.Expr("draws.draw_date"),
-		}),
+		// no-op update to force PostgreSQL RETURNING on conflict
+		DoUpdates: clause.AssignmentColumns([]string{"draw_date"}),
 	}).Create(&draw)
 	if result.Error != nil {
 		return nil, result.Error
