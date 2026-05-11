@@ -1,9 +1,9 @@
 <!-- AI-CONTEXT
-active: T-003(todo) T-015(review) T-017(todo)
+active: T-003(todo)
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019
 future: T-009(liff-planning post-MVP)
-priority_next: T-015
+priority_next: T-003
 src: v0.2
 updated: 2026-05-11
 -->
@@ -12,7 +12,7 @@ updated: 2026-05-11
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-05-11 (session 12)
+Last updated: 2026-05-11 (session 14)
 
 ## Rules
 
@@ -42,8 +42,6 @@ Last updated: 2026-05-11 (session 12)
 | ID    | Task                                                     | Type        | Source Reference                                  | Priority | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-003 | Design cronjob: lottery result fetch + comparison flow   | chore       | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES.                                                                                                                                                                                                                                                                                                                                                               |
-| T-015 | GitHub Actions CI/CD pipeline                            | chore/infra | —                                                 | Medium   | review | Implemented `.github/workflows/deploy.yml` with PR checks (`go vet`, `go test`, `go build`) and deploy on push to `main` via `flyctl deploy --remote-only`. Awaiting owner to add repo secret `FLY_API_TOKEN` and verify first green run on GitHub Actions. |
-| T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | improvement | doc/01-plan/work-status.md (Risks and Notes)      | Low      | todo   | Replace `FirstOrCreate` in `repository/draw_repository.go` with `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`. Eliminates the SELECT+INSERT race condition. No raw SQL needed. Non-blocking for MVP (≤100 users) — do before scaling. |
 
 ---
 
@@ -86,6 +84,9 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-019 | UX: loading indicator + personalized follow welcome [FOUND-IN-PASSING] | 2026-05-11 | Added `ShowLoadingAnimation` call in `handleMessage` (5s, clamped to LINE constraints); follow welcome now fetches profile display name via `GetProfile` and personalizes greeting; added tests for welcome message builder; `pnpm test:api` and `pnpm build` pass |
+| T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | 2026-05-11 | Replaced `FirstOrCreate` in `internal/repository/draw_repository.go` with atomic `Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`; eliminates SELECT+INSERT race; `pnpm test:api` and `pnpm build` pass |
+| T-015 | GitHub Actions CI/CD pipeline                               | 2026-05-11 | `.github/workflows/deploy.yml` implemented; owner added repository secret `FLY_API_TOKEN`; first GitHub Actions run confirmed green (PR checks + deploy on `main`) |
 | T-018 | Improve list command parsing for spaced/Unicode input [FOUND-IN-PASSING] | 2026-05-11 | Updated `isTicketListCmd` to normalize internal/Unicode spaces (including zero-width chars), so variants like `โ พย` and `โ\u200Bพย` match; added `internal/handler/line_handler_test.go`; `pnpm test:api` and `pnpm build` pass |
 | T-016 | Bug: ticket parsing breaks when x has surrounding spaces     | 2026-05-11 | Fixed `spaceXRe` + replacement to `${1}x${2}`; added Unicode normalization for non-ASCII spaces and `×/ｘ`; added `internal/service/ticket_service_test.go` covering `144333 x2`, `122222 x 3`, and Unicode variants; `go test ./...` and `pnpm build` pass |
 | T-014 | First production deploy to Fly.io + Neon wiring             | 2026-05-11 | Owner confirmed Fly deploy complete with 1 machine; Neon schema migrations applied; production LINE webhook wired; smoke-test ticket message stored in Neon DB |

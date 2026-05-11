@@ -12,8 +12,10 @@ Read these files **in order** at the start of every session — the first 3 each
 3. `02-task/task-board.md` — full task state
 4. `01-plan/project-plan.md` — overall plan and milestones
 5. `04-way-of-work/coding-standards.md` — coding rules
-6. `00-source/README.md` — source docs index
-7. `07-decisions/README.md` — ADR index (read before any architecture decision)
+6. `04-way-of-work/versioning-policy.md` — semver rules (when preparing a release)
+7. `04-way-of-work/release-checklist.md` — release steps
+8. `00-source/README.md` — source docs index
+9. `07-decisions/README.md` — ADR index (read before any architecture decision)
 
 ## Folder Structure
 
@@ -23,7 +25,7 @@ Read these files **in order** at the start of every session — the first 3 each
 | `01-plan/`        | Project plan and work status                               |
 | `02-task/`        | Task board                                                 |
 | `03-log/`         | Work logs and session history                              |
-| `04-way-of-work/` | Working guidelines, coding standards, AI decision protocol |
+| `04-way-of-work/` | Working guidelines, coding standards, AI decision protocol, versioning/release rules |
 | `05-summary/`     | Monthly and milestone summaries                            |
 | `06-extensions/`  | Extension docs for scope additions                         |
 | `07-decisions/`   | Architecture Decision Records (ADR) and entity register    |

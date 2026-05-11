@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-11 (session 12)
+last_session: 2026-05-11 (session 14)
 tool: GPT-5.3-Codex
-completed: []
-in_progress: [T-015(review)]
-checkpoint: .github/workflows/deploy.yml added
-next_from_last: T-015
-notes: Added GitHub Actions workflow for PR checks (go vet/test/build) and main-branch Fly deploy. Waiting for owner to add FLY_API_TOKEN secret and verify first GitHub run.
+completed: [T-017, T-019]
+in_progress: []
+checkpoint: draw upsert now atomic
+next_from_last: T-003
+notes: Replaced DrawRepository.FirstOrCreate with OnConflict upsert and added UX improvements [FOUND-IN-PASSING]: loading indicator + personalized follow welcome using profile name. test:api and build pass.
 deep_context: doc/06-extensions/T-004-migration-002-design.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/06-extensions/T-004-migration-002-design.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-11 (session 12)
+Last updated: 2026-05-11 (session 14)
 
 ---
 
@@ -23,6 +23,45 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-05-11 — Session 14 — [GPT-5.3-Codex]
+
+- **Session summary:** T-017 completed. Draw creation path is now atomic and race-safe under concurrent ticket submissions. Additional UX improvements were also delivered in this same session (T-019 [FOUND-IN-PASSING]).
+- **Root cause:** `FirstOrCreate` issues `SELECT` then `INSERT`; with two simultaneous requests and no existing draw row, both can observe "not found" and both attempt insert. One loses on unique `draw_date`, causing an avoidable error path.
+- **Work done:**
+  - `internal/repository/draw_repository.go`:
+    - Replaced `Where(...).FirstOrCreate(&draw)` with atomic upsert:
+      - `db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.Assignments(map[string]interface{}{"draw_date": gorm.Expr("draws.draw_date")})}).Create(&draw)`
+    - Added inline note explaining no-op update purpose (forces PostgreSQL `RETURNING` on conflict so GORM populates model fields)
+  - `internal/handler/line_handler.go` [FOUND-IN-PASSING]:
+    - Added LINE loading indicator via `ShowLoadingAnimation` while handling text messages
+    - Added follow-event personalization: fetch LINE profile via `GetProfile` and include display name in welcome message
+    - Added guard logic for loading duration (min 5s, max 60s, 5-second increments)
+  - `internal/handler/line_handler_test.go`:
+    - Added tests for `buildWelcomeMessage` (with/without display name)
+- **Validation evidence:**
+  - `pnpm test:api` passed
+  - `pnpm build` passed
+- **Tasks changed:**
+  - T-017: done
+  - T-019 [FOUND-IN-PASSING]: done
+- **Next priority:** T-003 (cronjob design)
+- **Daily Log:** _(local only — not committed)_
+
+---
+
+### 2026-05-11 — Session 13 — [GPT-5.3-Codex]
+
+- **Session summary:** T-015 completed. GitHub Actions CI/CD is now active and verified.
+- **Owner-confirmed completion evidence:**
+  - Repository secret `FLY_API_TOKEN` added in GitHub Actions settings
+  - Workflow run confirmed green end-to-end (PR checks + deploy on `main`)
+- **Tasks changed:**
+  - T-015: `review` → `done`
+- **Next priority:** T-003 (cronjob design)
+- **Daily Log:** _(local only — not committed)_
 
 ---
 

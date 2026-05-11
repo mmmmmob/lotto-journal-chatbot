@@ -131,12 +131,8 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 		log.Printf("[follow] existing user re-followed: %s", lineUserID)
 	}
 
-	welcome := "🎟️ ยินดีต้อนรับสู่ Lotto Journal! \n" +
-		"ตัวอย่าง: 123456 หรือ 456\n" +
-		"ส่งหลายเลขได้ เช่น 123456 789012\n" +
-		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
-		"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
-	h.replyText(e.ReplyToken, welcome)
+	displayName := h.getDisplayName(lineUserID)
+	h.replyText(e.ReplyToken, buildWelcomeMessage(displayName))
 }
 
 func (h *LineHandler) handleUnfollow(e webhook.UnfollowEvent) {
@@ -167,6 +163,9 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 		log.Println("[message] no userId in source")
 		return
 	}
+
+	// Best-effort loading indicator to show user we're processing the request.
+	h.showLoading(lineUserID, 5)
 
 	// Ensure the user record exists (edge case: message before follow event).
 	user, _, err := h.userSvc.FindOrCreate(lineUserID)
@@ -204,6 +203,52 @@ func (h *LineHandler) replyText(replyToken, text string) {
 		},
 	}); err != nil {
 		log.Printf("[reply] error: %v", err)
+	}
+}
+
+func (h *LineHandler) getDisplayName(lineUserID string) string {
+	profile, err := h.bot.GetProfile(lineUserID)
+	if err != nil {
+		log.Printf("[profile] GetProfile %s: %v", lineUserID, err)
+		return ""
+	}
+	return strings.TrimSpace(profile.DisplayName)
+}
+
+func buildWelcomeMessage(displayName string) string {
+	greeting := "👋 สวัสดี!"
+	if displayName != "" {
+		greeting = fmt.Sprintf("👋 สวัสดีคุณ %s!", displayName)
+	}
+
+	return greeting + "\n\n" +
+		"🎟️ ยินดีต้อนรับสู่ Lotto Journal!\n" +
+		"ตัวอย่าง: 123456 หรือ 456\n" +
+		"ส่งหลายเลขได้ เช่น 123456 789012\n" +
+		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
+		"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
+}
+
+func (h *LineHandler) showLoading(chatID string, loadingSeconds int32) {
+	if chatID == "" {
+		return
+	}
+	if loadingSeconds < 5 {
+		loadingSeconds = 5
+	}
+	// LINE requires loadingSeconds to be in 5-second increments.
+	if rem := loadingSeconds % 5; rem != 0 {
+		loadingSeconds += 5 - rem
+	}
+	if loadingSeconds > 60 {
+		loadingSeconds = 60
+	}
+
+	if _, err := h.bot.ShowLoadingAnimation(&messaging_api.ShowLoadingAnimationRequest{
+		ChatId:         chatID,
+		LoadingSeconds: loadingSeconds,
+	}); err != nil {
+		log.Printf("[loading] error: %v", err)
 	}
 }
 
