@@ -86,6 +86,86 @@ pnpm dev
 
 ---
 
+## Production Deployment (Fly.io + Neon)
+
+> Run all commands from the **repo root**.
+
+### 1. Prerequisites
+
+- Install [flyctl](https://fly.io/docs/flyctl/install/)
+- Login to Fly:
+
+```shell
+flyctl auth login
+```
+
+- Ensure production infra is ready:
+  - Fly app name: `lotto-journal-api`
+  - Production LINE channel created (separate from dev)
+  - Neon production database created
+
+### 2. Set production secrets on Fly
+
+Set runtime secrets (never commit these to git):
+
+```shell
+flyctl secrets set \
+  DB_DSN="postgres://...sslmode=require" \
+  LINE_CHANNEL_SECRET="..." \
+  LINE_CHANNEL_ACCESS_TOKEN="..." \
+  -a lotto-journal-api
+```
+
+### 3. Deploy to Fly
+
+```shell
+flyctl deploy -a lotto-journal-api
+```
+
+### 4. Run migrations against Neon
+
+Use the Neon connection string for production:
+
+```shell
+migrate -path apps/api/migrations -database "postgres://...sslmode=require" up
+```
+
+### 5. Verify production health
+
+```shell
+flyctl status -a lotto-journal-api
+flyctl checks list -a lotto-journal-api
+curl -i https://lotto-journal-api.fly.dev/health
+```
+
+### 6. Configure LINE production webhook
+
+In LINE Developers Console (production channel):
+
+- Webhook URL: `https://lotto-journal-api.fly.dev/webhook`
+- Enable webhook delivery
+
+### 7. Smoke test
+
+- Add the production bot account as friend
+- Send a ticket message (example: `123456 x2`)
+- Verify ticket rows in Neon DB
+
+### Runtime env map (production)
+
+| Key                         | Where it lives       | Notes                                                          |
+| --------------------------- | -------------------- | -------------------------------------------------------------- |
+| `DB_DSN`                    | Fly secrets          | Neon connection string (`sslmode=require`)                     |
+| `LINE_CHANNEL_SECRET`       | Fly secrets          | Production channel secret                                      |
+| `LINE_CHANNEL_ACCESS_TOKEN` | Fly secrets          | Production channel access token                                |
+| `APP_ENV`                   | `fly.toml` `[env]`   | Non-secret (`production`)                                      |
+| `PORT`                      | `fly.toml` `[env]`   | Non-secret (`:8080`)                                           |
+| `FLY_API_TOKEN`             | GitHub Actions secret | Used only by CI/CD deploy workflow (not app runtime)           |
+
+> Current production config keeps **1 machine running** in primary region `sin`.
+
+---
+
 ## API Testing (Bruno)
 
 The collection lives in `trunk/bruno/`. Open it in [Bruno](https://www.usebruno.com/) by choosing **Open Collection** and selecting that folder.
