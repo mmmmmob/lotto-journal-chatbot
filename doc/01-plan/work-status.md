@@ -4,7 +4,7 @@ phase: M1
 direction: Implement cronjob + production hardening
 focus: [T-003]
 done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019]
-future: [T-009 LIFF — post-MVP]
+future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP]
 blocked: none
 next: T-003
 risk: none
@@ -95,6 +95,10 @@ None currently.
 
 ## Future Direction
 
+- **T-020 — Photo OCR capture (post-MVP):** Add image-based ticket intake in LINE chat.
+  Flow: user sends 1 image → upload to Cloudflare R2 → OpenAI extracts candidate number JSON →
+  user confirms quantity (or corrects with `numberxquantity`) → save via existing ticket flow.
+  See `doc/06-extensions/T-020-photo-ocr-openai-r2-proposal.md`.
 - **T-009 — LIFF app (post-MVP):** A LIFF (LINE Front-end Framework) web app is planned to
   complement the chatbot. Lives in `apps/liff`. Monorepo structure (Turbo, pnpm workspaces)
   intentionally kept for this purpose. Task: design when post-MVP phase begins.

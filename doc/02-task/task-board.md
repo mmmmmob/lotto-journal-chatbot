@@ -2,7 +2,7 @@
 active: T-003(todo)
 blocked: none
 done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019
-future: T-009(liff-planning post-MVP)
+future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP)
 priority_next: T-003
 src: v0.2
 updated: 2026-05-11
@@ -71,6 +71,7 @@ Last updated: 2026-05-11 (session 14)
 | ID    | Task                                     | Type  | Source Reference                                        | Priority | Status | Notes                                                                                                                                |
 | ----- | ---------------------------------------- | ----- | ------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | T-009 | Plan LIFF (LINE Front-end Framework) app | chore | doc/00-source/versions/v0.2/01-prd.md §8 (Out of Scope) | Low      | todo   | LIFF web app to complement the chatbot. Lives in apps/liff. Monorepo kept intentionally for this. Design when post-MVP phase begins. |
+| T-020 | Photo ticket OCR via OpenAI + Cloudflare R2 (confirm-before-save) | feat  | doc/06-extensions/T-020-photo-ocr-openai-r2-proposal.md | Medium   | todo   | Post-MVP candidate. Single-image flow first; quantity-only confirm when OCR is correct, fallback to `numberxquantity` correction flow. Prioritized before T-009 by latest decision draft. |
 
 ---
 
