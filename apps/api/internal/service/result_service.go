@@ -71,7 +71,8 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 	// We mark it verified (skipped) in the database to prevent blocking future checks.
 	if latest.Response.Date != expectedDateStr {
 		gloDate, parseErr := time.Parse("2006-01-02", latest.Response.Date)
-		if parseErr == nil && gloDate.After(drawDate) {
+		drawDateUTC := time.Date(drawDate.Year(), drawDate.Month(), drawDate.Day(), 0, 0, 0, 0, time.UTC)
+		if parseErr == nil && gloDate.After(drawDateUTC) {
 			log.Printf("[result_service] WARNING: Draw %s is stale because GLO has already rolled over to %s. Marking as verified (skipped) to prevent blocking future draws.", expectedDateStr, latest.Response.Date)
 			if err := s.db.Model(&models.Draw{}).Where("id = ?", draw.ID).Update("is_verified", true).Error; err != nil {
 				return fmt.Errorf("mark stale draw verified: %w", err)
