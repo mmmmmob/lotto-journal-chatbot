@@ -58,6 +58,8 @@ Key variables:
 | `LINE_CHANNEL_SECRET`       | Go app         | from LINE Developers console → Basic Settings                                   |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Go app         | from LINE Developers console → Messaging API                                    |
 | `APP_ENV`                   | Go app         | App environment: `development`, `staging`, `production` (default: `development`) |
+| `CRON_SYNC_SCHEDULE`        | Go app         | Cron spec for draw schedule sync (default: `"0 3 * * *"`)                       |
+| `CRON_VERIFY_SCHEDULE`      | Go app         | Cron spec for draw results check (default: `"*/5 16-23 * * *"`)                  |
 
 ### 2. Start the database (Optional)
 
@@ -162,6 +164,8 @@ In LINE Developers Console (production channel):
 | `LINE_CHANNEL_ACCESS_TOKEN` | Fly secrets          | Production channel access token                                |
 | `APP_ENV`                   | `fly.toml` `[env]`   | Non-secret (`production`)                                      |
 | `PORT`                      | `fly.toml` `[env]`   | Non-secret (`:8080`)                                           |
+| `CRON_SYNC_SCHEDULE`        | `fly.toml` `[env]`   | Optional: Cron spec for draw sync (default: `"0 3 * * *"`)                     |
+| `CRON_VERIFY_SCHEDULE`      | `fly.toml` `[env]`   | Optional: Cron spec for results check (default: `"*/5 16-23 * * *"`)            |
 | `FLY_API_TOKEN`             | GitHub Actions secret | Used only by CI/CD deploy workflow (not app runtime)           |
 
 > Current production config keeps **1 machine running** in primary region `sin`.
