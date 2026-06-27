@@ -46,9 +46,19 @@ func NewResultService(
 // VerifyDrawResults pulls GLO results for the given date, saves them,
 // matches against unchecked user tickets, and records any winning tickets.
 func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Time) error {
-	expectedDateStr := drawDate.Format("2006-01-02")
+	// 1. Fetch latest GLO results
+	latest, err := s.client.FetchLatestResult(ctx)
+	if err != nil {
+		return fmt.Errorf("fetch latest results: %w", err)
+	}
 
-	// 1. Find or create the draw record
+	// 2. Validate that the returned draw date matches what the scheduler requested
+	expectedDateStr := drawDate.Format("2006-01-02")
+	if latest.Response.Date != expectedDateStr {
+		return fmt.Errorf("results pending: latest GLO draw is %s, expected %s", latest.Response.Date, expectedDateStr)
+	}
+
+	// 3. Find or create the draw record
 	draw, err := s.drawRepo.FindOrCreate(drawDate)
 	if err != nil {
 		return fmt.Errorf("resolve draw record: %w", err)
@@ -58,28 +68,6 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 	if draw.IsVerified {
 		log.Printf("[result_service] draw %s is already verified. Skipping checking.", expectedDateStr)
 		return nil
-	}
-
-	// 2. Fetch latest GLO results
-	latest, err := s.client.FetchLatestResult(ctx)
-	if err != nil {
-		return fmt.Errorf("fetch latest results: %w", err)
-	}
-
-	// 3. Validate that the returned draw date matches what the scheduler requested.
-	// If GLO has already rolled over to a newer draw date, the expected draw is stale.
-	// We mark it verified (skipped) in the database to prevent blocking future checks.
-	if latest.Response.Date != expectedDateStr {
-		gloDate, parseErr := time.Parse("2006-01-02", latest.Response.Date)
-		drawDateUTC := time.Date(drawDate.Year(), drawDate.Month(), drawDate.Day(), 0, 0, 0, 0, time.UTC)
-		if parseErr == nil && gloDate.After(drawDateUTC) {
-			log.Printf("[result_service] WARNING: Draw %s is stale because GLO has already rolled over to %s. Marking as verified (skipped) to prevent blocking future draws.", expectedDateStr, latest.Response.Date)
-			if err := s.db.Model(&models.Draw{}).Where("id = ?", draw.ID).Update("is_verified", true).Error; err != nil {
-				return fmt.Errorf("mark stale draw verified: %w", err)
-			}
-			return nil
-		}
-		return fmt.Errorf("results pending: latest GLO draw is %s, expected %s", latest.Response.Date, expectedDateStr)
 	}
 
 	// 4. Parse winning results from response
@@ -298,4 +286,19 @@ func parsePrizeAmount(price string) int {
 		f = val
 	}
 	return int(f)
+}
+
+// VerifyLatestDrawResults fetches the latest draw results from GLO API and verifies that specific draw.
+func (s *ResultService) VerifyLatestDrawResults(ctx context.Context) error {
+	latest, err := s.client.FetchLatestResult(ctx)
+	if err != nil {
+		return fmt.Errorf("fetch latest results: %w", err)
+	}
+
+	drawDate, err := time.Parse("2006-01-02", latest.Response.Date)
+	if err != nil {
+		return fmt.Errorf("parse GLO draw date %s: %w", latest.Response.Date, err)
+	}
+
+	return s.VerifyDrawResults(ctx, drawDate)
 }

@@ -242,7 +242,7 @@ func TestParsePrizeAmount(t *testing.T) {
 	}
 }
 
-func TestVerifyDrawResults_StaleState(t *testing.T) {
+func TestVerifyLatestDrawResults(t *testing.T) {
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
 		dsn = "postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable"
@@ -278,22 +278,16 @@ func TestVerifyDrawResults_StaleState(t *testing.T) {
 	drawRepo := repository.NewDrawRepository(tx)
 	resultSvc := NewResultService(tx, lotteryClient, drawRepo, nil, nil, nil)
 
-	drawDate, _ := time.Parse("2006-01-02", "2026-06-01")
-	draw, err := drawRepo.FindOrCreate(drawDate)
+	err = resultSvc.VerifyLatestDrawResults(context.Background())
 	if err != nil {
-		t.Fatalf("failed to seed test draw: %v", err)
+		t.Fatalf("expected VerifyLatestDrawResults to succeed, got: %v", err)
 	}
 
-	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
-	if err != nil {
-		t.Fatalf("expected VerifyDrawResults to return nil for stale draw, but got error: %v", err)
+	var draw models.Draw
+	if err := tx.First(&draw, "draw_date = ?", "2026-06-16").Error; err != nil {
+		t.Fatalf("failed to find draw record: %v", err)
 	}
-
-	var updatedDraw models.Draw
-	if err := tx.First(&updatedDraw, "id = ?", draw.ID).Error; err != nil {
-		t.Fatalf("failed to retrieve draw: %v", err)
-	}
-	if !updatedDraw.IsVerified {
-		t.Errorf("expected stale draw to be marked verified (skipped), but got false")
+	if !draw.IsVerified {
+		t.Errorf("expected draw to be marked verified, but got false")
 	}
 }
