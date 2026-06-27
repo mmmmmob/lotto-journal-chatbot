@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-active: T-003(todo)
+active: T-022(todo)
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019
-future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP)
-priority_next: T-003
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023
+future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP), T-021(multi-language post-MVP)
+priority_next: T-022
 src: v0.2
-updated: 2026-05-11
+updated: 2026-06-27
 -->
 
 ---
@@ -41,7 +41,7 @@ Last updated: 2026-05-11 (session 14)
 
 | ID    | Task                                                     | Type        | Source Reference                                  | Priority | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-003 | Design cronjob: lottery result fetch + comparison flow   | chore       | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.2 | High     | todo   | API: POST https://www.glo.or.th/api/lottery/getLatestLottery. Response format: see trunk/glo_result.json. Retry=5. Schedule configurable. Non-win push = YES.                                                                                                                                                                                                                                                                                                                                                               |
+| T-022 | Implement win notification via LINE push message         | feat        | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.1 | High     | todo   | Notify winners via LINE push messaging. Fetch users line_user_id and compile winnings. Include L6/N3 prizes and N3 special jackpot checks.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -87,6 +87,8 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-023 | Swagger Documentation and Mockery Setup                      | 2026-06-27 | Extracted interface layers; configured Mockery v3 with `.mockery.yml`; added Swagger specs and Fiber v3 swaggo middleware; set up dev-only access; automated compilation reloads in `air`; updated package scripts/READMEs |
+| T-003 | Design and implement cronjob: lottery result fetch + comparison flow | 2026-06-27 | Implemented LotteryClient for GLO APIs with retries/dedup; database-first draw resolver in DrawService with low-frequency background sync and emergency fallback; ResultService win-checking logic for L6 and N3; Bangkok time CronScheduler running startup sync, 3 AM sync, and 16:00 draw day checking; migration 000004 applied; all build/tests pass |
 | T-019 | UX: loading indicator + personalized follow welcome [FOUND-IN-PASSING] | 2026-05-11 | Added `ShowLoadingAnimation` call in `handleMessage` (5s, clamped to LINE constraints); follow welcome now fetches profile display name via `GetProfile` and personalizes greeting; added tests for welcome message builder; `pnpm test:api` and `pnpm build` pass |
 | T-017 | Improvement: atomic draws upsert via GORM clause.OnConflict | 2026-05-11 | Replaced `FirstOrCreate` in `internal/repository/draw_repository.go` with atomic `Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "draw_date"}}, DoUpdates: clause.AssignmentColumns([]string{"draw_date"})}).Create(&draw)`; eliminates SELECT+INSERT race; `pnpm test:api` and `pnpm build` pass |
 | T-015 | GitHub Actions CI/CD pipeline                               | 2026-05-11 | `.github/workflows/deploy.yml` implemented; owner added repository secret `FLY_API_TOKEN`; first GitHub Actions run confirmed green (PR checks + deploy on `main`) |

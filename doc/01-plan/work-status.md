@@ -1,12 +1,12 @@
 <!-- AI-CONTEXT
 src: v0.2
-phase: M1
-direction: Implement cronjob + production hardening
-focus: [T-003]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019]
-future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP]
+phase: M3
+direction: Implement win notification via LINE push messaging
+focus: [T-022]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023]
+future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP, T-021 Multi-language — post-MVP]
 blocked: none
-next: T-003
+next: T-022
 risk: none
 adr: ADR-001
 read_more:
@@ -15,14 +15,14 @@ read_more:
   architecture: doc/07-decisions/README.md
   entities: doc/07-decisions/entity-register.md
   source_current: doc/00-source/versions/v0.2/
-updated: 2026-05-11
+updated: 2026-06-27
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-05-11 (session 14)
+Last updated: 2026-06-27 (session 15)
 
 ## Source References
 
@@ -33,31 +33,25 @@ Last updated: 2026-05-11 (session 14)
 
 ## Phase and Direction
 
-**Current phase:** M1 — Design & Build
+**Current phase:** M3 — LINE Push Notifications
 
-ADR-001 has been accepted (Option B). M1 work remaining:
+With T-003 complete, the cronjob scheduler, GLO result checker, schedule caching database-first resolver, and ticket checking/win comparison engine are fully implemented. 
 
-1. ~~Design and implement the LINE webhook handler and ticket submission flow (T-002)~~ **Done**
-2. Design the cronjob for lottery result fetch + comparison (T-003)
-3. Feature: list upcoming draw tickets summary (T-012) — **Done**
-
-The cronjob (M2) and win notification (M3) follow after M1 is stable.
-
-**Deployment chain status:** T-013, T-014, and T-015 are complete (infra prep + first production deploy + GitHub Actions CI/CD automation).
-
-**Post-MVP direction:** A LIFF (LINE Front-end Framework) web app is planned to complement
-the chatbot. The monorepo structure is intentionally preserved for this. See T-009.
+The next phase (M3) focuses on **T-022: Implement win notification via LINE push message**, resolving user line_user_ids and sending the final win summaries to LINE users.
 
 ---
 
 ## Active Tasks
 
-- `T-003` — Design cronjob: lottery result fetch + comparison flow — todo
+- `T-022` — Implement win notification via LINE push message — todo
+
 
 ---
 
 ## Completed Tasks
 
+- `T-023` — Swagger Documentation and Mockery Setup — done (2026-06-27)
+- `T-003` — Design and implement cronjob: lottery result fetch + comparison flow — done (2026-06-27)
 - `T-000` — Documentation setup (2026-04-30)
 - `T-001` — Architecture pivot decided: Option B (LINE Messaging API) — ADR-001 Accepted (2026-04-30)
 - `T-005` — Formal source docs written: PRD v0.2 created (2026-04-30)
@@ -87,9 +81,9 @@ None currently.
 
 ## Next Steps
 
-1. **T-003:** Design cronjob — `trunk/glo_result.json` committed; webhook handler done; middleware hardened; ready to implement
-2. Monitor production bot behavior after CI/CD automation (deploy logs + webhook health checks)
-3. Keep low-priority refactors in backlog unless they block cronjob delivery
+1. **T-022:** Implement win notification via LINE push message (Milestone M3).
+2. Monitor production scheduler and sync logs on startup/daily run.
+3. Keep low-priority refactors in backlog unless they block win notifications delivery.
 
 ---
 
@@ -109,6 +103,7 @@ None currently.
 
 ## Risks and Notes
 
+- **T-003 completed (session 15):** Implemented GLO schedule synchronization and lottery result checking. To protect the server against IP blocking by GLO, we designed a database-first schedule caching strategy where the GLO API is only queried once a day in the background. The database `draws` table serves as the single source of truth for upcoming draw dates at runtime. Migration `000004_widen_winning_number` was created and applied to accommodate 12-digit N3 Jackpot winning numbers.
 - **LINE channel separation + production go-live (session 10):** Dedicated dev and production LINE channels are now both in use. Production webhook points to Fly.io app URL; end-to-end test (LINE message → DB insert in Neon) passed. Keep credentials isolated per channel and never mix them.
 - **T-016 bugfix applied (session 11):** Ticket parser now correctly handles `144333 x2` and `122222 x 3`. Root cause was regex replacement tokenization (`$1x$2` in Go replacement syntax); fixed to `${1}x${2}`. Parser now also normalizes Unicode whitespace and common non-ASCII x variants (`×`, `ｘ`, `Ｘ`, `✕`). Unit tests added in `internal/service/ticket_service_test.go`.
 - **T-018 [FOUND-IN-PASSING] (session 11):** `isTicketListCmd` now normalizes internal/Unicode spaces and zero-width characters so command variants like `โ พย`, `โ\u00A0พย`, and `โ\u200Bพย` correctly map to `โพย`. Unit tests added in `internal/handler/line_handler_test.go`.
