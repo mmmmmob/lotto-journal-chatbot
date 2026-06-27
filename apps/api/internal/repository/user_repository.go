@@ -6,6 +6,12 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	UserColID         = "id"
+	UserColLineUserID = "line_user_id"
+	UserColStatus     = "status"
+)
+
 type UserRepository struct {
 	db *gorm.DB
 }
@@ -24,7 +30,7 @@ func (r *UserRepository) Create(user *models.User) error {
 // FindByLineUserID returns the user with the given LINE user ID, or nil + gorm.ErrRecordNotFound.
 func (r *UserRepository) FindByLineUserID(lineUserID string) (*models.User, error) {
 	var user models.User
-	result := r.db.Where("line_user_id = ?", lineUserID).First(&user)
+	result := r.db.Where(UserColLineUserID+" = ?", lineUserID).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -38,7 +44,7 @@ func (r *UserRepository) FindOrCreate(lineUserID string) (*models.User, bool, er
 		LineUserID: lineUserID,
 		Status:     "active",
 	}
-	result := r.db.Where("line_user_id = ?", lineUserID).FirstOrCreate(&user)
+	result := r.db.Where(UserColLineUserID+" = ?", lineUserID).FirstOrCreate(&user)
 	if result.Error != nil {
 		return nil, false, result.Error
 	}
@@ -50,7 +56,8 @@ func (r *UserRepository) FindOrCreate(lineUserID string) (*models.User, bool, er
 func (r *UserRepository) UpdateStatus(lineUserID string, status string) error {
 	return r.db.
 		Model(&models.User{}).
-		Where("line_user_id = ?", lineUserID).
-		Update("status", status).
+		Where(UserColLineUserID+" = ?", lineUserID).
+		Update(UserColStatus, status).
 		Error
 }
+
