@@ -16,10 +16,13 @@ func NewHealthHandler(db *gorm.DB) *HealthHandler {
 
 // Handle performs a liveness + DB readiness check.
 //
-// Response shape:
-//
-//	200  {"status":"ok",       "db":"ok"}
-//	503  {"status":"degraded", "db":"<error message>"}
+// @Summary Perform health check
+// @Description Checks if the API server is live and the database connection is healthy.
+// @Tags System
+// @Produce json
+// @Success 200 {object} map[string]string "Successful health status"
+// @Failure 503 {object} map[string]string "Database connection is unhealthy"
+// @Router /health [get]
 func (h *HealthHandler) Handle(c fiber.Ctx) error {
 	sqlDB, err := h.db.DB()
 	if err != nil {
