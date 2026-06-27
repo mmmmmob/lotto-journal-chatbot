@@ -57,32 +57,34 @@ Key variables:
 | `PORT`                      | Go app         | `:3000`                                                                         |
 | `LINE_CHANNEL_SECRET`       | Go app         | from LINE Developers console → Basic Settings                                   |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Go app         | from LINE Developers console → Messaging API                                    |
+| `APP_ENV`                   | Go app         | App environment: `development`, `staging`, `production` (default: `development`) |
 
-### 2. Start the database
+### 2. Start the database (Optional)
+
+> [!NOTE]
+> Running `pnpm dev` automatically spins up the database container and waits for it to be healthy. You only need to run the command below manually if you want to run database commands/migrations without starting the API server.
 
 ```shell
 pnpm db:start
 ```
 
-Wait until the container is healthy before running migrations:
-
-```shell
-docker ps --filter name=lotto-db --format "table {{.Names}}\t{{.Status}}"
-```
-
-You should see `healthy` in the status before proceeding.
-
 ### 3. Run migrations
+
+Ensure the database is running (either via `pnpm db:start` or by starting the API) before executing migrations:
 
 ```shell
 pnpm migrate:up
 ```
 
-### 4. Start the API (with hot reload)
+### 4. Start the API & Database (with hot reload)
+
+This will spin up the database container, wait for it to be fully healthy, and boot up the hot-reloading API server:
 
 ```shell
 pnpm dev
 ```
+
+When you stop the server by pressing `Ctrl+C` once, the database container will automatically shut down as well.
 
 ---
 
@@ -247,11 +249,13 @@ All `make` commands run from `apps/api/` — the `pnpm` shortcuts above call the
 
 ### App
 
-| pnpm (root)  | make (apps/api) | What it does                    |
-| ------------ | --------------- | ------------------------------- |
-| `pnpm dev`   | `make run`      | Start API with hot reload (air) |
-| `pnpm build` | `make build`    | Build binary to `dist/`         |
-| —            | `make clean`    | Remove `tmp/` and `dist/`       |
+| pnpm (root)    | make (apps/api) | What it does                               |
+| -------------- | --------------- | ------------------------------------------ |
+| `pnpm dev`     | `make run`      | Start API with hot reload (air)            |
+| `pnpm build`   | `make build`    | Build binary to `dist/`                    |
+| —              | `make clean`    | Remove `tmp/` and `dist/`                  |
+| `pnpm swagger` | `make swagger`  | Generate Swagger spec files under `docs/` |
+| `pnpm mock`    | `make mock`     | Generate Interface mocks under `mocks/`    |
 
 ### Database
 
@@ -273,8 +277,9 @@ All `make` commands run from `apps/api/` — the `pnpm` shortcuts above call the
 
 ### Migration history
 
-| Version | File                    | Description                                                                                      |
-| ------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| 000001  | `000001_init_schema`    | Initial schema — all tables, enums, indexes                                                      |
-| 000002  | `000002_line_identity`  | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
-| 000003  | `000003_webhook_events` | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
+| Version | File                            | Description                                                                                      |
+| ------- | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 000001  | `000001_init_schema`            | Initial schema — all tables, enums, indexes                                                      |
+| 000002  | `000002_line_identity`          | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| 000003  | `000003_webhook_events`         | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
+| 000004  | `000004_widen_winning_number`   | Widen `draw_results.winning_number` to `varchar(12)` for N3 Jackpot                              |

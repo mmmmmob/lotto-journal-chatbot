@@ -25,9 +25,14 @@ clean:
 
 db-start:
 	@docker compose --env-file ../../.env.local -f ../../docker-compose.yml up -d
+	@echo "Waiting for database to be healthy..."
+	@until [ "$$(docker inspect --format='{{.State.Health.Status}}' lotto-db 2>/dev/null)" = "healthy" ]; do \
+		sleep 0.5; \
+	done
+	@echo "Database is ready!"
 
 db-stop:
-	@docker compose -f ../../docker-compose.yml stop
+	@docker compose -f ../../docker-compose.yml stop -t 2
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 
@@ -50,3 +55,14 @@ migrate-version:
 
 migrate-force:
 	@migrate -path $(MIGRATION_PATH) -database "$(DB_URL)" force $(N)
+
+# ── Swagger & Mocks ──────────────────────────────────────────────────────────
+
+.PHONY: swagger mock
+
+swagger:
+	@go run github.com/swaggo/swag/cmd/swag@latest init -g app/main.go --ot go,json,yaml
+
+mock:
+	@go run github.com/vektra/mockery/v3@v3.7.1
+

@@ -3,7 +3,7 @@
   "version": "0.2.2",
   "description": "Lotto Journal as LINE Messaging API and LIFF in a monorepo structure",
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "pnpm db:start && trap 'trap - INT TERM EXIT; pnpm db:stop; exit' INT TERM EXIT; pnpm --filter @lotto/api dev",
     "build": "turbo run build",
     "test:api": "pnpm --filter @lotto/api exec go test ./...",
     "format": "prettier --write .",
@@ -12,7 +12,9 @@
     "db:stop": "pnpm --filter @lotto/api db:stop",
     "migrate:up": "pnpm --filter @lotto/api migrate:up",
     "migrate:down": "pnpm --filter @lotto/api migrate:down",
-    "migrate:version": "pnpm --filter @lotto/api migrate:version"
+    "migrate:version": "pnpm --filter @lotto/api migrate:version",
+    "swagger": "pnpm --filter @lotto/api swagger",
+    "mock": "pnpm --filter @lotto/api mock"
   },
   "private": true,
   "author": "Theppitak M.",
