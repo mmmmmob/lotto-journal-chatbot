@@ -102,6 +102,8 @@ None currently.
 - **T-009 — LIFF app (post-MVP):** A LIFF (LINE Front-end Framework) web app is planned to
   complement the chatbot. Lives in `apps/liff`. Monorepo structure (Turbo, pnpm workspaces)
   intentionally kept for this purpose. Task: design when post-MVP phase begins.
+- **T-021 — Multi-language & Localization (post-MVP):** Support EN/TH localization dynamically using LINE Profile language settings combined with setting override commands.
+
 
 ---
 

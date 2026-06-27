@@ -72,6 +72,8 @@ Last updated: 2026-05-11 (session 14)
 | ----- | ---------------------------------------- | ----- | ------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | T-009 | Plan LIFF (LINE Front-end Framework) app | chore | doc/00-source/versions/v0.2/01-prd.md §8 (Out of Scope) | Low      | todo   | LIFF web app to complement the chatbot. Lives in apps/liff. Monorepo kept intentionally for this. Design when post-MVP phase begins. |
 | T-020 | Photo ticket OCR via OpenAI + Cloudflare R2 (confirm-before-save) | feat  | doc/06-extensions/T-020-photo-ocr-openai-r2-proposal.md | Medium   | todo   | Post-MVP candidate. Single-image flow first; quantity-only confirm when OCR is correct, fallback to `numberxquantity` correction flow. Prioritized before T-009 by latest decision draft. |
+| T-021 | Multi-language & Localization support (EN/TH) | feat  | doc/00-source/versions/v0.2/01-prd.md §8 (Out of Scope) | Low      | todo   | Support dynamic locale detection from LINE Profile API and setting overrides command (e.g. `EN`/`TH`). Stored in `users.language`. |
+
 
 ---
 
