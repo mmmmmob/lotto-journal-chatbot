@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,9 +45,9 @@ func NewResultService(
 
 // VerifyDrawResults pulls GLO results for the given date, saves them,
 // matches against unchecked user tickets, and records any winning tickets.
-func (s *ResultService) VerifyDrawResults(drawDate time.Time) error {
+func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Time) error {
 	// 1. Fetch latest GLO results
-	latest, err := s.client.FetchLatestResult()
+	latest, err := s.client.FetchLatestResult(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch latest results: %w", err)
 	}
@@ -217,7 +219,7 @@ func (s *ResultService) VerifyDrawResults(drawDate time.Time) error {
 
 		// Mark processed tickets as checked
 		if len(processedTicketIDs) > 0 {
-			if err := tx.Model(&models.Ticket{}).Where("id IN ?", processedTicketIDs).Update("is_checked", true).Error; err != nil {
+			if err := s.ticketRepo.MarkCheckedInTransaction(tx, processedTicketIDs); err != nil {
 				return fmt.Errorf("mark tickets as checked: %w", err)
 			}
 		}
@@ -272,6 +274,7 @@ func parsePrize(drawID uuid.UUID, category string, prize client.GLOPrize) []*mod
 }
 
 func parsePrizeAmount(price string) int {
+	price = strings.ReplaceAll(price, ",", "")
 	var f float64
 	_, err := fmt.Sscanf(price, "%f", &f)
 	if err != nil {

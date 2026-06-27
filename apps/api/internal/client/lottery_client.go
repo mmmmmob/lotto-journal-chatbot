@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -86,11 +87,11 @@ func NewLotteryClient(baseURL string) *LotteryClient {
 }
 
 // FetchLatestResult fetches the latest lottery results from GLO.
-func (c *LotteryClient) FetchLatestResult() (*GLOLotteryResponse, error) {
+func (c *LotteryClient) FetchLatestResult(ctx context.Context) (*GLOLotteryResponse, error) {
 	url := fmt.Sprintf("%s/api/lottery/getLatestLottery", c.baseURL)
 
-	respBody, err := c.retry(func() ([]byte, error) {
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("{}")))
+	respBody, err := c.retry(ctx, func() ([]byte, error) {
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer([]byte("{}")))
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +126,7 @@ func (c *LotteryClient) FetchLatestResult() (*GLOLotteryResponse, error) {
 }
 
 // FetchDrawSchedule fetches the draw dates schedule for the given year.
-func (c *LotteryClient) FetchDrawSchedule(year int) ([]time.Time, error) {
+func (c *LotteryClient) FetchDrawSchedule(ctx context.Context, year int) ([]time.Time, error) {
 	url := fmt.Sprintf("%s/api/lottery/getPeriodsByYear", c.baseURL)
 
 	reqPayload := GLOScheduleRequest{
@@ -137,8 +138,8 @@ func (c *LotteryClient) FetchDrawSchedule(year int) ([]time.Time, error) {
 		return nil, fmt.Errorf("marshal schedule request: %w", err)
 	}
 
-	respBody, err := c.retry(func() ([]byte, error) {
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBytes))
+	respBody, err := c.retry(ctx, func() ([]byte, error) {
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBytes))
 		if err != nil {
 			return nil, err
 		}
@@ -192,12 +193,19 @@ func (c *LotteryClient) FetchDrawSchedule(year int) ([]time.Time, error) {
 }
 
 // retry helper that executes a function up to 5 times with exponential backoff.
-func (c *LotteryClient) retry(fn func() ([]byte, error)) ([]byte, error) {
+// It is context-aware and exits immediately if the context is cancelled.
+func (c *LotteryClient) retry(ctx context.Context, fn func() ([]byte, error)) ([]byte, error) {
 	maxAttempts := 5
 	backoff := 500 * time.Millisecond
 
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		data, err := fn()
 		if err == nil {
 			return data, nil
@@ -207,8 +215,12 @@ func (c *LotteryClient) retry(fn func() ([]byte, error)) ([]byte, error) {
 		log.Printf("[client] GLO API attempt %d failed: %v", attempt, err)
 
 		if attempt < maxAttempts {
-			time.Sleep(backoff)
-			backoff *= 2
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(backoff):
+				backoff *= 2
+			}
 		}
 	}
 

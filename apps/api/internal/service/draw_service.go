@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -70,9 +71,9 @@ func (s *DrawService) FindOrCreateUpcoming() (*models.Draw, error) {
 
 // SyncDrawSchedule fetches the schedule from GLO API for the current year,
 // deduplicates draw dates, and bulk updates our draws table.
-func (s *DrawService) SyncDrawSchedule() error {
+func (s *DrawService) SyncDrawSchedule(ctx context.Context) error {
 	year := time.Now().In(bangkokLoc).Year()
-	dates, err := s.client.FetchDrawSchedule(year)
+	dates, err := s.client.FetchDrawSchedule(ctx, year)
 	if err != nil {
 		return fmt.Errorf("fetch schedule from GLO: %w", err)
 	}

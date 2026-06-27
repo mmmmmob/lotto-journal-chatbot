@@ -8,13 +8,9 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
-
-	"lotto-journal/api/internal/models"
-	"lotto-journal/api/internal/repository"
 )
 
 type CronScheduler struct {
-	db             *gorm.DB
 	drawService    *DrawService
 	resultService  *ResultService
 	cron           *cron.Cron
@@ -23,14 +19,12 @@ type CronScheduler struct {
 }
 
 func NewCronScheduler(
-	db *gorm.DB,
 	drawService *DrawService,
 	resultService *ResultService,
 	syncSchedule string,
 	verifySchedule string,
 ) *CronScheduler {
 	return &CronScheduler{
-		db:             db,
 		drawService:    drawService,
 		resultService:  resultService,
 		syncSchedule:   syncSchedule,
@@ -50,7 +44,7 @@ func (s *CronScheduler) Start(ctx context.Context) {
 			}
 		}()
 		log.Println("[scheduler] Executing startup draw schedule sync...")
-		if err := s.drawService.SyncDrawSchedule(); err != nil {
+		if err := s.drawService.SyncDrawSchedule(ctx); err != nil {
 			log.Printf("[scheduler] Startup draw schedule sync failed: %v", err)
 		}
 	}()
@@ -64,7 +58,7 @@ func (s *CronScheduler) Start(ctx context.Context) {
 	// Job 1: Daily Draw Schedule Sync
 	_, err := s.cron.AddFunc(s.syncSchedule, func() {
 		log.Println("[scheduler] Triggering daily draw schedule sync...")
-		if err := s.drawService.SyncDrawSchedule(); err != nil {
+		if err := s.drawService.SyncDrawSchedule(context.Background()); err != nil {
 			log.Printf("[scheduler] Daily schedule sync failed: %v", err)
 		}
 	})
@@ -74,7 +68,7 @@ func (s *CronScheduler) Start(ctx context.Context) {
 
 	// Job 2: Check Draw Results
 	_, err = s.cron.AddFunc(s.verifySchedule, func() {
-		s.checkResults()
+		s.checkResults(context.Background())
 	})
 	if err != nil {
 		log.Fatalf("[scheduler] Failed to schedule result checking job: %v", err)
@@ -90,7 +84,7 @@ func (s *CronScheduler) Start(ctx context.Context) {
 	log.Println("[scheduler] Background scheduler stopped.")
 }
 
-func (s *CronScheduler) checkResults() {
+func (s *CronScheduler) checkResults(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[scheduler] panic in checkResults: %v\n%s", r, debug.Stack())
@@ -101,24 +95,22 @@ func (s *CronScheduler) checkResults() {
 	todayUTC := time.Date(bkkNow.Year(), bkkNow.Month(), bkkNow.Day(), 0, 0, 0, 0, time.UTC)
 	todayStr := todayUTC.Format("2006-01-02")
 
-	var draws []models.Draw
-	err := s.db.Where(repository.DrawColDrawDate+" = ?", todayStr).Limit(1).Find(&draws).Error
+	// Use DrawRepository via drawService to query today's draw
+	draw, err := s.drawService.repo.FindByDate(todayUTC)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return // Not a draw day
+		}
 		log.Printf("[scheduler] Error querying today's draw: %v", err)
 		return
 	}
 
-	if len(draws) == 0 {
-		return // Not a draw day
-	}
-
-	draw := draws[0]
 	if draw.IsVerified {
 		return // Results already verified
 	}
 
 	log.Printf("[scheduler] Draw day detected (%s) and results unverified. Checking GLO results...", todayStr)
-	if err := s.resultService.VerifyDrawResults(todayUTC); err != nil {
+	if err := s.resultService.VerifyDrawResults(ctx, todayUTC); err != nil {
 		log.Printf("[scheduler] Draw results verification failed: %v", err)
 	}
 }

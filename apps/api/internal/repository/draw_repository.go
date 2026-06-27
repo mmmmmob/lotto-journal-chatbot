@@ -23,11 +23,11 @@ func NewDrawRepository(db *gorm.DB) *DrawRepository {
 	return &DrawRepository{db: db}
 }
 
-// FindNextDraw returns the first draw scheduled on or after the given date.
+// FindNextDraw returns the first unverified draw scheduled on or after the given date.
 func (r *DrawRepository) FindNextDraw(fromDate time.Time) (*models.Draw, error) {
 	var draw models.Draw
 	dateStr := fromDate.Format("2006-01-02")
-	result := r.db.Where(DrawColDrawDate+" >= ?", dateStr).Order(DrawColDrawDate + " ASC").First(&draw)
+	result := r.db.Where(DrawColDrawDate+" >= ? AND "+DrawColIsVerified+" = false", dateStr).Order(DrawColDrawDate + " ASC").First(&draw)
 	if result.Error != nil {
 		return nil, result.Error
 	}

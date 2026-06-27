@@ -61,7 +61,7 @@ func main() {
 	resultSvc := service.NewResultService(db, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
 
 	// Start background cron scheduler
-	scheduler := service.NewCronScheduler(db, drawSvc, resultSvc, cfg.CronSyncSchedule, cfg.CronVerifySchedule)
+	scheduler := service.NewCronScheduler(drawSvc, resultSvc, cfg.CronSyncSchedule, cfg.CronVerifySchedule)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go scheduler.Start(ctx)

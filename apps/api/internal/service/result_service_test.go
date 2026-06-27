@@ -1,12 +1,12 @@
 package service
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
-
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -46,7 +46,7 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 			"response": {
 				"date": "2026-07-01",
 				"data": {
-					"first": { "price": "6000000.00", "number": [{"round": 1, "value": "123456"}] },
+					"first": { "price": "6,000,000.00", "number": [{"round": 1, "value": "123456"}] },
 					"second": { "price": "200000.00", "number": [] },
 					"third": { "price": "80000.00", "number": [] },
 					"fourth": { "price": "40000.00", "number": [] },
@@ -110,7 +110,7 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 	}
 
 	// 8. Run Verification Service
-	err = resultSvc.VerifyDrawResults(drawDate)
+	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
 	if err != nil {
 		t.Fatalf("VerifyDrawResults failed: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestVerifyDrawResults_PendingState(t *testing.T) {
 	resultSvc := NewResultService(nil, lotteryClient, nil, nil, nil, nil)
 
 	drawDate, _ := time.Parse("2006-01-02", "2026-07-01")
-	err := resultSvc.VerifyDrawResults(drawDate)
+	err := resultSvc.VerifyDrawResults(context.Background(), drawDate)
 
 	if err == nil {
 		t.Fatalf("expected error due to results pending, but got nil")
@@ -199,5 +199,30 @@ func TestVerifyDrawResults_PendingState(t *testing.T) {
 	expectedErr := "results pending: latest GLO draw is 2026-06-16, expected 2026-07-01"
 	if err.Error() != expectedErr {
 		t.Errorf("expected error message %q, got %q", expectedErr, err.Error())
+	}
+}
+
+func TestParsePrizeAmount(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"6000000.00", 6000000},
+		{"6,000,000.00", 6000000},
+		{"200000", 200000},
+		{"2,000", 2000},
+		{"500.00", 500},
+		{"0", 0},
+		{"", 0},
+		{"invalid", 0},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			got := parsePrizeAmount(tc.input)
+			if got != tc.expected {
+				t.Errorf("parsePrizeAmount(%q) = %d; expected %d", tc.input, got, tc.expected)
+			}
+		})
 	}
 }
