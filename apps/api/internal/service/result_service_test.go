@@ -170,6 +170,20 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 }
 
 func TestVerifyDrawResults_PendingState(t *testing.T) {
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable"
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping integration test; cannot connect to DB: %v", err)
+		return
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+
 	// Create mock server returning a date other than requested
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -187,10 +201,11 @@ func TestVerifyDrawResults_PendingState(t *testing.T) {
 	defer mockServer.Close()
 
 	lotteryClient := client.NewLotteryClient(mockServer.URL)
-	resultSvc := NewResultService(nil, lotteryClient, nil, nil, nil, nil)
+	drawRepo := repository.NewDrawRepository(tx)
+	resultSvc := NewResultService(tx, lotteryClient, drawRepo, nil, nil, nil)
 
 	drawDate, _ := time.Parse("2006-01-02", "2026-07-01")
-	err := resultSvc.VerifyDrawResults(context.Background(), drawDate)
+	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
 
 	if err == nil {
 		t.Fatalf("expected error due to results pending, but got nil")
@@ -224,5 +239,61 @@ func TestParsePrizeAmount(t *testing.T) {
 				t.Errorf("parsePrizeAmount(%q) = %d; expected %d", tc.input, got, tc.expected)
 			}
 		})
+	}
+}
+
+func TestVerifyDrawResults_StaleState(t *testing.T) {
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable"
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping integration test; cannot connect to DB: %v", err)
+		return
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"statusMessage": "getLatestLottery - Success",
+			"statusCode": 200,
+			"status": true,
+			"response": {
+				"date": "2026-06-16",
+				"data": {
+					"first": { "price": "6000000.00", "number": [] }
+				}
+			}
+		}`))
+	}))
+	defer mockServer.Close()
+
+	lotteryClient := client.NewLotteryClient(mockServer.URL)
+	drawRepo := repository.NewDrawRepository(tx)
+	resultSvc := NewResultService(tx, lotteryClient, drawRepo, nil, nil, nil)
+
+	drawDate, _ := time.Parse("2006-01-02", "2026-06-01")
+	draw, err := drawRepo.FindOrCreate(drawDate)
+	if err != nil {
+		t.Fatalf("failed to seed test draw: %v", err)
+	}
+
+	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
+	if err != nil {
+		t.Fatalf("expected VerifyDrawResults to return nil for stale draw, but got error: %v", err)
+	}
+
+	var updatedDraw models.Draw
+	if err := tx.First(&updatedDraw, "id = ?", draw.ID).Error; err != nil {
+		t.Fatalf("failed to retrieve draw: %v", err)
+	}
+	if !updatedDraw.IsVerified {
+		t.Errorf("expected stale draw to be marked verified (skipped), but got false")
 	}
 }
