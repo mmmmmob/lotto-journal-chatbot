@@ -100,6 +100,68 @@ func (_c *MockDrawRepositoryInterface_FindByDate_Call) RunAndReturn(run func(dat
 	return _c
 }
 
+// FindLatestUnverified provides a mock function for the type MockDrawRepositoryInterface
+func (_mock *MockDrawRepositoryInterface) FindLatestUnverified(date time.Time) (*models.Draw, error) {
+	ret := _mock.Called(date)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindLatestUnverified")
+	}
+
+	var r0 *models.Draw
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(time.Time) (*models.Draw, error)); ok {
+		return returnFunc(date)
+	}
+	if returnFunc, ok := ret.Get(0).(func(time.Time) *models.Draw); ok {
+		r0 = returnFunc(date)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Draw)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(time.Time) error); ok {
+		r1 = returnFunc(date)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDrawRepositoryInterface_FindLatestUnverified_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindLatestUnverified'
+type MockDrawRepositoryInterface_FindLatestUnverified_Call struct {
+	*mock.Call
+}
+
+// FindLatestUnverified is a helper method to define mock.On call
+//   - date time.Time
+func (_e *MockDrawRepositoryInterface_Expecter) FindLatestUnverified(date any) *MockDrawRepositoryInterface_FindLatestUnverified_Call {
+	return &MockDrawRepositoryInterface_FindLatestUnverified_Call{Call: _e.mock.On("FindLatestUnverified", date)}
+}
+
+func (_c *MockDrawRepositoryInterface_FindLatestUnverified_Call) Run(run func(date time.Time)) *MockDrawRepositoryInterface_FindLatestUnverified_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 time.Time
+		if args[0] != nil {
+			arg0 = args[0].(time.Time)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDrawRepositoryInterface_FindLatestUnverified_Call) Return(draw *models.Draw, err error) *MockDrawRepositoryInterface_FindLatestUnverified_Call {
+	_c.Call.Return(draw, err)
+	return _c
+}
+
+func (_c *MockDrawRepositoryInterface_FindLatestUnverified_Call) RunAndReturn(run func(date time.Time) (*models.Draw, error)) *MockDrawRepositoryInterface_FindLatestUnverified_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindNextDraw provides a mock function for the type MockDrawRepositoryInterface
 func (_mock *MockDrawRepositoryInterface) FindNextDraw(fromDate time.Time) (*models.Draw, error) {
 	ret := _mock.Called(fromDate)

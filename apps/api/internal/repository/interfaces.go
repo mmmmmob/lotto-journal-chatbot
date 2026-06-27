@@ -27,4 +27,5 @@ type DrawRepositoryInterface interface {
 	FindNextDraw(fromDate time.Time) (*models.Draw, error)
 	FindByDate(date time.Time) (*models.Draw, error)
 	FindOrCreate(date time.Time) (*models.Draw, error)
+	FindLatestUnverified(date time.Time) (*models.Draw, error)
 }

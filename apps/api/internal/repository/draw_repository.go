@@ -64,3 +64,14 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 	return &draw, nil
 }
 
+// FindLatestUnverified returns the most recent draw on or before the given date that is not yet verified.
+func (r *DrawRepository) FindLatestUnverified(date time.Time) (*models.Draw, error) {
+	var draw models.Draw
+	dateStr := date.Format("2006-01-02")
+	result := r.db.Where(DrawColDrawDate+" <= ? AND "+DrawColIsVerified+" = false", dateStr).Order(DrawColDrawDate + " DESC").First(&draw)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &draw, nil
+}
+
