@@ -1,0 +1,89 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend API for the Lotto Journal LINE Bot and verification engine.",
+        "title": "Lotto Journal API",
+        "contact": {},
+        "version": "0.2"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Checks if the API server is live and the database connection is healthy.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Perform health check",
+                "responses": {
+                    "200": {
+                        "description": "Successful health status",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Database connection is unhealthy",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/webhook": {
+            "post": {
+                "description": "Handles incoming LINE Messaging API events (follow, unfollow, message).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "LINE"
+                ],
+                "summary": "LINE Webhook Receiver",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signature header for LINE payload validation",
+                        "name": "X-Line-Signature",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "LINE Event Payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Invalid signature or request payload"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -2,6 +2,7 @@
 
 **Version:** v0.2
 **Date:** 2026-04-30
+**Updated:** 2026-05-12
 **Status:** Approved — microcopy TBD (welcome message, push message copy)
 **Based on:** ADR-001 (Option B — LINE Messaging API pivot, Accepted 2026-04-30)
 **Supersedes:** v0.1 setup placeholder
@@ -46,7 +47,7 @@ Thai lottery players who:
    - `status` = `active`
 5. Backend sends a **welcome reply message** explaining how to use the service
 
-**Message format for welcome reply:** `<NEEDS_CLARIFICATION: exact welcome message copy>` // will decided all the microcopy later
+**Message format for welcome reply:** `<NEEDS_CLARIFICATION: exact welcome message copy>` (microcopy to be finalized later)
 
 ---
 
@@ -58,8 +59,9 @@ Thai lottery players who:
 
 - Plain number — user sends `123456` or `456`
 - User can send multiple numbers in one message, separated by spaces or commas — e.g., `123456, 654321` or `456 789`
-- Each input can indicate the amount of tickets for that number by appending `xN` — e.g., `123456x2` means 2 tickets of number 123456 (accept with space or no space before `x`)`
-  (other options will be implemented later as features expand (e.g., send ticket photos or calculate sum of bought tickets for financial planning), but MVP will rely on users sending plain text messages with their ticket numbers and optional quantity)
+- Each input can indicate the ticket quantity by appending `xN` — e.g., `123456x2` means 2 tickets of number `123456` (accept with or without spaces before `x`)
+- Command (implemented): user can send `โพย` to list tickets already recorded for the upcoming draw
+- Other options will be implemented later as features expand (e.g., send ticket photos or calculate sum of bought tickets for financial planning), but MVP relies on users sending plain text messages with ticket numbers and optional quantity
 
 **Steps:**
 
@@ -75,7 +77,7 @@ Thai lottery players who:
    - `draw_id` = resolved `draws.id`
    - `type` = `L6` or `N3`
    - `number` = the parsed number
-   - `quantity` = 1 (default; if `xN` syntax is implemented, this would be set to N, otherwise 1)
+   - `quantity` = 1 by default, or set from `xN` when provided (e.g. `123456x2` → `quantity=2`)
    - `is_checked` = false
 7. Backend sends a **reply message** confirming the ticket was recorded
 
@@ -107,7 +109,7 @@ Thai lottery players who:
 5. System marks `draws.is_verified = true`
 6. System queries all `tickets` where `draw_id = current_draw_id AND is_checked = false`
 7. For each ticket, compare `tickets.number` against relevant `draw_results` rows:
-   - N6 ticket → compare against all N6 prize categories
+   - L6 ticket → compare against all L6 prize categories
    - N3 ticket → compare against all N3 prize categories
 8. For each matching ticket:
    - Insert a `user_winnings` record: `(user_id, ticket_id, draw_result_id, prize_money)`
@@ -126,9 +128,9 @@ Thai lottery players who:
 
 ### 3.4 On-demand Status Query (Optional / Post-MVP)
 
-Implement on next phase after MVP. This allows users to query the status of their tickets at any time, not just on draw days.
+Implement in a post-MVP phase. This allows users to query ticket status at any time, not only on draw days.
 
-Possible: user sends a command like "ผล" (results) to get recent draw results or their ticket status.
+Possible flow: user sends a command like "ผล" (results) to get recent draw results or their ticket status.
 
 ---
 
@@ -218,21 +220,21 @@ This migration implements the changes required by ADR-001 (Option B).
 - `provider_service`
 - `verification_type`
 
-### 5.2 Tables Unchanged (post-migration)
+### 5.2 Tables (post-migration snapshot)
 
 | Table           | Notes                                                                |
 | --------------- | -------------------------------------------------------------------- |
 | `draws`         | Unchanged                                                            |
 | `tickets`       | Unchanged; `owner_id` still references `users.id`                    |
 | `draw_results`  | Unchanged                                                            |
-| `user_winnings` | Unchanged                                                            |
-| `files`         | implement on next MVP for ticket photo upload and transcribe via OCR |
+| `user_winnings` | Includes `user_id` FK (added in migration 000002)                   |
+| `files`         | Reserved for a future MVP extension: ticket photo upload + OCR transcription |
 
-### 5.3 Enums Unchanged
+### 5.3 Enums (post-migration snapshot)
 
 | Enum             | Values                                                                                                                                                                                  |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `account_status` | `active`, `pending`, `suspended`                                                                                                                                                        |
+| `account_status` | `active`, `inactive`, `suspended`                                                                                                                                                       |
 | `lottery_type`   | `N3`, `L6`                                                                                                                                                                              |
 | `prize_type`     | `l6_first`, `l6_second`, `l6_third`, `l6_fourth`, `l6_fifth`, `l6_last2`, `l6_last3f`, `l6_last3b`, `l6_near_first`, `n3_straight_three`, `n3_shuffle`, `n3_straight_two`, `n3_special` |
 
@@ -252,13 +254,13 @@ This migration implements the changes required by ADR-001 (Option B).
 | ENV: channel secret    | `LINE_CHANNEL_SECRET`                                           |
 | ENV: access token      | `LINE_CHANNEL_ACCESS_TOKEN`                                     |
 
-(recheck the exact API endpoints and request/response formats in the official LINE Messaging API documentation to ensure accuracy -> https://developers.line.biz/en/docs/messaging-api/overview/)
+(Recheck exact API endpoints and request/response formats in the official LINE Messaging API documentation to ensure accuracy: https://developers.line.biz/en/docs/messaging-api/overview/)
 
 **Webhook event types to handle:**
 
 - `message` (type: text) — user sends a ticket number
 - `follow` — user adds the LINE Official Account as a friend
-- `unfollow` — soft delete user or mark as inactive in DB
+- `unfollow` — mark user as inactive (soft-delete behavior)
 
 **Idempotency:** LINE may re-deliver webhook events. The backend must use the event's
 `webhookEventId` (or `message.id`) to detect and skip duplicates.
@@ -270,10 +272,10 @@ This migration implements the changes required by ADR-001 (Option B).
 | Purpose         | Fetch official draw results on draw days                                            |
 | Endpoint        | [/api/lottery/getLatestLottery](https://www.glo.or.th/api/lottery/getLatestLottery) |
 | Authentication  | open                                                                                |
-| Response format | json (example on ./trunk/glo_result.json)                                           |
+| Response format | JSON (example: `./trunk/glo_result.json`)                                            |
 | Draw dates      | 1st and 16th of each month (subject to change if marked as holiday)                 |
 | Rate limits     | TBC                                                                                 |
-| Fallback        | manual feedback if API is down after x times of retry (TBD)                         |
+| Fallback        | Manual fallback if API remains unavailable after configured retries (TBD)            |
 
 ---
 
@@ -284,8 +286,8 @@ This migration implements the changes required by ADR-001 (Option B).
 | Idempotency | LINE webhook events must be deduplicated; `user_winnings` unique index prevents duplicate win records |
 | Reliability | Cronjob must retry on external API failure; log failures clearly                                      |
 | Security    | Webhook signature verified on every request; no secrets hardcoded; no PII in logs                     |
-| Scalability | TBC / But for MVP is no bigger than 100 users                                                         |
-| Monitoring  | First MVP log only on backend system terminal                                                         |
+| Scalability | TBC; MVP target is up to 100 users                                                                       |
+| Monitoring  | MVP uses backend terminal logs only                                                                    |
 | Timezone    | All draw-day scheduling uses Bangkok time (GMT +0700)                                                 |
 
 ---
@@ -297,8 +299,12 @@ This migration implements the changes required by ADR-001 (Option B).
 - Admin dashboard or back-office web UI
 - Historical statistics or analytics for users
 - Web UI for end users (apps/web removed per ADR-001)
-- Multiple notification channels (only LINE)
+- Multiple notification channels simultaneously
 - On-demand status query from users (flow 3.4 — deferred post-MVP)
+- **Localization & Multi-Language Support (EN/TH):** Out of scope for MVP (Thai language only). Future expansion plans include:
+  * Fetching user locale preference dynamically via LINE Profile API (`profile.Language` field returns `"th"` or `"en"`).
+  * Supporting custom command overrides (e.g., `EN` / `TH` settings commands).
+  * Storing language preferences in a new `users.language` database column, and loading corresponding localization dictionaries dynamically.
 - **LIFF (LINE Front-end Framework) web app** — intentionally deferred, not abandoned.
   LIFF would run inside LINE's in-app browser and complement the chatbot (e.g. ticket history
   view, result display, settings). When added it will live in `apps/liff` alongside `apps/api`

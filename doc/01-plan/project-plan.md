@@ -64,9 +64,9 @@ Key flows:
 | Milestone | Description                                               | Source Reference              | Status      |
 | --------- | --------------------------------------------------------- | ----------------------------- | ----------- |
 | M0        | Architecture decided + formal source docs written         | ADR-001, v0.2/01-prd.md       | Done        |
-| M1        | User identity redesign + LINE webhook + ticket submission | v0.2/01-prd.md §3.1–3.2, §5.1 | In Progress |
-| M2        | Cronjob: result fetch + comparison + win detection        | v0.2/01-prd.md §3.3, §6.2     | Next        |
-| M3        | Win notification via LINE push message                    | v0.2/01-prd.md §3.3, §6.1     | Pending     |
+| M1        | User identity redesign + LINE webhook + ticket submission | v0.2/01-prd.md §3.1–3.2, §5.1 | Done        |
+| M2        | Cronjob: result fetch + comparison + win detection        | v0.2/01-prd.md §3.3, §6.2     | Done        |
+| M3        | Win notification via LINE push message                    | v0.2/01-prd.md §3.3, §6.1     | In Progress |
 | M4        | Hardening: idempotency, error handling, testing, launch   | v0.2/01-prd.md §7             | Pending     |
 
 ---

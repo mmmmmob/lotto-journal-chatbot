@@ -1,0 +1,60 @@
+basePath: /
+host: localhost:3000
+info:
+  contact: {}
+  description: Backend API for the Lotto Journal LINE Bot and verification engine.
+  title: Lotto Journal API
+  version: "0.2"
+paths:
+  /health:
+    get:
+      description: Checks if the API server is live and the database connection is
+        healthy.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful health status
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Database connection is unhealthy
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Perform health check
+      tags:
+      - System
+  /webhook:
+    post:
+      consumes:
+      - application/json
+      description: Handles incoming LINE Messaging API events (follow, unfollow, message).
+      parameters:
+      - description: Signature header for LINE payload validation
+        in: header
+        name: X-Line-Signature
+        required: true
+        type: string
+      - description: LINE Event Payload
+        in: body
+        name: body
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid signature or request payload
+        "500":
+          description: Internal Server Error
+      summary: LINE Webhook Receiver
+      tags:
+      - LINE
+swagger: "2.0"

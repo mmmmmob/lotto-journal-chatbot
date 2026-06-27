@@ -1,19 +1,19 @@
 <!-- AI-CONTEXT
-last_session: 2026-05-11 (session 14)
-tool: GPT-5.3-Codex
-completed: [T-017, T-019]
+last_session: 2026-06-27 (session 16)
+tool: Antigravity
+completed: [T-003, T-023]
 in_progress: []
-checkpoint: draw upsert now atomic
-next_from_last: T-003
-notes: Replaced DrawRepository.FirstOrCreate with OnConflict upsert and added UX improvements [FOUND-IN-PASSING]: loading indicator + personalized follow welcome using profile name. test:api and build pass.
-deep_context: doc/06-extensions/T-004-migration-002-design.md
+checkpoint: Swagger, Mockery, DB lifecycle automation, and CronScheduler refactoring complete
+next_from_last: T-022
+notes: Extracted interfaces, integrated Mockery v3 and Fiber v3 swaggo, automated dev db startup/shutdown, and refactored CronScheduler to robfig/cron/v3 with env overrides.
+deep_context: doc/00-source/versions/v0.2/01-prd.md
 -->
 
 ---
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-05-11 (session 14)
+Last updated: 2026-06-27 (session 16)
 
 ---
 
@@ -23,6 +23,48 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-06-27 — Session 16 — [Antigravity]
+
+- **Session summary:** T-023 completed. Mockery v3 and Swagger documentation setups are fully integrated. Bypassed Turborepo in `dev` to resolve signal interception issues, and automated database startup/shutdown on `pnpm dev` with health-checks. Refactored `CronScheduler` to use `robfig/cron/v3` with environmental overrides for cron schedules.
+- **Work done:**
+  - Extracted repository and service interfaces (`interfaces.go`).
+  - Configured Mockery v3 with `.mockery.yml` and generated type mocks.
+  - Added Swagger specs and Fiber v3 swaggo middleware, restricted to non-production env.
+  - Automated `swag init` execution in `.air.toml` during hot-reload builds, excluding `docs` and `mocks` to prevent build loops.
+  - Integrated `pnpm swagger` and `pnpm mock` script bindings.
+  - Configured parent shell traps in root `package.json` to handle clean database shutdowns on `Ctrl+C`.
+  - Refactored `CronScheduler` to use `robfig/cron/v3` and added support for `CRON_SYNC_SCHEDULE` and `CRON_VERIFY_SCHEDULE` env variables.
+  - Updated root and package READMEs to document environment variables, new targets, and dev lifecycle.
+- **Validation evidence:**
+  - `pnpm test:api` passes successfully
+  - `pnpm build` passes successfully
+  - Graceful start/stop tested and verified with single `Ctrl+C`
+- **Tasks changed:**
+  - T-023: done
+- **Next priority:** T-022 (LINE win push notifications)
+
+---
+
+### 2026-06-27 — Session 15 — [Antigravity]
+
+- **Session summary:** T-003 completed. The cronjob scheduler, GLO result checker, schedule caching database-first resolver, and ticket checking/win comparison engine are fully implemented.
+- **Work done:**
+  - Created migration `000004_widen_winning_number` to expand `draw_results.winning_number` from `varchar(6)` to `varchar(12)` for N3 Jackpot.
+  - Implemented `LotteryClient` in `apps/api/internal/client/lottery_client.go` to connect to GLO API endpoints with retries and duplicate date filtering.
+  - Updated `DrawService` in `apps/api/internal/service/draw_service.go` to resolve draw dates database-first, caching GLO schedule dates in the database and keeping a mathematical fallback.
+  - Created `ResultService` in `apps/api/internal/service/result_service.go` for checking L6 and N3 ticket numbers and creating `user_winnings` in a transaction.
+  - Created `CronScheduler` in `apps/api/internal/service/cron_scheduler.go` to run background checking (at 16:00 draw days) and schedule syncing (daily at 3 AM + startup) in Bangkok timezone.
+  - Wired all dependencies and started the scheduler goroutine in `apps/api/app/main.go`.
+  - Created unit tests in `apps/api/internal/service/result_service_test.go`.
+- **Validation evidence:**
+  - `pnpm test:api` passes successfully (with DB integration transaction verification)
+  - `pnpm build` passes successfully
+- **Tasks changed:**
+  - T-003: done
+- **Next priority:** T-022 (LINE win push notifications)
 
 ---
 

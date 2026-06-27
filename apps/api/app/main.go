@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -10,14 +11,24 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/timeout"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 
+	"lotto-journal/api/internal/client"
 	"lotto-journal/api/internal/config"
 	"lotto-journal/api/internal/database"
 	"lotto-journal/api/internal/handler"
 	"lotto-journal/api/internal/repository"
 	"lotto-journal/api/internal/service"
 	"lotto-journal/api/middlewares"
+
+	_ "lotto-journal/api/docs"
+
+	"github.com/gofiber/contrib/v3/swaggo"
 )
 
+// @title Lotto Journal API
+// @version 0.2
+// @description Backend API for the Lotto Journal LINE Bot and verification engine.
+// @host localhost:3000
+// @BasePath /
 func main() {
 	// Load config
 	cfg := config.LoadConfig()
@@ -32,15 +43,28 @@ func main() {
 		log.Fatalf("Failed to create LINE bot client: %v", err)
 	}
 
+	// GLO Lottery client
+	lotteryClient := client.NewLotteryClient("")
+
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
 	drawRepo := repository.NewDrawRepository(db)
 	ticketRepo := repository.NewTicketRepository(db)
 	webhookRepo := repository.NewWebhookEventRepository(db)
+	drawResultRepo := repository.NewDrawResultRepository(db)
+	winningRepo := repository.NewUserWinningRepository(db)
 
 	// Services
 	userSvc := service.NewUserService(userRepo)
-	ticketSvc := service.NewTicketService(ticketRepo, drawRepo)
+	drawSvc := service.NewDrawService(drawRepo, lotteryClient)
+	ticketSvc := service.NewTicketService(ticketRepo, drawRepo, drawSvc)
+	resultSvc := service.NewResultService(db, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
+
+	// Start background cron scheduler
+	scheduler := service.NewCronScheduler(drawSvc, resultSvc, cfg.CronSyncSchedule, cfg.CronVerifySchedule)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go scheduler.Start(ctx)
 
 	// Handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -65,6 +89,11 @@ func main() {
 
 	// Routes
 	app.Get("/health", healthHandler.Handle)
+
+	if cfg.APP_ENV != "production" {
+		log.Println("[main] Swagger UI available at /swagger/index.html")
+		app.Get("/swagger/*", swaggo.HandlerDefault)
+	}
 
 	// timeout.New wraps the handler: if it does not return within 25 s, Fiber responds 408.
 	// Applied only to /webhook — other routes (e.g. /health) have no artificial deadline.

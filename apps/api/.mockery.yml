@@ -1,0 +1,16 @@
+all: true
+dir: 'internal/mocks'
+force-file-write: true
+structname: 'Mock{{.InterfaceName}}'
+pkgname: 'mocks'
+filename: 'Mock{{.InterfaceName}}.go'
+packages:
+  lotto-journal/api/internal/service:
+    interfaces:
+      TicketServiceInterface:
+      UserServiceInterface:
+  lotto-journal/api/internal/repository:
+    interfaces:
+      UserRepositoryInterface:
+      TicketRepositoryInterface:
+      DrawRepositoryInterface:
