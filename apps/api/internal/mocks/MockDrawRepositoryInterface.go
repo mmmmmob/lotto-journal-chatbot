@@ -8,7 +8,9 @@ import (
 	"lotto-journal/api/internal/models"
 	"time"
 
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // NewMockDrawRepositoryInterface creates a new instance of MockDrawRepositoryInterface. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -282,6 +284,63 @@ func (_c *MockDrawRepositoryInterface_FindOrCreate_Call) Return(draw *models.Dra
 }
 
 func (_c *MockDrawRepositoryInterface_FindOrCreate_Call) RunAndReturn(run func(date time.Time) (*models.Draw, error)) *MockDrawRepositoryInterface_FindOrCreate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkVerifiedInTransaction provides a mock function for the type MockDrawRepositoryInterface
+func (_mock *MockDrawRepositoryInterface) MarkVerifiedInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
+	ret := _mock.Called(tx, drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkVerifiedInTransaction")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*gorm.DB, uuid.UUID) error); ok {
+		r0 = returnFunc(tx, drawID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkVerifiedInTransaction'
+type MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call struct {
+	*mock.Call
+}
+
+// MarkVerifiedInTransaction is a helper method to define mock.On call
+//   - tx *gorm.DB
+//   - drawID uuid.UUID
+func (_e *MockDrawRepositoryInterface_Expecter) MarkVerifiedInTransaction(tx any, drawID any) *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call {
+	return &MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call{Call: _e.mock.On("MarkVerifiedInTransaction", tx, drawID)}
+}
+
+func (_c *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call) Run(run func(tx *gorm.DB, drawID uuid.UUID)) *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *gorm.DB
+		if args[0] != nil {
+			arg0 = args[0].(*gorm.DB)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call) Return(err error) *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call) RunAndReturn(run func(tx *gorm.DB, drawID uuid.UUID) error) *MockDrawRepositoryInterface_MarkVerifiedInTransaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

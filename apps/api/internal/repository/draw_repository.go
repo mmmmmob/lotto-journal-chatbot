@@ -3,6 +3,7 @@ package repository
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -76,5 +77,10 @@ func (r *DrawRepository) FindLatestUnverified(date time.Time) (*models.Draw, err
 		return nil, result.Error
 	}
 	return &draw, nil
+}
+
+// MarkVerifiedInTransaction marks a draw as verified inside a transaction.
+func (r *DrawRepository) MarkVerifiedInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
+	return tx.Model(&models.Draw{}).Where("id = ?", drawID).Update(DrawColIsVerified, true).Error
 }
 

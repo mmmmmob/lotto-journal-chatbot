@@ -19,19 +19,19 @@ import (
 type ResultService struct {
 	db             *gorm.DB
 	client         *client.LotteryClient
-	drawRepo       *repository.DrawRepository
-	drawResultRepo *repository.DrawResultRepository
-	ticketRepo     *repository.TicketRepository
-	winningRepo    *repository.UserWinningRepository
+	drawRepo       repository.DrawRepositoryInterface
+	drawResultRepo repository.DrawResultRepositoryInterface
+	ticketRepo     repository.TicketRepositoryInterface
+	winningRepo    repository.UserWinningRepositoryInterface
 }
 
 func NewResultService(
 	db *gorm.DB,
 	client *client.LotteryClient,
-	drawRepo *repository.DrawRepository,
-	drawResultRepo *repository.DrawResultRepository,
-	ticketRepo *repository.TicketRepository,
-	winningRepo *repository.UserWinningRepository,
+	drawRepo repository.DrawRepositoryInterface,
+	drawResultRepo repository.DrawResultRepositoryInterface,
+	ticketRepo repository.TicketRepositoryInterface,
+	winningRepo repository.UserWinningRepositoryInterface,
 ) *ResultService {
 	return &ResultService{
 		db:             db,
@@ -95,14 +95,27 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 
 	// 5. Run checking in a database transaction
 	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// Clean up any existing winnings, results, or checked statuses for this draw to ensure absolute idempotency
+		if err := s.winningRepo.DeleteByDrawIDInTransaction(tx, draw.ID); err != nil {
+			return fmt.Errorf("clear existing user winnings: %w", err)
+		}
+
+		if err := s.drawResultRepo.DeleteByDrawIDInTransaction(tx, draw.ID); err != nil {
+			return fmt.Errorf("clear existing draw results: %w", err)
+		}
+
+		if err := s.ticketRepo.ResetCheckedStatusByDrawIDInTransaction(tx, draw.ID); err != nil {
+			return fmt.Errorf("reset tickets checked status: %w", err)
+		}
+
 		// Save all parsed draw results (handles GORM UUID generation in-place)
-		if err := tx.CreateInBatches(drawResults, 100).Error; err != nil {
+		if err := s.drawResultRepo.CreateInBatchesInTransaction(tx, drawResults); err != nil {
 			return fmt.Errorf("bulk insert draw results: %w", err)
 		}
 
 		// Query unchecked tickets
-		var uncheckedTickets []*models.Ticket
-		if err := tx.Where("draw_id = ? AND is_checked = false", draw.ID).Find(&uncheckedTickets).Error; err != nil {
+		uncheckedTickets, err := s.ticketRepo.FindUncheckedInTransaction(tx, draw.ID)
+		if err != nil {
 			return fmt.Errorf("retrieve unchecked tickets: %w", err)
 		}
 
@@ -212,7 +225,7 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 
 		// Save winnings (if any)
 		if len(winnings) > 0 {
-			if err := tx.CreateInBatches(winnings, 100).Error; err != nil {
+			if err := s.winningRepo.CreateInBatchesInTransaction(tx, winnings); err != nil {
 				return fmt.Errorf("bulk insert user winnings: %w", err)
 			}
 		}
@@ -225,7 +238,7 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 		}
 
 		// Mark draw verified
-		if err := tx.Model(&models.Draw{}).Where("id = ?", draw.ID).Update("is_verified", true).Error; err != nil {
+		if err := s.drawRepo.MarkVerifiedInTransaction(tx, draw.ID); err != nil {
 			return fmt.Errorf("mark draw verified: %w", err)
 		}
 

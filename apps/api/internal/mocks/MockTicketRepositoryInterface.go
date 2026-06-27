@@ -152,6 +152,74 @@ func (_c *MockTicketRepositoryInterface_FindUnchecked_Call) RunAndReturn(run fun
 	return _c
 }
 
+// FindUncheckedInTransaction provides a mock function for the type MockTicketRepositoryInterface
+func (_mock *MockTicketRepositoryInterface) FindUncheckedInTransaction(tx *gorm.DB, drawID uuid.UUID) ([]*models.Ticket, error) {
+	ret := _mock.Called(tx, drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindUncheckedInTransaction")
+	}
+
+	var r0 []*models.Ticket
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(*gorm.DB, uuid.UUID) ([]*models.Ticket, error)); ok {
+		return returnFunc(tx, drawID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(*gorm.DB, uuid.UUID) []*models.Ticket); ok {
+		r0 = returnFunc(tx, drawID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.Ticket)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(*gorm.DB, uuid.UUID) error); ok {
+		r1 = returnFunc(tx, drawID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTicketRepositoryInterface_FindUncheckedInTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUncheckedInTransaction'
+type MockTicketRepositoryInterface_FindUncheckedInTransaction_Call struct {
+	*mock.Call
+}
+
+// FindUncheckedInTransaction is a helper method to define mock.On call
+//   - tx *gorm.DB
+//   - drawID uuid.UUID
+func (_e *MockTicketRepositoryInterface_Expecter) FindUncheckedInTransaction(tx any, drawID any) *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call {
+	return &MockTicketRepositoryInterface_FindUncheckedInTransaction_Call{Call: _e.mock.On("FindUncheckedInTransaction", tx, drawID)}
+}
+
+func (_c *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call) Run(run func(tx *gorm.DB, drawID uuid.UUID)) *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *gorm.DB
+		if args[0] != nil {
+			arg0 = args[0].(*gorm.DB)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call) Return(tickets []*models.Ticket, err error) *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call {
+	_c.Call.Return(tickets, err)
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call) RunAndReturn(run func(tx *gorm.DB, drawID uuid.UUID) ([]*models.Ticket, error)) *MockTicketRepositoryInterface_FindUncheckedInTransaction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockTicketRepositoryInterface
 func (_mock *MockTicketRepositoryInterface) List(drawID uuid.UUID, userID uuid.UUID) ([]*models.Ticket, error) {
 	ret := _mock.Called(drawID, userID)
@@ -273,6 +341,63 @@ func (_c *MockTicketRepositoryInterface_MarkCheckedInTransaction_Call) Return(er
 }
 
 func (_c *MockTicketRepositoryInterface_MarkCheckedInTransaction_Call) RunAndReturn(run func(tx *gorm.DB, ticketIDs []uuid.UUID) error) *MockTicketRepositoryInterface_MarkCheckedInTransaction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResetCheckedStatusByDrawIDInTransaction provides a mock function for the type MockTicketRepositoryInterface
+func (_mock *MockTicketRepositoryInterface) ResetCheckedStatusByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
+	ret := _mock.Called(tx, drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResetCheckedStatusByDrawIDInTransaction")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*gorm.DB, uuid.UUID) error); ok {
+		r0 = returnFunc(tx, drawID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetCheckedStatusByDrawIDInTransaction'
+type MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call struct {
+	*mock.Call
+}
+
+// ResetCheckedStatusByDrawIDInTransaction is a helper method to define mock.On call
+//   - tx *gorm.DB
+//   - drawID uuid.UUID
+func (_e *MockTicketRepositoryInterface_Expecter) ResetCheckedStatusByDrawIDInTransaction(tx any, drawID any) *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call {
+	return &MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call{Call: _e.mock.On("ResetCheckedStatusByDrawIDInTransaction", tx, drawID)}
+}
+
+func (_c *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call) Run(run func(tx *gorm.DB, drawID uuid.UUID)) *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *gorm.DB
+		if args[0] != nil {
+			arg0 = args[0].(*gorm.DB)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call) Return(err error) *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call) RunAndReturn(run func(tx *gorm.DB, drawID uuid.UUID) error) *MockTicketRepositoryInterface_ResetCheckedStatusByDrawIDInTransaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

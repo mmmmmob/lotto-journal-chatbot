@@ -44,12 +44,24 @@ func (r *TicketRepository) FindUnchecked(drawID uuid.UUID) ([]*models.Ticket, er
 	return tickets, result.Error
 }
 
+// FindUncheckedInTransaction retrieves unchecked tickets using a transaction object.
+func (r *TicketRepository) FindUncheckedInTransaction(tx *gorm.DB, drawID uuid.UUID) ([]*models.Ticket, error) {
+	var tickets []*models.Ticket
+	result := tx.Where(TicketColDrawID+" = ? AND "+TicketColIsChecked+" = false", drawID).Find(&tickets)
+	return tickets, result.Error
+}
+
 // MarkCheckedInTransaction updates the status of the given tickets to checked.
 func (r *TicketRepository) MarkCheckedInTransaction(tx *gorm.DB, ticketIDs []uuid.UUID) error {
 	if len(ticketIDs) == 0 {
 		return nil
 	}
 	return tx.Model(&models.Ticket{}).Where(TicketColID+" IN ?", ticketIDs).Update(TicketColIsChecked, true).Error
+}
+
+// ResetCheckedStatusByDrawIDInTransaction resets the checked status of all tickets for a draw.
+func (r *TicketRepository) ResetCheckedStatusByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
+	return tx.Model(&models.Ticket{}).Where(TicketColDrawID+" = ?", drawID).Update(TicketColIsChecked, false).Error
 }
 
 
