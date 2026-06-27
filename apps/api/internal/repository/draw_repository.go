@@ -36,12 +36,15 @@ func (r *DrawRepository) FindNextDraw(fromDate time.Time) (*models.Draw, error) 
 
 // FindByDate returns the draw for the given date, or nil + gorm.ErrRecordNotFound.
 func (r *DrawRepository) FindByDate(date time.Time) (*models.Draw, error) {
-	var draw models.Draw
-	result := r.db.Where(DrawColDrawDate+" = ?", date.Format("2006-01-02")).First(&draw)
+	var draws []models.Draw
+	result := r.db.Where(DrawColDrawDate+" = ?", date.Format("2006-01-02")).Limit(1).Find(&draws)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &draw, nil
+	if len(draws) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return &draws[0], nil
 }
 
 // FindOrCreate returns the existing draw for the given date or creates a new one.
