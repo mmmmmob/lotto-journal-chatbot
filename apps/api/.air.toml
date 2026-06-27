@@ -3,9 +3,9 @@ tmp_dir = "tmp"
 
 [build]
   bin = "./tmp/main"
-  cmd = "go build -o ./tmp/main ./app/main.go" 
+  cmd = "go run github.com/swaggo/swag/cmd/swag@latest init -g app/main.go --ot go,json,yaml && go build -o ./tmp/main ./app/main.go" 
   delay = 1000
-  exclude_dir = ["tmp", "dist", "vendor"]
+  exclude_dir = ["tmp", "dist", "vendor", "docs", "internal/mocks"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false

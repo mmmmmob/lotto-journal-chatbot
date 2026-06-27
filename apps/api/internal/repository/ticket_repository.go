@@ -7,6 +7,16 @@ import (
 	"lotto-journal/api/internal/models"
 )
 
+const (
+	TicketColID        = "id"
+	TicketColOwnerID   = "owner_id"
+	TicketColDrawID    = "draw_id"
+	TicketColType      = "type"
+	TicketColNumber    = "number"
+	TicketColQuantity  = "quantity"
+	TicketColIsChecked = "is_checked"
+)
+
 type TicketRepository struct {
 	db *gorm.DB
 }
@@ -23,6 +33,23 @@ func (r *TicketRepository) Create(ticket *models.Ticket) error {
 // List all tickets user hold for each draw
 func (r *TicketRepository) List(drawID uuid.UUID, userID uuid.UUID) ([]*models.Ticket, error) {
 	var tickets []*models.Ticket
-	result := r.db.Where("owner_id = ? AND draw_id = ?", userID, drawID).Find(&tickets)
+	result := r.db.Where(TicketColOwnerID+" = ? AND "+TicketColDrawID+" = ?", userID, drawID).Find(&tickets)
 	return tickets, result.Error
 }
+
+// FindUnchecked retrieves all tickets for a draw that have not been checked yet.
+func (r *TicketRepository) FindUnchecked(drawID uuid.UUID) ([]*models.Ticket, error) {
+	var tickets []*models.Ticket
+	result := r.db.Where(TicketColDrawID+" = ? AND "+TicketColIsChecked+" = false", drawID).Find(&tickets)
+	return tickets, result.Error
+}
+
+// MarkCheckedInTransaction updates the status of the given tickets to checked.
+func (r *TicketRepository) MarkCheckedInTransaction(tx *gorm.DB, ticketIDs []uuid.UUID) error {
+	if len(ticketIDs) == 0 {
+		return nil
+	}
+	return tx.Model(&models.Ticket{}).Where(TicketColID+" IN ?", ticketIDs).Update(TicketColIsChecked, true).Error
+}
+
+

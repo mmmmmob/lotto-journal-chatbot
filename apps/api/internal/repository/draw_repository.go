@@ -9,6 +9,12 @@ import (
 	"lotto-journal/api/internal/models"
 )
 
+const (
+	DrawColID         = "id"
+	DrawColDrawDate   = "draw_date"
+	DrawColIsVerified = "is_verified"
+)
+
 type DrawRepository struct {
 	db *gorm.DB
 }
@@ -17,10 +23,21 @@ func NewDrawRepository(db *gorm.DB) *DrawRepository {
 	return &DrawRepository{db: db}
 }
 
+// FindNextDraw returns the first unverified draw scheduled on or after the given date.
+func (r *DrawRepository) FindNextDraw(fromDate time.Time) (*models.Draw, error) {
+	var draw models.Draw
+	dateStr := fromDate.Format("2006-01-02")
+	result := r.db.Where(DrawColDrawDate+" >= ? AND "+DrawColIsVerified+" = false", dateStr).Order(DrawColDrawDate + " ASC").First(&draw)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &draw, nil
+}
+
 // FindByDate returns the draw for the given date, or nil + gorm.ErrRecordNotFound.
 func (r *DrawRepository) FindByDate(date time.Time) (*models.Draw, error) {
 	var draw models.Draw
-	result := r.db.Where("draw_date = ?", date.Format("2006-01-02")).First(&draw)
+	result := r.db.Where(DrawColDrawDate+" = ?", date.Format("2006-01-02")).First(&draw)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -36,9 +53,9 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 	draw := models.Draw{DrawDate: dateOnly}
 
 	result := r.db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "draw_date"}},
+		Columns: []clause.Column{{Name: DrawColDrawDate}},
 		// no-op update to force PostgreSQL RETURNING on conflict
-		DoUpdates: clause.AssignmentColumns([]string{"draw_date"}),
+		DoUpdates: clause.AssignmentColumns([]string{DrawColDrawDate}),
 	}).Create(&draw)
 	if result.Error != nil {
 		return nil, result.Error
@@ -46,3 +63,15 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 
 	return &draw, nil
 }
+
+// FindLatestUnverified returns the most recent draw on or before the given date that is not yet verified.
+func (r *DrawRepository) FindLatestUnverified(date time.Time) (*models.Draw, error) {
+	var draw models.Draw
+	dateStr := date.Format("2006-01-02")
+	result := r.db.Where(DrawColDrawDate+" <= ? AND "+DrawColIsVerified+" = false", dateStr).Order(DrawColDrawDate + " DESC").First(&draw)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &draw, nil
+}
+

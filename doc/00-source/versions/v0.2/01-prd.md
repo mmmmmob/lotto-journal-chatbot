@@ -299,8 +299,12 @@ This migration implements the changes required by ADR-001 (Option B).
 - Admin dashboard or back-office web UI
 - Historical statistics or analytics for users
 - Web UI for end users (apps/web removed per ADR-001)
-- Multiple notification channels (only LINE)
+- Multiple notification channels simultaneously
 - On-demand status query from users (flow 3.4 — deferred post-MVP)
+- **Localization & Multi-Language Support (EN/TH):** Out of scope for MVP (Thai language only). Future expansion plans include:
+  * Fetching user locale preference dynamically via LINE Profile API (`profile.Language` field returns `"th"` or `"en"`).
+  * Supporting custom command overrides (e.g., `EN` / `TH` settings commands).
+  * Storing language preferences in a new `users.language` database column, and loading corresponding localization dictionaries dynamically.
 - **LIFF (LINE Front-end Framework) web app** — intentionally deferred, not abandoned.
   LIFF would run inside LINE's in-app browser and complement the chatbot (e.g. ticket history
   view, result display, settings). When added it will live in `apps/liff` alongside `apps/api`

@@ -25,16 +25,16 @@ import (
 type LineHandler struct {
 	channelSecret string
 	bot           *messaging_api.MessagingApiAPI
-	userSvc       *service.UserService
-	ticketSvc     *service.TicketService
+	userSvc       service.UserServiceInterface
+	ticketSvc     service.TicketServiceInterface
 	webhookRepo   *repository.WebhookEventRepository
 }
 
 func NewLineHandler(
 	channelSecret string,
 	bot *messaging_api.MessagingApiAPI,
-	userSvc *service.UserService,
-	ticketSvc *service.TicketService,
+	userSvc service.UserServiceInterface,
+	ticketSvc service.TicketServiceInterface,
 	webhookRepo *repository.WebhookEventRepository,
 ) *LineHandler {
 	return &LineHandler{
@@ -47,8 +47,18 @@ func NewLineHandler(
 }
 
 // Handle is the Fiber route handler for POST /webhook.
-// It builds a synthetic *http.Request so the LINE SDK can verify the signature
-// and parse the event payload (the SDK expects net/http; Fiber uses fasthttp).
+//
+// @Summary LINE Webhook Receiver
+// @Description Handles incoming LINE Messaging API events (follow, unfollow, message).
+// @Tags LINE
+// @Accept json
+// @Produce json
+// @Param X-Line-Signature header string true "Signature header for LINE payload validation"
+// @Param body body string true "LINE Event Payload"
+// @Success 200 "OK"
+// @Failure 400 "Invalid signature or request payload"
+// @Failure 500 "Internal Server Error"
+// @Router /webhook [post]
 func (h *LineHandler) Handle(c fiber.Ctx) error {
 	req := &http.Request{
 		Method: "POST",

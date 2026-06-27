@@ -11,6 +11,8 @@
     "migrate:up:one": "make migrate-up-one",
     "migrate:down": "make migrate-down",
     "migrate:down:all": "make migrate-down-all",
-    "migrate:version": "make migrate-version"
+    "migrate:version": "make migrate-version",
+    "swagger": "make swagger",
+    "mock": "make mock"
   }
 }

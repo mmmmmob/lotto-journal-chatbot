@@ -13,11 +13,13 @@ All commands run from `apps/api/`.
 
 ### App
 
-| Command      | What it does                    |
-| ------------ | ------------------------------- |
-| `make run`   | Start API with hot reload (air) |
-| `make build` | Build binary to `dist/`         |
-| `make clean` | Remove `tmp/` and `dist/`       |
+| Command      | What it does                               |
+| ------------ | ------------------------------------------ |
+| `make run`   | Start API with hot reload (air)            |
+| `make build` | Build binary to `dist/`                    |
+| `make clean` | Remove `tmp/` and `dist/`                  |
+| `make swagger`| Generate Swagger spec files under `docs/` |
+| `make mock`  | Generate Interface mocks under `mocks/`    |
 
 ### Database
 
@@ -41,10 +43,11 @@ All commands run from `apps/api/`.
 
 ## Routes
 
-| Method | Path       | Handler         | Timeout | Description                                        |
-| ------ | ---------- | --------------- | ------- | -------------------------------------------------- |
-| `POST` | `/webhook` | `LineHandler`   | 25 s    | LINE webhook receiver — all chatbot events         |
-| `GET`  | `/health`  | `HealthHandler` | none    | Liveness + DB readiness; `200` ok / `503` degraded |
+| Method | Path         | Handler         | Timeout | Description                                                 |
+| ------ | ------------ | --------------- | ------- | ----------------------------------------------------------- |
+| `POST` | `/webhook`   | `LineHandler`   | 25 s    | LINE webhook receiver — all chatbot events                  |
+| `GET`  | `/health`    | `HealthHandler` | none    | Liveness + DB readiness; `200` ok / `503` degraded          |
+| `GET`  | `/swagger/*` | Swaggo Handler  | none    | Swagger UI documentation (available in dev/staging only)    |
 
 ---
 
@@ -91,15 +94,19 @@ Log line format:
 apps/api/
 ├── app/
 │   └── main.go              # Entry point
+├── docs/                    # Swagger spec files
 ├── internal/
+│   ├── client/              # GLO API client
 │   ├── config/              # Env config loader
 │   ├── database/            # DB connection
 │   ├── handler/             # HTTP handlers
+│   ├── mocks/               # Generated mockery files
 │   ├── models/              # GORM models
 │   ├── repository/          # DB access layer
 │   └── service/             # Business logic
 ├── migrations/              # SQL migration files
 ├── middlewares/             # Fiber middlewares
+├── .mockery.yml             # Mockery v3 config
 ├── Makefile
 └── go.mod
 ```
@@ -119,8 +126,9 @@ apps/api/
 
 ### Migration history
 
-| Version | File                    | Description                                                                                      |
-| ------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| 000001  | `000001_init_schema`    | Initial schema — all tables, enums, indexes                                                      |
-| 000002  | `000002_line_identity`  | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
-| 000003  | `000003_webhook_events` | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
+| Version | File                            | Description                                                                                      |
+| ------- | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 000001  | `000001_init_schema`            | Initial schema — all tables, enums, indexes                                                      |
+| 000002  | `000002_line_identity`          | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
+| 000003  | `000003_webhook_events`         | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
+| 000004  | `000004_widen_winning_number`   | Widen `draw_results.winning_number` to `varchar(12)` for N3 Jackpot                              |

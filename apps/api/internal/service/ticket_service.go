@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -34,15 +33,18 @@ type ParsedTicket struct {
 type TicketService struct {
 	ticketRepo *repository.TicketRepository
 	drawRepo   *repository.DrawRepository
+	drawSvc    *DrawService
 }
 
 func NewTicketService(
 	ticketRepo *repository.TicketRepository,
 	drawRepo *repository.DrawRepository,
+	drawSvc *DrawService,
 ) *TicketService {
 	return &TicketService{
 		ticketRepo: ticketRepo,
 		drawRepo:   drawRepo,
+		drawSvc:    drawSvc,
 	}
 }
 
@@ -130,7 +132,7 @@ func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedT
 		return nil, invalid, nil
 	}
 
-	draw, err := s.drawRepo.FindOrCreate(NextDrawDate(time.Now()))
+	draw, err := s.drawSvc.FindOrCreateUpcoming()
 	if err != nil {
 		return nil, invalid, fmt.Errorf("resolve upcoming draw: %w", err)
 	}
@@ -153,7 +155,7 @@ func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedT
 
 // ListTickets find the nearest draw date from current time and call List method on ticketRepo to return list of tickets user holds
 func (s *TicketService) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error) {
-	draw, err := s.drawRepo.FindOrCreate(NextDrawDate(time.Now()))
+	draw, err := s.drawSvc.FindOrCreateUpcoming()
 	if err != nil {
 		return nil, fmt.Errorf("resolve upcoming draw: %w", err)
 	}
