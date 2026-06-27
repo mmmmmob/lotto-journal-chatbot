@@ -48,7 +48,7 @@ func (s *CronScheduler) Start(ctx context.Context) {
 			log.Printf("[scheduler] Startup draw schedule sync failed: %v", err)
 		}
 		log.Println("[scheduler] Executing startup results catch-up check...")
-		s.checkResults(ctx)
+		s.checkResultsStartup(ctx)
 	}()
 
 	// 2. Initialize robfig/cron with Bangkok location and default panic recovery chain
@@ -86,6 +86,33 @@ func (s *CronScheduler) Start(ctx context.Context) {
 	log.Println("[scheduler] Background scheduler stopped.")
 }
 
+func (s *CronScheduler) checkResultsStartup(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[scheduler] panic in checkResultsStartup: %v\n%s", r, debug.Stack())
+		}
+	}()
+
+	bkkNow := time.Now().In(bangkokLoc)
+	todayUTC := time.Date(bkkNow.Year(), bkkNow.Month(), bkkNow.Day(), 0, 0, 0, 0, time.UTC)
+
+	// Check if there are any unverified draws on or before today
+	_, err := s.drawService.repo.FindLatestUnverified(todayUTC)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Println("[scheduler] No unverified draws to catch up.")
+			return // Nothing to catch up!
+		}
+		log.Printf("[scheduler] Error querying unverified draws for startup: %v", err)
+		return
+	}
+
+	log.Printf("[scheduler] Unverified draws detected. Checking latest GLO results...")
+	if err := s.resultService.VerifyLatestDrawResults(ctx); err != nil {
+		log.Printf("[scheduler] Draw results verification failed: %v", err)
+	}
+}
+
 func (s *CronScheduler) checkResults(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -96,18 +123,22 @@ func (s *CronScheduler) checkResults(ctx context.Context) {
 	bkkNow := time.Now().In(bangkokLoc)
 	todayUTC := time.Date(bkkNow.Year(), bkkNow.Month(), bkkNow.Day(), 0, 0, 0, 0, time.UTC)
 
-	// Use DrawRepository via drawService to query the latest unverified draw on or before today
-	draw, err := s.drawService.repo.FindLatestUnverified(todayUTC)
+	// Only call GLO if today is a scheduled draw day and is unverified
+	draw, err := s.drawService.repo.FindByDate(todayUTC)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return // No unverified draws on or before today
+			return // Today is not a draw day, do nothing.
 		}
-		log.Printf("[scheduler] Error querying latest unverified draw: %v", err)
+		log.Printf("[scheduler] Error querying today's draw: %v", err)
 		return
 	}
 
-	log.Printf("[scheduler] Unverified draw detected (scheduled date: %s). Checking GLO results...", draw.DrawDate.Format("2006-01-02"))
-	if err := s.resultService.VerifyDrawResults(ctx, draw.DrawDate); err != nil {
+	if draw.IsVerified {
+		return // Today's draw is already verified, do nothing.
+	}
+
+	log.Printf("[scheduler] Today is a draw day and is unverified. Checking latest GLO results...")
+	if err := s.resultService.VerifyLatestDrawResults(ctx); err != nil {
 		log.Printf("[scheduler] Draw results verification failed: %v", err)
 	}
 }

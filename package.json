@@ -1,6 +1,6 @@
 {
   "name": "lotto-journal",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Lotto Journal as LINE Messaging API and LIFF in a monorepo structure",
   "scripts": {
     "dev": "pnpm db:start && trap 'trap - INT TERM EXIT; pnpm db:stop; exit' INT TERM EXIT; pnpm --filter @lotto/api dev",

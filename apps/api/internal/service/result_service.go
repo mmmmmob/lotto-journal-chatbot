@@ -287,3 +287,18 @@ func parsePrizeAmount(price string) int {
 	}
 	return int(f)
 }
+
+// VerifyLatestDrawResults fetches the latest draw results from GLO API and verifies that specific draw.
+func (s *ResultService) VerifyLatestDrawResults(ctx context.Context) error {
+	latest, err := s.client.FetchLatestResult(ctx)
+	if err != nil {
+		return fmt.Errorf("fetch latest results: %w", err)
+	}
+
+	drawDate, err := time.Parse("2006-01-02", latest.Response.Date)
+	if err != nil {
+		return fmt.Errorf("parse GLO draw date %s: %w", latest.Response.Date, err)
+	}
+
+	return s.VerifyDrawResults(ctx, drawDate)
+}
