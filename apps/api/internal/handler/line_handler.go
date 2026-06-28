@@ -12,8 +12,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/google/uuid"
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 
@@ -264,6 +264,11 @@ func (h *LineHandler) replyAndLogText(replyToken string, user *models.User, noti
 		msg := err.Error()
 		errStr = &msg
 		log.Printf("[reply] error: %v", err)
+	}
+
+	if user == nil {
+		log.Printf("[reply] cannot log notification: user is nil")
+		return
 	}
 
 	if logErr := h.notificationSvc.LogNotification(user.ID, user.LineUserID, notifType, drawID, status, errStr); logErr != nil {
