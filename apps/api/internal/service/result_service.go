@@ -17,12 +17,13 @@ import (
 )
 
 type ResultService struct {
-	db             *gorm.DB
-	client         *client.LotteryClient
-	drawRepo       repository.DrawRepositoryInterface
-	drawResultRepo repository.DrawResultRepositoryInterface
-	ticketRepo     repository.TicketRepositoryInterface
-	winningRepo    repository.UserWinningRepositoryInterface
+	db              *gorm.DB
+	client          *client.LotteryClient
+	drawRepo        repository.DrawRepositoryInterface
+	drawResultRepo  repository.DrawResultRepositoryInterface
+	ticketRepo      repository.TicketRepositoryInterface
+	winningRepo     repository.UserWinningRepositoryInterface
+	notificationSvc NotificationServiceInterface
 }
 
 func NewResultService(
@@ -32,14 +33,16 @@ func NewResultService(
 	drawResultRepo repository.DrawResultRepositoryInterface,
 	ticketRepo repository.TicketRepositoryInterface,
 	winningRepo repository.UserWinningRepositoryInterface,
+	notificationSvc NotificationServiceInterface,
 ) *ResultService {
 	return &ResultService{
-		db:             db,
-		client:         client,
-		drawRepo:       drawRepo,
-		drawResultRepo: drawResultRepo,
-		ticketRepo:     ticketRepo,
-		winningRepo:    winningRepo,
+		db:              db,
+		client:          client,
+		drawRepo:        drawRepo,
+		drawResultRepo:  drawResultRepo,
+		ticketRepo:      ticketRepo,
+		winningRepo:     winningRepo,
+		notificationSvc: notificationSvc,
 	}
 }
 
@@ -252,25 +255,17 @@ func (s *ResultService) VerifyDrawResults(ctx context.Context, drawDate time.Tim
 		return fmt.Errorf("database transaction: %w", err)
 	}
 
-	// 6. Push notifications (Stub/Trigger)
-	// (Note: LINE Push Messaging for winnings is planned in milestone M3).
-	// We log a stub message here which can be hooked into the push service later.
-	s.triggerStubNotification(draw.ID, expectedDateStr)
+	// 6. Push notifications
+	if err := s.notificationSvc.SendDrawNotifications(ctx, draw.ID, expectedDateStr); err != nil {
+		log.Printf("[result_service] failed to send draw notifications: %v", err)
+	}
 
 	return nil
 }
 
-func (s *ResultService) triggerStubNotification(drawID uuid.UUID, drawDateStr string) {
-	log.Printf("[result_service] [STUB] Triggering win notifications for draw %s", drawDateStr)
-
-	// In the future (M3), this will query all winnings for drawID,
-	// resolve user line_user_ids, fetch the 'n3_special' winning number (if any)
-	// to format the jackpot alert message, and invoke bot.PushMessage.
-}
-
 // parsePrize is a helper mapping GLO prize structures to DrawResult database models.
 func parsePrize(drawID uuid.UUID, category string, prize client.GLOPrize) []*models.DrawResult {
-	amount := parsePrizeAmount(prize.Price)
+	amount := ParsePrizeAmount(prize.Price)
 	var results []*models.DrawResult
 	for _, num := range prize.Number {
 		if num.Value == "" {
@@ -286,7 +281,7 @@ func parsePrize(drawID uuid.UUID, category string, prize client.GLOPrize) []*mod
 	return results
 }
 
-func parsePrizeAmount(price string) int {
+func ParsePrizeAmount(price string) int {
 	price = strings.ReplaceAll(price, ",", "")
 	var f float64
 	_, err := fmt.Sscanf(price, "%f", &f)
