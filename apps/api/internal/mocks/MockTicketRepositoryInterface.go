@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"lotto-journal/api/internal/models"
+	"lotto-journal/api/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -86,6 +87,68 @@ func (_c *MockTicketRepositoryInterface_Create_Call) Return(err error) *MockTick
 }
 
 func (_c *MockTicketRepositoryInterface_Create_Call) RunAndReturn(run func(ticket *models.Ticket) error) *MockTicketRepositoryInterface_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindDrawTicketsWithOwners provides a mock function for the type MockTicketRepositoryInterface
+func (_mock *MockTicketRepositoryInterface) FindDrawTicketsWithOwners(drawID uuid.UUID) ([]repository.DrawTicketWithOwner, error) {
+	ret := _mock.Called(drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindDrawTicketsWithOwners")
+	}
+
+	var r0 []repository.DrawTicketWithOwner
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) ([]repository.DrawTicketWithOwner, error)); ok {
+		return returnFunc(drawID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) []repository.DrawTicketWithOwner); ok {
+		r0 = returnFunc(drawID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]repository.DrawTicketWithOwner)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = returnFunc(drawID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindDrawTicketsWithOwners'
+type MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call struct {
+	*mock.Call
+}
+
+// FindDrawTicketsWithOwners is a helper method to define mock.On call
+//   - drawID uuid.UUID
+func (_e *MockTicketRepositoryInterface_Expecter) FindDrawTicketsWithOwners(drawID any) *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call {
+	return &MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call{Call: _e.mock.On("FindDrawTicketsWithOwners", drawID)}
+}
+
+func (_c *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call) Run(run func(drawID uuid.UUID)) *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 uuid.UUID
+		if args[0] != nil {
+			arg0 = args[0].(uuid.UUID)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call) Return(drawTicketWithOwners []repository.DrawTicketWithOwner, err error) *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call {
+	_c.Call.Return(drawTicketWithOwners, err)
+	return _c
+}
+
+func (_c *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call) RunAndReturn(run func(drawID uuid.UUID) ([]repository.DrawTicketWithOwner, error)) *MockTicketRepositoryInterface_FindDrawTicketsWithOwners_Call {
 	_c.Call.Return(run)
 	return _c
 }

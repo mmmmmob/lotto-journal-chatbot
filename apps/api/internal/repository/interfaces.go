@@ -23,6 +23,7 @@ type TicketRepositoryInterface interface {
 	FindUncheckedInTransaction(tx *gorm.DB, drawID uuid.UUID) ([]*models.Ticket, error)
 	MarkCheckedInTransaction(tx *gorm.DB, ticketIDs []uuid.UUID) error
 	ResetCheckedStatusByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error
+	FindDrawTicketsWithOwners(drawID uuid.UUID) ([]DrawTicketWithOwner, error)
 }
 
 type DrawRepositoryInterface interface {
@@ -37,10 +38,12 @@ type DrawResultRepositoryInterface interface {
 	CreateInBatches(results []*models.DrawResult) error
 	CreateInBatchesInTransaction(tx *gorm.DB, results []*models.DrawResult) error
 	DeleteByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error
+	FindSpecialResultByDrawID(drawID uuid.UUID) (*models.DrawResult, error)
 }
 
 type UserWinningRepositoryInterface interface {
 	CreateInBatches(winnings []*models.UserWinning) error
 	CreateInBatchesInTransaction(tx *gorm.DB, winnings []*models.UserWinning) error
 	DeleteByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error
+	FindDrawWinnings(drawID uuid.UUID) ([]DrawWinningDetail, error)
 }

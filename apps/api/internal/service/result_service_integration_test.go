@@ -1,4 +1,6 @@
-package service
+//go:build integration
+
+package service_test
 
 import (
 	"context"
@@ -9,12 +11,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"lotto-journal/api/internal/client"
+	"lotto-journal/api/internal/mocks"
 	"lotto-journal/api/internal/models"
 	"lotto-journal/api/internal/repository"
+	"lotto-journal/api/internal/service"
 )
 
 func TestVerifyDrawResults_Integration(t *testing.T) {
@@ -44,7 +49,7 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 			"statusCode": 200,
 			"status": true,
 			"response": {
-				"date": "2026-07-01",
+				"date": "2026-09-01",
 				"data": {
 					"first": { "price": "6,000,000.00", "number": [{"round": 1, "value": "123456"}] },
 					"second": { "price": "200,000.00", "number": [{"round": 1, "value": "222222"}] },
@@ -74,7 +79,10 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 	ticketRepo := repository.NewTicketRepository(tx)
 	winningRepo := repository.NewUserWinningRepository(tx)
 
-	resultSvc := NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
+	mockNotifSvc := mocks.NewMockNotificationServiceInterface(t)
+	mockNotifSvc.On("SendDrawNotifications", mock.Anything, mock.Anything, "2026-09-01").Return(nil)
+
+	resultSvc := service.NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, mockNotifSvc)
 
 	// 5. Seed test user
 	user := models.User{
@@ -87,7 +95,7 @@ func TestVerifyDrawResults_Integration(t *testing.T) {
 	}
 
 	// 6. Seed test draw
-	drawDate, _ := time.Parse("2006-01-02", "2026-07-01")
+	drawDate, _ := time.Parse("2006-01-02", "2026-09-01")
 	draw, err := drawRepo.FindOrCreate(drawDate)
 	if err != nil {
 		t.Fatalf("failed to seed test draw: %v", err)
@@ -247,7 +255,8 @@ func TestVerifyDrawResults_PendingState(t *testing.T) {
 	drawResultRepo := repository.NewDrawResultRepository(tx)
 	ticketRepo := repository.NewTicketRepository(tx)
 	winningRepo := repository.NewUserWinningRepository(tx)
-	resultSvc := NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
+	mockNotifSvc := mocks.NewMockNotificationServiceInterface(t)
+	resultSvc := service.NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, mockNotifSvc)
 
 	drawDate, _ := time.Parse("2006-01-02", "2026-07-01")
 	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
@@ -279,9 +288,9 @@ func TestParsePrizeAmount(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.input, func(t *testing.T) {
-			got := parsePrizeAmount(tc.input)
+			got := service.ParsePrizeAmount(tc.input)
 			if got != tc.expected {
-				t.Errorf("parsePrizeAmount(%q) = %d; expected %d", tc.input, got, tc.expected)
+				t.Errorf("ParsePrizeAmount(%q) = %d; expected %d", tc.input, got, tc.expected)
 			}
 		})
 	}
@@ -324,7 +333,10 @@ func TestVerifyLatestDrawResults(t *testing.T) {
 	drawResultRepo := repository.NewDrawResultRepository(tx)
 	ticketRepo := repository.NewTicketRepository(tx)
 	winningRepo := repository.NewUserWinningRepository(tx)
-	resultSvc := NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
+	mockNotifSvc := mocks.NewMockNotificationServiceInterface(t)
+	mockNotifSvc.On("SendDrawNotifications", mock.Anything, mock.Anything, "2026-06-16").Return(nil)
+
+	resultSvc := service.NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, mockNotifSvc)
 
 	err = resultSvc.VerifyLatestDrawResults(context.Background())
 	if err != nil {

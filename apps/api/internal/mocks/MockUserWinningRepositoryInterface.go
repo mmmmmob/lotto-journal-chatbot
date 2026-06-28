@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"lotto-journal/api/internal/models"
+	"lotto-journal/api/internal/repository"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -200,6 +201,68 @@ func (_c *MockUserWinningRepositoryInterface_DeleteByDrawIDInTransaction_Call) R
 }
 
 func (_c *MockUserWinningRepositoryInterface_DeleteByDrawIDInTransaction_Call) RunAndReturn(run func(tx *gorm.DB, drawID uuid.UUID) error) *MockUserWinningRepositoryInterface_DeleteByDrawIDInTransaction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindDrawWinnings provides a mock function for the type MockUserWinningRepositoryInterface
+func (_mock *MockUserWinningRepositoryInterface) FindDrawWinnings(drawID uuid.UUID) ([]repository.DrawWinningDetail, error) {
+	ret := _mock.Called(drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindDrawWinnings")
+	}
+
+	var r0 []repository.DrawWinningDetail
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) ([]repository.DrawWinningDetail, error)); ok {
+		return returnFunc(drawID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) []repository.DrawWinningDetail); ok {
+		r0 = returnFunc(drawID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]repository.DrawWinningDetail)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = returnFunc(drawID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserWinningRepositoryInterface_FindDrawWinnings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindDrawWinnings'
+type MockUserWinningRepositoryInterface_FindDrawWinnings_Call struct {
+	*mock.Call
+}
+
+// FindDrawWinnings is a helper method to define mock.On call
+//   - drawID uuid.UUID
+func (_e *MockUserWinningRepositoryInterface_Expecter) FindDrawWinnings(drawID any) *MockUserWinningRepositoryInterface_FindDrawWinnings_Call {
+	return &MockUserWinningRepositoryInterface_FindDrawWinnings_Call{Call: _e.mock.On("FindDrawWinnings", drawID)}
+}
+
+func (_c *MockUserWinningRepositoryInterface_FindDrawWinnings_Call) Run(run func(drawID uuid.UUID)) *MockUserWinningRepositoryInterface_FindDrawWinnings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 uuid.UUID
+		if args[0] != nil {
+			arg0 = args[0].(uuid.UUID)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserWinningRepositoryInterface_FindDrawWinnings_Call) Return(drawWinningDetails []repository.DrawWinningDetail, err error) *MockUserWinningRepositoryInterface_FindDrawWinnings_Call {
+	_c.Call.Return(drawWinningDetails, err)
+	return _c
+}
+
+func (_c *MockUserWinningRepositoryInterface_FindDrawWinnings_Call) RunAndReturn(run func(drawID uuid.UUID) ([]repository.DrawWinningDetail, error)) *MockUserWinningRepositoryInterface_FindDrawWinnings_Call {
 	_c.Call.Return(run)
 	return _c
 }

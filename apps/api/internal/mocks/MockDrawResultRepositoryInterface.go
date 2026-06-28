@@ -203,3 +203,65 @@ func (_c *MockDrawResultRepositoryInterface_DeleteByDrawIDInTransaction_Call) Ru
 	_c.Call.Return(run)
 	return _c
 }
+
+// FindSpecialResultByDrawID provides a mock function for the type MockDrawResultRepositoryInterface
+func (_mock *MockDrawResultRepositoryInterface) FindSpecialResultByDrawID(drawID uuid.UUID) (*models.DrawResult, error) {
+	ret := _mock.Called(drawID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindSpecialResultByDrawID")
+	}
+
+	var r0 *models.DrawResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) (*models.DrawResult, error)); ok {
+		return returnFunc(drawID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) *models.DrawResult); ok {
+		r0 = returnFunc(drawID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.DrawResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = returnFunc(drawID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindSpecialResultByDrawID'
+type MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call struct {
+	*mock.Call
+}
+
+// FindSpecialResultByDrawID is a helper method to define mock.On call
+//   - drawID uuid.UUID
+func (_e *MockDrawResultRepositoryInterface_Expecter) FindSpecialResultByDrawID(drawID any) *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call {
+	return &MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call{Call: _e.mock.On("FindSpecialResultByDrawID", drawID)}
+}
+
+func (_c *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call) Run(run func(drawID uuid.UUID)) *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 uuid.UUID
+		if args[0] != nil {
+			arg0 = args[0].(uuid.UUID)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call) Return(drawResult *models.DrawResult, err error) *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call {
+	_c.Call.Return(drawResult, err)
+	return _c
+}
+
+func (_c *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call) RunAndReturn(run func(drawID uuid.UUID) (*models.DrawResult, error)) *MockDrawResultRepositoryInterface_FindSpecialResultByDrawID_Call {
+	_c.Call.Return(run)
+	return _c
+}
