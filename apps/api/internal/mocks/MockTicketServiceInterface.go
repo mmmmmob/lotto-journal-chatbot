@@ -102,7 +102,7 @@ func (_c *MockTicketServiceInterface_ListTickets_Call) RunAndReturn(run func(own
 }
 
 // SubmitTickets provides a mock function for the type MockTicketServiceInterface
-func (_mock *MockTicketServiceInterface) SubmitTickets(ownerID uuid.UUID, text string) ([]service.ParsedTicket, []string, error) {
+func (_mock *MockTicketServiceInterface) SubmitTickets(ownerID uuid.UUID, text string) ([]service.ParsedTicket, []string, uuid.UUID, error) {
 	ret := _mock.Called(ownerID, text)
 
 	if len(ret) == 0 {
@@ -111,8 +111,9 @@ func (_mock *MockTicketServiceInterface) SubmitTickets(ownerID uuid.UUID, text s
 
 	var r0 []service.ParsedTicket
 	var r1 []string
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(uuid.UUID, string) ([]service.ParsedTicket, []string, error)); ok {
+	var r2 uuid.UUID
+	var r3 error
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID, string) ([]service.ParsedTicket, []string, uuid.UUID, error)); ok {
 		return returnFunc(ownerID, text)
 	}
 	if returnFunc, ok := ret.Get(0).(func(uuid.UUID, string) []service.ParsedTicket); ok {
@@ -129,12 +130,19 @@ func (_mock *MockTicketServiceInterface) SubmitTickets(ownerID uuid.UUID, text s
 			r1 = ret.Get(1).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(2).(func(uuid.UUID, string) error); ok {
+	if returnFunc, ok := ret.Get(2).(func(uuid.UUID, string) uuid.UUID); ok {
 		r2 = returnFunc(ownerID, text)
 	} else {
-		r2 = ret.Error(2)
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).(uuid.UUID)
+		}
 	}
-	return r0, r1, r2
+	if returnFunc, ok := ret.Get(3).(func(uuid.UUID, string) error); ok {
+		r3 = returnFunc(ownerID, text)
+	} else {
+		r3 = ret.Error(3)
+	}
+	return r0, r1, r2, r3
 }
 
 // MockTicketServiceInterface_SubmitTickets_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SubmitTickets'
@@ -167,12 +175,12 @@ func (_c *MockTicketServiceInterface_SubmitTickets_Call) Run(run func(ownerID uu
 	return _c
 }
 
-func (_c *MockTicketServiceInterface_SubmitTickets_Call) Return(parsedTickets []service.ParsedTicket, strings []string, err error) *MockTicketServiceInterface_SubmitTickets_Call {
-	_c.Call.Return(parsedTickets, strings, err)
+func (_c *MockTicketServiceInterface_SubmitTickets_Call) Return(parsedTickets []service.ParsedTicket, strings []string, uUID uuid.UUID, err error) *MockTicketServiceInterface_SubmitTickets_Call {
+	_c.Call.Return(parsedTickets, strings, uUID, err)
 	return _c
 }
 
-func (_c *MockTicketServiceInterface_SubmitTickets_Call) RunAndReturn(run func(ownerID uuid.UUID, text string) ([]service.ParsedTicket, []string, error)) *MockTicketServiceInterface_SubmitTickets_Call {
+func (_c *MockTicketServiceInterface_SubmitTickets_Call) RunAndReturn(run func(ownerID uuid.UUID, text string) ([]service.ParsedTicket, []string, uuid.UUID, error)) *MockTicketServiceInterface_SubmitTickets_Call {
 	_c.Call.Return(run)
 	return _c
 }

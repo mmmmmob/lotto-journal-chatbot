@@ -13,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 
@@ -23,11 +24,12 @@ import (
 
 // LineHandler handles all LINE Messaging API webhook events.
 type LineHandler struct {
-	channelSecret string
-	bot           *messaging_api.MessagingApiAPI
-	userSvc       service.UserServiceInterface
-	ticketSvc     service.TicketServiceInterface
-	webhookRepo   *repository.WebhookEventRepository
+	channelSecret   string
+	bot             *messaging_api.MessagingApiAPI
+	userSvc         service.UserServiceInterface
+	ticketSvc       service.TicketServiceInterface
+	notificationSvc service.NotificationServiceInterface
+	webhookRepo     *repository.WebhookEventRepository
 }
 
 func NewLineHandler(
@@ -35,14 +37,16 @@ func NewLineHandler(
 	bot *messaging_api.MessagingApiAPI,
 	userSvc service.UserServiceInterface,
 	ticketSvc service.TicketServiceInterface,
+	notificationSvc service.NotificationServiceInterface,
 	webhookRepo *repository.WebhookEventRepository,
 ) *LineHandler {
 	return &LineHandler{
-		channelSecret: channelSecret,
-		bot:           bot,
-		userSvc:       userSvc,
-		ticketSvc:     ticketSvc,
-		webhookRepo:   webhookRepo,
+		channelSecret:   channelSecret,
+		bot:             bot,
+		userSvc:         userSvc,
+		ticketSvc:       ticketSvc,
+		notificationSvc: notificationSvc,
+		webhookRepo:     webhookRepo,
 	}
 }
 
@@ -126,7 +130,7 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 		return
 	}
 
-	_, isNew, err := h.userSvc.FindOrCreate(lineUserID)
+	user, isNew, err := h.userSvc.FindOrCreate(lineUserID)
 	if err != nil {
 		log.Printf("[follow] FindOrCreate %s: %v", lineUserID, err)
 		return
@@ -144,7 +148,7 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 	}
 
 	displayName := h.getDisplayName(lineUserID)
-	h.replyText(e.ReplyToken, buildWelcomeMessage(displayName))
+	h.replyAndLogText(e.ReplyToken, user, "welcome", nil, buildWelcomeMessage(displayName))
 }
 
 func (h *LineHandler) handleUnfollow(e webhook.UnfollowEvent) {
@@ -213,15 +217,23 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
 			return
 		}
-		h.replyText(e.ReplyToken, buildTicketListReply(userTickets))
+		var drawIDPtr *uuid.UUID
+		if len(userTickets) > 0 {
+			drawIDPtr = &userTickets[0].DrawID
+		}
+		h.replyAndLogText(e.ReplyToken, user, "ticket_list", drawIDPtr, buildTicketListReply(userTickets))
 	} else {
-		saved, invalid, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
+		saved, invalid, drawID, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
 		if err != nil {
 			log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
 			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
 			return
 		}
-		h.replyText(e.ReplyToken, buildReply(saved, invalid))
+		var drawIDPtr *uuid.UUID
+		if drawID != uuid.Nil {
+			drawIDPtr = &drawID
+		}
+		h.replyAndLogText(e.ReplyToken, user, "ticket_submitted", drawIDPtr, buildReply(saved, invalid))
 	}
 }
 
@@ -235,6 +247,32 @@ func (h *LineHandler) replyText(replyToken, text string) {
 		},
 	}); err != nil {
 		log.Printf("[reply] error: %v", err)
+	}
+}
+
+func (h *LineHandler) replyAndLogText(replyToken string, user *models.User, notifType string, drawID *uuid.UUID, text string) {
+	var errStr *string
+	status := "success"
+
+	if _, err := h.bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
+		ReplyToken: replyToken,
+		Messages: []messaging_api.MessageInterface{
+			messaging_api.TextMessage{Text: text},
+		},
+	}); err != nil {
+		status = "failed"
+		msg := err.Error()
+		errStr = &msg
+		log.Printf("[reply] error: %v", err)
+	}
+
+	if user == nil {
+		log.Printf("[reply] cannot log notification: user is nil")
+		return
+	}
+
+	if logErr := h.notificationSvc.LogNotification(user.ID, user.LineUserID, notifType, drawID, status, errStr); logErr != nil {
+		log.Printf("[reply] failed to write notification log: %v", logErr)
 	}
 }
 

@@ -1,12 +1,12 @@
 <!-- AI-CONTEXT
 src: v0.2
 phase: M3
-direction: Implement win notification via LINE push messaging
-focus: [T-022]
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023]
+direction: LINE Push Notifications
+focus: []
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023, T-022]
 future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP, T-021 Multi-language — post-MVP]
 blocked: none
-next: T-022
+next: none
 risk: none
 adr: ADR-001
 read_more:
@@ -15,14 +15,15 @@ read_more:
   architecture: doc/07-decisions/README.md
   entities: doc/07-decisions/entity-register.md
   source_current: doc/00-source/versions/v0.2/
-updated: 2026-06-27
+  walkthrough: apps/api/walkthrough.md
+updated: 2026-06-28
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-06-27 (session 15)
+Last updated: 2026-06-28 (session 17)
 
 ## Source References
 
@@ -33,23 +34,21 @@ Last updated: 2026-06-27 (session 15)
 
 ## Phase and Direction
 
-**Current phase:** M3 — LINE Push Notifications
+**Current phase:** M3 — LINE Push Notifications (Complete)
 
-With T-003 complete, the cronjob scheduler, GLO result checker, schedule caching database-first resolver, and ticket checking/win comparison engine are fully implemented. 
-
-The next phase (M3) focuses on **T-022: Implement win notification via LINE push message**, resolving user line_user_ids and sending the final win summaries to LINE users.
+With **T-022** complete, the LINE Push Notifications engine is fully implemented. Active users receive automated win/loss notifications shortly after a draw is verified in `ResultService`. Logs are written to `notification_logs` table for tracking.
 
 ---
 
 ## Active Tasks
 
-- `T-022` — Implement win notification via LINE push message — todo
-
+None. All PRD v0.2 MVP features are fully implemented and verified!
 
 ---
 
 ## Completed Tasks
 
+- `T-022` — Implement win notification via LINE push message — done (2026-06-28)
 - `T-023` — Swagger Documentation and Mockery Setup — done (2026-06-27)
 - `T-003` — Design and implement cronjob: lottery result fetch + comparison flow — done (2026-06-27)
 - `T-000` — Documentation setup (2026-04-30)
@@ -81,9 +80,8 @@ None currently.
 
 ## Next Steps
 
-1. **T-022:** Implement win notification via LINE push message (Milestone M3).
-2. Monitor production scheduler and sync logs on startup/daily run.
-3. Keep low-priority refactors in backlog unless they block win notifications delivery.
+1. Deploy the new features (migration `000005_notification_logs`, `NotificationService`, GORM logging logic) to Fly.io production.
+2. Monitor production logs for database schema updates and outbox messaging delivery.
 
 ---
 

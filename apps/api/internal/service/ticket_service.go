@@ -126,15 +126,15 @@ func normalizeTicketText(text string) string {
 
 // SubmitTickets parses the message text, resolves (or creates) the upcoming draw,
 // persists each valid ticket, and returns the saved tickets and any invalid tokens.
-func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedTicket, []string, error) {
+func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedTicket, []string, uuid.UUID, error) {
 	parsed, invalid := ParseTicketInput(text)
 	if len(parsed) == 0 {
-		return nil, invalid, nil
+		return nil, invalid, uuid.Nil, nil
 	}
 
 	draw, err := s.drawSvc.FindOrCreateUpcoming()
 	if err != nil {
-		return nil, invalid, fmt.Errorf("resolve upcoming draw: %w", err)
+		return nil, invalid, uuid.Nil, fmt.Errorf("resolve upcoming draw: %w", err)
 	}
 
 	for _, pt := range parsed {
@@ -146,11 +146,11 @@ func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedT
 			Quantity: pt.Quantity,
 		}
 		if err := s.ticketRepo.Create(ticket); err != nil {
-			return nil, invalid, fmt.Errorf("save ticket %s: %w", pt.Number, err)
+			return nil, invalid, uuid.Nil, fmt.Errorf("save ticket %s: %w", pt.Number, err)
 		}
 	}
 
-	return parsed, invalid, nil
+	return parsed, invalid, draw.ID, nil
 }
 
 // ListTickets find the nearest draw date from current time and call List method on ticketRepo to return list of tickets user holds
