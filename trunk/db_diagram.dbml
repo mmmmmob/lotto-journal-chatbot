@@ -77,7 +77,7 @@ Table user_winnings {
 
 Table notification_logs {
   id uuid [pk, default: `gen_random_uuid()`]
-  user_id uuid [ref: > users.id]
+  user_id uuid [not null, ref: > users.id]
   line_user_id varchar [not null]
   notification_type notification_type [not null]
   draw_id uuid [ref: > draws.id, null]
