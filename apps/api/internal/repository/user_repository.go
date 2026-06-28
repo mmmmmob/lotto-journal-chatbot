@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	TableUsers        = "users"
 	UserColID         = "id"
 	UserColLineUserID = "line_user_id"
 	UserColStatus     = "status"

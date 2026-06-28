@@ -1,0 +1,4 @@
+-- MIGRATION 000005 — AUDIT LOGS FOR OUTBOUND NOTIFICATIONS (DOWN)
+DROP TABLE IF EXISTS "notification_logs";
+DROP TYPE IF EXISTS "notification_type";
+DROP TYPE IF EXISTS "notification_status";

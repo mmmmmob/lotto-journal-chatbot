@@ -1,18 +1,18 @@
 <!-- AI-CONTEXT
-active: T-022(todo)
+active: none
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023 T-022
 future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP), T-021(multi-language post-MVP)
-priority_next: T-022
+priority_next: none
 src: v0.2
-updated: 2026-06-27
+updated: 2026-06-28
 -->
 
 ---
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-05-11 (session 14)
+Last updated: 2026-06-28
 
 ## Rules
 
@@ -41,7 +41,6 @@ Last updated: 2026-05-11 (session 14)
 
 | ID    | Task                                                     | Type        | Source Reference                                  | Priority | Status | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----- | -------------------------------------------------------- | ----------- | ------------------------------------------------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T-022 | Implement win notification via LINE push message         | feat        | doc/00-source/versions/v0.2/01-prd.md §§3.3, §6.1 | High     | todo   | Notify winners via LINE push messaging. Fetch users line_user_id and compile winnings. Include L6/N3 prizes and N3 special jackpot checks.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -87,6 +86,7 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-022 | Implement win notification via LINE push message             | 2026-06-28 | Implemented NotificationService to check and group winnings per active user, format push texts, handle 3-attempt backoff retries, and write success/failed audits to notification_logs table. |
 | T-023 | Swagger Documentation and Mockery Setup                      | 2026-06-27 | Extracted interface layers; configured Mockery v3 with `.mockery.yml`; added Swagger specs and Fiber v3 swaggo middleware; set up dev-only access; automated compilation reloads in `air`; updated package scripts/READMEs |
 | T-003 | Design and implement cronjob: lottery result fetch + comparison flow | 2026-06-27 | Implemented LotteryClient for GLO APIs with retries/dedup; database-first draw resolver in DrawService with low-frequency background sync and emergency fallback; ResultService win-checking logic for L6 and N3; Bangkok time CronScheduler running startup sync, 3 AM sync, and 16:00 draw day checking; migration 000004 applied; all build/tests pass |
 | T-019 | UX: loading indicator + personalized follow welcome [FOUND-IN-PASSING] | 2026-05-11 | Added `ShowLoadingAnimation` call in `handleMessage` (5s, clamped to LINE constraints); follow welcome now fetches profile display name via `GetProfile` and personalizes greeting; added tests for welcome message builder; `pnpm test:api` and `pnpm build` pass |

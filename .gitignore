@@ -60,8 +60,7 @@ ehthumbs.db
 Desktop.ini
 
 # Editors / IDEs
-.vscode/*
-!.vscode/settings.json
+.vscode/
 .idea
 *.swp
 *.swo

@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
-last_session: 2026-06-27 (session 16)
+last_session: 2026-06-28 (session 17)
 tool: Antigravity
-completed: [T-003, T-023]
+completed: [T-022]
 in_progress: []
-checkpoint: Swagger, Mockery, DB lifecycle automation, and CronScheduler refactoring complete
-next_from_last: T-022
-notes: Extracted interfaces, integrated Mockery v3 and Fiber v3 swaggo, automated dev db startup/shutdown, and refactored CronScheduler to robfig/cron/v3 with env overrides.
+checkpoint: LINE Win/Loss Push Notifications, GORM Query Cleanups, Outbound Logging, and integration tests build tag separation complete
+next_from_last: none
+notes: Implemented NotificationService, automated LINE push notifications, logged webhook replies and pushes to notification_logs, moved GORM logic to repos, and isolated integration tests using standard build tags.
 deep_context: doc/00-source/versions/v0.2/01-prd.md
 -->
 
@@ -13,7 +13,7 @@ deep_context: doc/00-source/versions/v0.2/01-prd.md
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-06-27 (session 16)
+Last updated: 2026-06-28 (session 17)
 
 ---
 
@@ -23,6 +23,28 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-06-28 — Session 17 — [Antigravity]
+
+- **Session summary:** T-022 completed. Implemented win/loss notifications via LINE push messaging and a robust outbound logging/audit pipeline. Removed inline GORM queries from services, isolated integration tests via Go build tags, and resolved local test database state pollution.
+- **Work done:**
+  - Created migration `000005_notification_logs` to provision the `notification_logs` table, its types, and GORM model `NotificationLog`.
+  - Updated `ticket_repository.go` to implement `FindDrawTicketsWithOwners` and `user_winning_repository.go` to implement `FindDrawWinnings` for clean encapsulation of repository join queries.
+  - Implemented `FindSpecialResultByDrawID` on `DrawResultRepository` to retrieve N3 special jackpot results.
+  - Built `NotificationService` to group user winnings/tickets, perform N3 jackpot checks, push formatted Thai notifications via LINE Push API with backoff retries, and write logs to `notification_logs` DB table.
+  - Updated `ResultService.VerifyDrawResults` to trigger notifications asynchronously after database draws commit.
+  - Updated `LineHandler` to capture resolved `draw_id` and audit all outbound reply texts (welcome, ticket submissions, ticket lists) to `notification_logs`.
+  - Renamed integration test files to suffix with `_integration_test.go` and configured `//go:build integration` tag to separate fast unit tests.
+  - Configured root `package.json` to execute integration tests via tag, and added `.vscode/settings.json` to configure gopls to read build tags.
+  - Appended `.vscode/` folder to gitignore.
+- **Validation evidence:**
+  - `pnpm test:api` (and uncached go tests with `-tags=integration`) execute and pass successfully.
+  - `pnpm build` passes successfully.
+- **Tasks changed:**
+  - T-022: done
+- **Next priority:** none (PRD v0.2 MVP features fully implemented)
 
 ---
 

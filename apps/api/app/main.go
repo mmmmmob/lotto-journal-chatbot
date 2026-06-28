@@ -58,7 +58,8 @@ func main() {
 	userSvc := service.NewUserService(userRepo)
 	drawSvc := service.NewDrawService(drawRepo, lotteryClient)
 	ticketSvc := service.NewTicketService(ticketRepo, drawRepo, drawSvc)
-	resultSvc := service.NewResultService(db, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo)
+	notificationSvc := service.NewNotificationService(db, bot, ticketRepo, winningRepo, drawResultRepo)
+	resultSvc := service.NewResultService(db, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, notificationSvc)
 
 	// Start background cron scheduler
 	scheduler := service.NewCronScheduler(drawSvc, resultSvc, cfg.CronSyncSchedule, cfg.CronVerifySchedule)
@@ -73,6 +74,7 @@ func main() {
 		bot,
 		userSvc,
 		ticketSvc,
+		notificationSvc,
 		webhookRepo,
 	)
 

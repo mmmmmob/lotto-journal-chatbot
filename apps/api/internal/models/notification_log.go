@@ -1,0 +1,18 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type NotificationLog struct {
+	ID               uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	UserID           uuid.UUID  `gorm:"type:uuid;not null;index"                       json:"user_id"`
+	LineUserID       string     `gorm:"type:varchar;not null"                          json:"line_user_id"`
+	NotificationType string     `gorm:"type:notification_type;not null"                json:"notification_type"`
+	DrawID           *uuid.UUID `gorm:"type:uuid;index"                                json:"draw_id,omitempty"`
+	Status           string     `gorm:"type:notification_status;not null"              json:"status"`
+	ErrorMessage     *string    `gorm:"type:text"                                      json:"error_message,omitempty"`
+	CreatedAt        time.Time  `gorm:"type:timestamp;autoCreateTime"                  json:"created_at"`
+}
