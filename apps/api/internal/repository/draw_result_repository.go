@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	TableDrawResults           = "draw_results"
 	DrawResultColID            = "id"
 	DrawResultColDrawID        = "draw_id"
 	DrawResultColPrizeCategory = "prize_category"
@@ -38,4 +39,13 @@ func (r *DrawResultRepository) CreateInBatchesInTransaction(tx *gorm.DB, results
 
 func (r *DrawResultRepository) DeleteByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
 	return tx.Where(DrawResultColDrawID+" = ?", drawID).Delete(&models.DrawResult{}).Error
+}
+
+func (r *DrawResultRepository) FindSpecialResultByDrawID(drawID uuid.UUID) (*models.DrawResult, error) {
+	var result models.DrawResult
+	err := r.db.Where(DrawResultColDrawID+" = ? AND "+DrawResultColPrizeCategory+" = ?", drawID, "n3_special").First(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

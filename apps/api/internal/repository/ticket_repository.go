@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -8,6 +10,7 @@ import (
 )
 
 const (
+	TableTickets       = "tickets"
 	TicketColID        = "id"
 	TicketColOwnerID   = "owner_id"
 	TicketColDrawID    = "draw_id"
@@ -16,6 +19,15 @@ const (
 	TicketColQuantity  = "quantity"
 	TicketColIsChecked = "is_checked"
 )
+
+type DrawTicketWithOwner struct {
+	ID         uuid.UUID
+	OwnerID    uuid.UUID
+	Type       string
+	Number     string
+	Quantity   int
+	LineUserID string
+}
 
 type TicketRepository struct {
 	db *gorm.DB
@@ -62,6 +74,38 @@ func (r *TicketRepository) MarkCheckedInTransaction(tx *gorm.DB, ticketIDs []uui
 // ResetCheckedStatusByDrawIDInTransaction resets the checked status of all tickets for a draw.
 func (r *TicketRepository) ResetCheckedStatusByDrawIDInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
 	return tx.Model(&models.Ticket{}).Where(TicketColDrawID+" = ?", drawID).Update(TicketColIsChecked, false).Error
+}
+
+func (r *TicketRepository) FindDrawTicketsWithOwners(drawID uuid.UUID) ([]DrawTicketWithOwner, error) {
+	var tickets []DrawTicketWithOwner
+
+	selectFields := fmt.Sprintf("%s.%s, %s.%s, %s.%s, %s.%s, %s.%s, %s.%s",
+		TableTickets, TicketColID,
+		TableTickets, TicketColOwnerID,
+		TableTickets, TicketColType,
+		TableTickets, TicketColNumber,
+		TableTickets, TicketColQuantity,
+		TableUsers, UserColLineUserID,
+	)
+
+	joinClause := fmt.Sprintf("JOIN %s ON %s.%s = %s.%s",
+		TableUsers,
+		TableTickets, TicketColOwnerID,
+		TableUsers, UserColID,
+	)
+
+	whereClause := fmt.Sprintf("%s.%s = ? AND %s.%s = ?",
+		TableTickets, TicketColDrawID,
+		TableUsers, UserColStatus,
+	)
+
+	err := r.db.Table(TableTickets).
+		Select(selectFields).
+		Joins(joinClause).
+		Where(whereClause, drawID, "active").
+		Scan(&tickets).Error
+
+	return tickets, err
 }
 
 
