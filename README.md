@@ -187,13 +187,14 @@ The collection lives in `trunk/bruno/`. Open it in [Bruno](https://www.usebruno.
 
 ### Requests
 
-| Folder | Request            | What it tests                                                                             |
-| ------ | ------------------ | ----------------------------------------------------------------------------------------- |
-| REST   | Webhook - Follow   | User adds the bot as a friend → creates user record, sends welcome reply                  |
-| REST   | Webhook - Message  | User sends ticket numbers (e.g. `123456 x2, 789`) → parses and saves tickets              |
-| REST   | Webhook - Unfollow | User removes the bot → marks user `inactive`                                              |
-| REST   | Health             | `GET /health` — liveness + DB readiness; `200` ok / `503` degraded                        |
-| GLO    | Check Result       | Calls the Thai Government Lottery API directly — useful for inspecting the result payload |
+| Folder | Request            | What it tests                                                                                                    |
+| ------ | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| REST   | Webhook - Follow   | User adds the bot as a friend → creates user record, sends welcome reply                                         |
+| REST   | Webhook - Message  | User sends ticket numbers (e.g. `123456 x2, 789`) → parses and saves tickets                                     |
+| REST   | Webhook - Unfollow | User removes the bot → marks user `inactive`                                                                     |
+| REST   | Health             | `GET /health` — liveness + DB readiness; `200` ok / `503` degraded                                               |
+| GLO    | Check Result       | Calls the Thai Government Lottery API directly — useful for inspecting the result payload                        |
+| GLO    | Get Draw Schedule  | Calls the Thai Government Lottery API directly — useful for inspecting the draw schedule/periods payload by year |
 
 ### One-time setup
 
@@ -287,3 +288,4 @@ All `make` commands run from `apps/api/` — the `pnpm` shortcuts above call the
 | 000002  | `000002_line_identity`          | LINE identity redesign — replace email/password with `line_user_id`; rename `N6→L6`, `n6_*→l6_*` |
 | 000003  | `000003_webhook_events`         | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
 | 000004  | `000004_widen_winning_number`   | Widen `draw_results.winning_number` to `varchar(12)` for N3 Jackpot                              |
+| 000005  | `000005_notification_logs`      | Notification logs — table for auditing outgoing push/reply messages                              |
