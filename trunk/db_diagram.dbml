@@ -1,6 +1,6 @@
 // * explanations can be found at https://dbdocs.io/theppitak.m/Lotto-Journal
-// * schema version: post-migration 000003 (target state)
-// * ground truth for current DB state: apps/api/migrations/ (all 000001–000003)
+// * schema version: post-migration 000005 (target state)
+// * ground truth for current DB state: apps/api/migrations/ (all 000001–000005)
 
 // USERS
 Table users {
@@ -52,7 +52,7 @@ Table draw_results {
   id uuid [pk, default: `gen_random_uuid()`]
   draw_id uuid [ref: > draws.id]
   prize_category prize_type
-  winning_number varchar(6)
+  winning_number varchar(12)
   prize_amount int4
 
   // prevent duplicate insert
@@ -73,6 +73,17 @@ Table user_winnings {
   indexes {
     (ticket_id, draw_result_id) [unique]
   }
+}
+
+Table notification_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > users.id]
+  line_user_id varchar [not null]
+  notification_type notification_type [not null]
+  draw_id uuid [ref: > draws.id, null]
+  status notification_status [not null]
+  error_message text [null]
+  created_at timestamp [default: `now()`]
 }
 
 
@@ -102,4 +113,16 @@ enum prize_type {
   n3_shuffle
   n3_straight_two
   n3_special
+}
+
+enum notification_status {
+  success
+  failed
+}
+
+enum notification_type {
+  welcome
+  ticket_submitted
+  ticket_list
+  draw_result
 }

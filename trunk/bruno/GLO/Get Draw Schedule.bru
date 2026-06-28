@@ -1,0 +1,23 @@
+meta {
+  name: Get Draw Schedule
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://www.glo.or.th/api/lottery/getPeriodsByYear
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "year": 2026,
+    "type": "ALL"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
