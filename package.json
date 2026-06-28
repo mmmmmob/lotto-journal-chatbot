@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm db:start && trap 'trap - INT TERM EXIT; pnpm db:stop; exit' INT TERM EXIT; pnpm --filter @lotto/api dev",
     "build": "turbo run build",
-    "test:api": "pnpm --filter @lotto/api exec go test ./...",
+    "test:api": "pnpm --filter @lotto/api exec go test -tags=integration ./...",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:start": "pnpm --filter @lotto/api db:start",
