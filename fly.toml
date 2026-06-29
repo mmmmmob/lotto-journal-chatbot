@@ -9,6 +9,11 @@ primary_region = "sin"
 [env]
   APP_ENV = "production"
   PORT = ":8080"
+  CRON_SYNC_SCHEDULE = "0 3 * * *"
+  CRON_VERIFY_SCHEDULE = "*/5 16-23 * * *"
+
+[deploy]
+  release_command = "/app/migrate -path /app/migrations -database \"$DB_DSN\" up"
 
 [http_service]
   internal_port = 8080

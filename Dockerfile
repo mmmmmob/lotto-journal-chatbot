@@ -9,6 +9,9 @@ COPY apps/api/go.mod apps/api/go.sum ./apps/api/
 WORKDIR /src/apps/api
 RUN go mod download
 
+# Install golang-migrate (cached separately from app source code)
+RUN CGO_ENABLED=0 GOOS=linux GOBIN=/out go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.2
+
 # Copy API source and build
 COPY apps/api/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/lotto-api app/main.go
@@ -20,6 +23,8 @@ RUN addgroup -S app && adduser -S app -G app && \
 
 WORKDIR /app
 COPY --from=builder /out/lotto-api /app/lotto-api
+COPY --from=builder /out/migrate /app/migrate
+COPY apps/api/migrations /app/migrations
 
 # Non-secret runtime defaults (Fly can override)
 ENV APP_ENV=production
