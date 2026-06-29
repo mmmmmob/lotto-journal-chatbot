@@ -47,15 +47,15 @@ when they win on official draw dates.
 4. System compares results against all user tickets in the database
 5. Winners are notified automatically (via LINE if pivot is chosen)
 
-### Existing Code (as of 2026-04-30)
+### Existing Code (as of 2026-06-28)
 
-| Component               | Status   | Notes                                                                  |
-| ----------------------- | -------- | ---------------------------------------------------------------------- |
-| `apps/api`              | Partial  | Fiber setup, basic signup handler (incomplete), DB connection          |
-| `apps/web`              | Removed  | Deleted in T-006 (ADR-001 — no web UI for end users)                   |
-| DB schema               | Complete | Full schema: users, tickets, draws, draw_results, user_winnings, files |
-| Migrations              | Complete | `000001_init_schema`, `000002_line_identity`, `000003_webhook_events`  |
-| `trunk/db_diagram.dbml` | Complete | Full ER diagram                                                        |
+| Component               | Status   | Notes                                                                                                         |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `apps/api`              | Complete | Go Fiber API with LINE webhook handler, background cron job scheduler, result checker, & push notification engine |
+| `apps/web`              | Removed  | Deleted in T-006 (ADR-001 — no web UI for end users)                                                          |
+| DB schema               | Complete | Full schema: users, tickets, draws, draw_results, user_winnings, files, notification_logs                     |
+| Migrations              | Complete | `000001_init_schema` to `000005_notification_logs`                                                            |
+| `trunk/db_diagram.dbml` | Complete | Full ER diagram                                                                                               |
 
 ---
 

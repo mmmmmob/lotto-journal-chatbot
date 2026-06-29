@@ -60,6 +60,7 @@ If undocumented code is found:
 
 ## Index
 
-| File                            | Title                              | Date       | Status |
-| ------------------------------- | ---------------------------------- | ---------- | ------ |
-| `T-004-migration-002-design.md` | Migration 000002 — Design Document | 2026-04-30 | done   |
+| File                                    | Title                                                                   | Date       | Status |
+| --------------------------------------- | ----------------------------------------------------------------------- | ---------- | ------ |
+| `T-004-migration-002-design.md`         | Migration 000002 — Design Document                                      | 2026-04-30 | done   |
+| `T-020-photo-ocr-openai-r2-proposal.md` | T-020 — Photo Ticket Capture (LINE Image → OpenAI OCR → Confirm → Save) | 2026-05-12 | draft  |

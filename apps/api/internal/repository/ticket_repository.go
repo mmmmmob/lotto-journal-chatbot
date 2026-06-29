@@ -27,6 +27,7 @@ type DrawTicketWithOwner struct {
 	Number     string
 	Quantity   int
 	LineUserID string
+	Language   string
 }
 
 type TicketRepository struct {
@@ -79,13 +80,14 @@ func (r *TicketRepository) ResetCheckedStatusByDrawIDInTransaction(tx *gorm.DB, 
 func (r *TicketRepository) FindDrawTicketsWithOwners(drawID uuid.UUID) ([]DrawTicketWithOwner, error) {
 	var tickets []DrawTicketWithOwner
 
-	selectFields := fmt.Sprintf("%s.%s, %s.%s, %s.%s, %s.%s, %s.%s, %s.%s",
+	selectFields := fmt.Sprintf("%s.%s, %s.%s, %s.%s, %s.%s, %s.%s, %s.%s, %s.%s",
 		TableTickets, TicketColID,
 		TableTickets, TicketColOwnerID,
 		TableTickets, TicketColType,
 		TableTickets, TicketColNumber,
 		TableTickets, TicketColQuantity,
 		TableUsers, UserColLineUserID,
+		TableUsers, UserColLanguage,
 	)
 
 	joinClause := fmt.Sprintf("JOIN %s ON %s.%s = %s.%s",

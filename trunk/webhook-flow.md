@@ -40,19 +40,22 @@ LINE Platform
           ▼         ▼          ▼
        follow   unfollow   message (text)
           │         │          │
-          │         │    ┌─────┴──────────────┐
-          │         │    │ isTicketListCmd?   │
-          │         │    └──────┬─────────────┘
-          │         │        yes│          no│
-          │         │           ▼            ▼
-          ▼         ▼     TicketService  TicketService
-     UserService  User    ListTickets    SubmitTickets
-     FindOrCreate Deactivate    │            │
-          │                     ▼            ▼
-    UserRepository         DrawRepository + TicketRepository
-    (users table)          (draws + tickets tables)
-          │                   │
-          └─────────┬─────────┘
+          │         │    ┌─────┴───────────────────────────────────────────────────────┐
+          │         │    │ isThaiSwitchCmd? / isEnglishSwitchCmd? / isTicketListCmd?   │
+          │         │    │ isAddHelpCmd? / isNotifyHelpCmd?                            │
+          │         │    └──────┬──────────────────────────────────────────────────────┘
+          │         │           ├──────────────┬──────────────────┬──────────────┐
+          │         │           ▼ (lang)       ▼ (list)           ▼ (help)       ▼ (none/submit)
+          ▼         ▼      UserService   TicketService       Localizer      TicketService
+     UserService  User    UpdateLanguage  ListTickets         Dictionary     SubmitTickets
+     FindOrCreate Deactivate    │              │                  │              │
+          │         │           │              │                  │              │
+     UserRepository └───────────┼──────────────┼──────────────────┼──────────────┘
+     (users table)              ▼              ▼                  ▼
+          │                DrawRepository   DrawRepo       DrawRepository
+          │                (draws table)    (draws)        + TicketRepo
+          │                     │              │                  │
+          └─────────────────────┴──────────────┴──────────────────┘
                     ▼
              PostgreSQL DB
                     │
@@ -96,14 +99,18 @@ app.Post("/webhook", timeout.New(lineHandler.Handle, timeout.Config{
 
 ```go
 // Repositories — own all DB access
-userRepo    := repository.NewUserRepository(db)
-drawRepo    := repository.NewDrawRepository(db)
-ticketRepo  := repository.NewTicketRepository(db)
-webhookRepo := repository.NewWebhookEventRepository(db)
+userRepo       := repository.NewUserRepository(db)
+drawRepo       := repository.NewDrawRepository(db)
+ticketRepo     := repository.NewTicketRepository(db)
+winningRepo    := repository.NewUserWinningRepository(db)
+drawResultRepo := repository.NewDrawResultRepository(db)
+webhookRepo    := repository.NewWebhookEventRepository(db)
 
 // Services — own all business logic
-userSvc   := service.NewUserService(userRepo)
-ticketSvc := service.NewTicketService(ticketRepo, drawRepo)
+userSvc         := service.NewUserService(userRepo)
+drawSvc         := service.NewDrawService()
+ticketSvc       := service.NewTicketService(ticketRepo, drawRepo, drawSvc)
+notificationSvc := service.NewNotificationService(db, bot, ticketRepo, winningRepo, drawResultRepo)
 
 // Handler — owns HTTP concerns only
 lineHandler := handler.NewLineHandler(
@@ -111,6 +118,7 @@ lineHandler := handler.NewLineHandler(
     bot,                        // LINE messaging client (for replies)
     userSvc,
     ticketSvc,
+    notificationSvc,            // for notification log writes
     webhookRepo,                // for deduplication
 )
 ```
@@ -293,15 +301,22 @@ Then the handler checks whether the message is a recognised command keyword and 
 ### 4c-0: Route by keyword
 
 ```go
-if isTicketListCmd(textMsg.Text) {
-    // → list tickets for upcoming draw
+if isThaiSwitchCmd(msgText) {
+    // → Switch language to Thai
+} else if isEnglishSwitchCmd(msgText) {
+    // → Switch language to English
+} else if isTicketListCmd(msgText) {
+    // → List tickets for upcoming draw
+} else if isAddHelpCmd(msgText) {
+    // → Show ticket submission help
+} else if isNotifyHelpCmd(msgText) {
+    // → Show draw result notification help
 } else {
-    // → parse and submit tickets
+    // → Parse and submit tickets
 }
 ```
 
-`isTicketListCmd` normalizes surrounding/internal whitespace (including Unicode and zero-width spaces)
-before matching the command keyword `โพย`.
+Each command helper (`isThaiSwitchCmd`, `isTicketListCmd`, etc.) normalizes surrounding/internal whitespace (including Unicode and zero-width spaces) before matching the command keywords (supporting both EN and TH variants).
 Anything that is not a recognised command is treated as a ticket submission attempt.
 
 ---
@@ -475,9 +490,12 @@ LINE sends POST /webhook
 | `app/main.go`                                     | Wires all layers; registers global middleware + `POST /webhook` with timeout |
 | `middlewares/log.go`                              | Logs every request: method, path, status, duration, req_id                   |
 | `internal/handler/line_handler.go`                | Receives request, verifies, routes events, sends replies                     |
-| `internal/service/user_service.go`                | Find-or-create user; deactivate on unfollow                                  |
+| `internal/localization/localizer.go`              | Dictionary for EN/TH translations and Quick Replies                          |
+| `internal/models/notification_log.go`             | Log types and type-safe enums for audit logging                              |
+| `internal/service/user_service.go`                | Find-or-create user; deactivate on unfollow; update user language            |
 | `internal/service/ticket_service.go`              | Parse message text; save tickets                                             |
 | `internal/service/draw_service.go`                | Calculate next draw date                                                     |
+| `internal/service/notification_service.go`        | Log notification audits; send draw results                                   |
 | `internal/repository/user_repository.go`          | `users` table — FindOrCreate, UpdateStatus                                   |
 | `internal/repository/draw_repository.go`          | `draws` table — FindOrCreate                                                 |
 | `internal/repository/ticket_repository.go`        | `tickets` table — `Create`, `List`                                           |

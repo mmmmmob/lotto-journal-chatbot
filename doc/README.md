@@ -36,9 +36,11 @@ Current: **`v0.2`** — LINE-based PRD. See `00-source/versions/v0.2/01-prd.md`.
 
 ## Current Status
 
-**Phase:** M1 — Design & Build
+**Phase:** M3 — LINE Push Notifications (Complete)
 
 - ADR-001 accepted (Option B — LINE Messaging API pivot)
-- Migration 000002 and 000003 complete (LINE identity redesign + webhook idempotency)
-- Active tasks: T-003 (cronjob design) — T-002 complete
+- Migration 000002 to 000005 complete (LINE identity, webhook events, winning number type widening, and notification logs)
+- Swagger API documentation & Mockery mock generator fully integrated (T-023)
+- Win/loss notifications via LINE push messaging and audit logging engine fully implemented (T-022)
+- Active tasks: None (PRD v0.2 MVP features fully implemented and verified)
 - See `01-plan/work-status.md` for full detail

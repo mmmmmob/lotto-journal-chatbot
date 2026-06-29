@@ -1,12 +1,13 @@
 // * explanations can be found at https://dbdocs.io/theppitak.m/Lotto-Journal
-// * schema version: post-migration 000005 (target state)
-// * ground truth for current DB state: apps/api/migrations/ (all 000001–000005)
+// * schema version: post-migration 000007 (target state)
+// * ground truth for current DB state: apps/api/migrations/ (all 000001–000007)
 
 // USERS
 Table users {
   id uuid [pk, default: `gen_random_uuid()`]
   line_user_id varchar [unique, not null]
   status account_status [default: 'active']
+  language varchar(10) [not null, default: 'en']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 }
@@ -125,4 +126,7 @@ enum notification_type {
   ticket_submitted
   ticket_list
   draw_result
+  language_changed
+  help_add
+  help_notify
 }

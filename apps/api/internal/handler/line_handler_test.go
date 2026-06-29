@@ -33,23 +33,65 @@ func TestIsTicketListCmd(t *testing.T) {
 }
 
 func TestBuildWelcomeMessage(t *testing.T) {
-	t.Run("with display name", func(t *testing.T) {
-		msg := buildWelcomeMessage("Ploy")
+	t.Run("Thai with display name", func(t *testing.T) {
+		msg := buildWelcomeMessage("Ploy", "th", true)
 		if !strings.Contains(msg, "สวัสดีคุณ Ploy") {
 			t.Fatalf("expected personalized greeting, got %q", msg)
 		}
 		if !strings.Contains(msg, "ยินดีต้อนรับสู่ Lotto Journal") {
 			t.Fatalf("expected welcome body, got %q", msg)
 		}
+		if !strings.Contains(msg, "เปลี่ยนเป็นภาษาอังกฤษ") {
+			t.Fatalf("expected toggle hint, got %q", msg)
+		}
 	})
 
-	t.Run("without display name", func(t *testing.T) {
-		msg := buildWelcomeMessage("")
+	t.Run("Thai without display name", func(t *testing.T) {
+		msg := buildWelcomeMessage("", "th", true)
 		if !strings.Contains(msg, "สวัสดี!") {
 			t.Fatalf("expected generic greeting, got %q", msg)
 		}
 		if !strings.Contains(msg, "ยินดีต้อนรับสู่ Lotto Journal") {
 			t.Fatalf("expected welcome body, got %q", msg)
+		}
+	})
+
+	t.Run("Thai returning", func(t *testing.T) {
+		msg := buildWelcomeMessage("Ploy", "th", false)
+		if !strings.Contains(msg, "สวัสดีคุณ Ploy") {
+			t.Fatalf("expected personalized greeting, got %q", msg)
+		}
+		if !strings.Contains(msg, "ยินดีต้อนรับกลับสู่ Lotto Journal") {
+			t.Fatalf("expected returning welcome body, got %q", msg)
+		}
+		if strings.Contains(msg, "เปลี่ยนเป็นภาษาอังกฤษ") {
+			t.Fatalf("did not expect toggle hint, got %q", msg)
+		}
+	})
+
+	t.Run("English with display name", func(t *testing.T) {
+		msg := buildWelcomeMessage("John", "en", true)
+		if !strings.Contains(msg, "Hello John!") {
+			t.Fatalf("expected personalized greeting, got %q", msg)
+		}
+		if !strings.Contains(msg, "Welcome to Lotto Journal") {
+			t.Fatalf("expected welcome body, got %q", msg)
+		}
+		if !strings.Contains(msg, "switch to Thai language") {
+			t.Fatalf("expected toggle hint, got %q", msg)
+		}
+	})
+
+	t.Run("English returning", func(t *testing.T) {
+		msg := buildWelcomeMessage("John", "en", false)
+		if !strings.Contains(msg, "Hello John!") {
+			t.Fatalf("expected personalized greeting, got %q", msg)
+		}
+		if !strings.Contains(msg, "Welcome back to Lotto Journal") {
+			t.Fatalf("expected returning welcome body, got %q", msg)
+		}
+		if strings.Contains(msg, "switch to Thai language") {
+			t.Fatalf("did not expect toggle hint, got %q", msg)
 		}
 	})
 }
