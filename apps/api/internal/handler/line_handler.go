@@ -253,7 +253,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	if isThaiSwitchCmd(msgText) {
 		if err := h.userSvc.UpdateLanguage(lineUserID, "th"); err != nil {
 			log.Printf("[message] UpdateLanguage to th for %s: %v", lineUserID, err)
-			h.replyMaintenance(e.ReplyToken)
+			h.replyMaintenanceLocalized(e.ReplyToken, user.Language)
 			return
 		}
 		user.Language = "th"
@@ -265,7 +265,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	if isEnglishSwitchCmd(msgText) {
 		if err := h.userSvc.UpdateLanguage(lineUserID, "en"); err != nil {
 			log.Printf("[message] UpdateLanguage to en for %s: %v", lineUserID, err)
-			h.replyMaintenance(e.ReplyToken)
+			h.replyMaintenanceLocalized(e.ReplyToken, user.Language)
 			return
 		}
 		user.Language = "en"
@@ -278,7 +278,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 		userTickets, drawDate, err := h.ticketSvc.ListTickets(user.ID)
 		if err != nil {
 			log.Printf("[message] error retrieving %s tickets: %v", user.ID, err)
-			h.replyMaintenance(e.ReplyToken)
+			h.replyMaintenanceLocalized(e.ReplyToken, user.Language)
 			return
 		}
 		var drawIDPtr *uuid.UUID
@@ -305,7 +305,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	saved, invalid, drawID, err := h.ticketSvc.SubmitTickets(user.ID, msgText)
 	if err != nil {
 		log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
-		h.replyMaintenance(e.ReplyToken)
+		h.replyMaintenanceLocalized(e.ReplyToken, user.Language)
 		return
 	}
 	var drawIDPtr *uuid.UUID
@@ -528,6 +528,11 @@ func webhookEventID(event webhook.EventInterface) string {
 
 func (h *LineHandler) replyMaintenance(replyToken string) {
 	h.replyText(replyToken, localization.DbMaintenanceMessage)
+}
+
+func (h *LineHandler) replyMaintenanceLocalized(replyToken string, lang string) {
+	dict := localization.GetDictionary(lang)
+	h.replyText(replyToken, dict.DbMaintenance)
 }
 
 func eventReplyToken(event webhook.EventInterface) string {

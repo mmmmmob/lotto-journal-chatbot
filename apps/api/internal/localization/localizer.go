@@ -35,6 +35,7 @@ type Dictionary struct {
 	GenericError            string
 	WelcomeGreetingGeneric  string
 	WelcomeGreetingPersonal string
+	DbMaintenance           string
 }
 
 var Dictionaries = map[Language]*Dictionary{
@@ -60,6 +61,7 @@ var Dictionaries = map[Language]*Dictionary{
 		GenericError:            "An error occurred. Please try again 🙏",
 		WelcomeGreetingGeneric:  "👋 Hello!",
 		WelcomeGreetingPersonal: "👋 Hello %s!",
+		DbMaintenance:           "Sorry for the inconvenience. Our system database is temporarily undergoing maintenance. Please try again later.",
 	},
 	TH: {
 		WelcomeFirstTime:        "🎟️ ยินดีต้อนรับสู่ Lotto Journal!\nพิมพ์เลขสลากที่คุณซื้อไว้เพื่อรอตรวจผลอัตโนมัติได้เลย\nตัวอย่าง: 123456 หรือ 456\nส่งหลายเลขได้ เช่น 123456 789012\nระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'\n\n(พิมพ์ `english` เพื่อเปลี่ยนเป็นภาษาอังกฤษ)",
@@ -83,6 +85,7 @@ var Dictionaries = map[Language]*Dictionary{
 		GenericError:            "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏",
 		WelcomeGreetingGeneric:  "👋 สวัสดี!",
 		WelcomeGreetingPersonal: "👋 สวัสดีคุณ %s!",
+		DbMaintenance:           "ขออภัยในความไม่สะดวก ขณะนี้ระบบฐานข้อมูลอยู่ระหว่างการปรับปรุงชั่วคราว กรุณาลองใหม่อีกครั้งในภายหลัง",
 	},
 }
 
