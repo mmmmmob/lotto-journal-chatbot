@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -154,11 +155,11 @@ func (s *TicketService) SubmitTickets(ownerID uuid.UUID, text string) ([]ParsedT
 }
 
 // ListTickets find the nearest draw date from current time and call List method on ticketRepo to return list of tickets user holds
-func (s *TicketService) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error) {
+func (s *TicketService) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, time.Time, error) {
 	draw, err := s.drawSvc.FindOrCreateUpcoming()
 	if err != nil {
-		return nil, fmt.Errorf("resolve upcoming draw: %w", err)
+		return nil, time.Time{}, fmt.Errorf("resolve upcoming draw: %w", err)
 	}
 	tickets, err := s.ticketRepo.List(draw.ID, ownerID)
-	return tickets, err
+	return tickets, draw.DrawDate, err
 }

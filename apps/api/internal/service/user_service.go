@@ -29,3 +29,8 @@ func (s *UserService) Deactivate(lineUserID string) error {
 func (s *UserService) Reactivate(lineUserID string) error {
 	return s.repo.UpdateStatus(lineUserID, "active")
 }
+
+// UpdateLanguage updates the user's language preference.
+func (s *UserService) UpdateLanguage(lineUserID string, language string) error {
+	return s.repo.UpdateLanguage(lineUserID, language)
+}
