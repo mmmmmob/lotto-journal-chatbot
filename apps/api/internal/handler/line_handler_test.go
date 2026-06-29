@@ -3,6 +3,8 @@ package handler
 import (
 	"strings"
 	"testing"
+
+	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 )
 
 func TestIsTicketListCmd(t *testing.T) {
@@ -94,4 +96,37 @@ func TestBuildWelcomeMessage(t *testing.T) {
 			t.Fatalf("did not expect toggle hint, got %q", msg)
 		}
 	})
+}
+
+func TestEventReplyToken(t *testing.T) {
+	tests := []struct {
+		name  string
+		event webhook.EventInterface
+		want  string
+	}{
+		{
+			name:  "follow event",
+			event: webhook.FollowEvent{ReplyToken: "follow-token"},
+			want:  "follow-token",
+		},
+		{
+			name:  "message event",
+			event: webhook.MessageEvent{ReplyToken: "message-token"},
+			want:  "message-token",
+		},
+		{
+			name:  "unfollow event",
+			event: webhook.UnfollowEvent{},
+			want:  "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := eventReplyToken(tc.event)
+			if got != tc.want {
+				t.Fatalf("eventReplyToken(%T) = %q, want %q", tc.event, got, tc.want)
+			}
+		})
+	}
 }
