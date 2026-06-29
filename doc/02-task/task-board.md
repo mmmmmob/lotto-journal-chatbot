@@ -1,18 +1,18 @@
 <!-- AI-CONTEXT
 active: none
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023 T-022
-future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP), T-021(multi-language post-MVP)
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023 T-022 T-021
+future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP)
 priority_next: none
-src: v0.2
-updated: 2026-06-28
+src: v0.3
+updated: 2026-06-29
 -->
 
 ---
 
 # Task Board — Lotto Journal
 
-Last updated: 2026-06-28
+Last updated: 2026-06-29
 
 ## Rules
 
@@ -69,9 +69,8 @@ Last updated: 2026-06-28
 
 | ID    | Task                                     | Type  | Source Reference                                        | Priority | Status | Notes                                                                                                                                |
 | ----- | ---------------------------------------- | ----- | ------------------------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| T-009 | Plan LIFF (LINE Front-end Framework) app | chore | doc/00-source/versions/v0.2/01-prd.md §8 (Out of Scope) | Low      | todo   | LIFF web app to complement the chatbot. Lives in apps/liff. Monorepo kept intentionally for this. Design when post-MVP phase begins. |
+| T-009 | Plan LIFF (LINE Front-end Framework) app | chore | doc/00-source/versions/v0.3/01-prd.md §8 (Out of Scope) | Low      | todo   | LIFF web app to complement the chatbot. Lives in apps/liff. Monorepo kept intentionally for this. Design when post-MVP phase begins. |
 | T-020 | Photo ticket OCR via OpenAI + Cloudflare R2 (confirm-before-save) | feat  | doc/06-extensions/T-020-photo-ocr-openai-r2-proposal.md | Medium   | todo   | Post-MVP candidate. Single-image flow first; quantity-only confirm when OCR is correct, fallback to `numberxquantity` correction flow. Prioritized before T-009 by latest decision draft. |
-| T-021 | Multi-language & Localization support (EN/TH) | feat  | doc/00-source/versions/v0.2/01-prd.md §8 (Out of Scope) | Low      | todo   | Support dynamic locale detection from LINE Profile API and setting overrides command (e.g. `EN`/`TH`). Stored in `users.language`. |
 
 
 ---
@@ -86,6 +85,7 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-021 | Multi-language & Localization support (EN/TH)                | 2026-06-29 | Persisted user language preference in `users.language`; automatically detected profile language from LINE Profile API on follow; handled manual switcher commands (`ไทย`/`english`); localized text messages and win/loss push notifications; enabled one-tap Quick Replies navigation buttons. |
 | T-022 | Implement win notification via LINE push message             | 2026-06-28 | Implemented NotificationService to check and group winnings per active user, format push texts, handle 3-attempt backoff retries, and write success/failed audits to notification_logs table. |
 | T-023 | Swagger Documentation and Mockery Setup                      | 2026-06-27 | Extracted interface layers; configured Mockery v3 with `.mockery.yml`; added Swagger specs and Fiber v3 swaggo middleware; set up dev-only access; automated compilation reloads in `air`; updated package scripts/READMEs |
 | T-003 | Design and implement cronjob: lottery result fetch + comparison flow | 2026-06-27 | Implemented LotteryClient for GLO APIs with retries/dedup; database-first draw resolver in DrawService with low-frequency background sync and emergency fallback; ResultService win-checking logic for L6 and N3; Bangkok time CronScheduler running startup sync, 3 AM sync, and 16:00 draw day checking; migration 000004 applied; all build/tests pass |
