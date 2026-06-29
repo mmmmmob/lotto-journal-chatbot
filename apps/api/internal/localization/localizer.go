@@ -86,6 +86,8 @@ var Dictionaries = map[Language]*Dictionary{
 	},
 }
 
+const DbMaintenanceMessage = "ขออภัยในความไม่สะดวก ขณะนี้ระบบฐานข้อมูลอยู่ระหว่างการปรับปรุงชั่วคราว กรุณาลองใหม่อีกครั้งในภายหลัง\n\nSorry for the inconvenience. The system is currently undergoing database maintenance. Please try again later."
+
 func GetDictionary(lang string) *Dictionary {
 	l := Language(strings.ToLower(lang))
 	if dict, ok := Dictionaries[l]; ok {
