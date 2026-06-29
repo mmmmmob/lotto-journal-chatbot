@@ -133,3 +133,5 @@ apps/api/
 | 000003  | `000003_webhook_events`         | Idempotency table — store processed LINE `webhookEventId` values (ON CONFLICT DO NOTHING)        |
 | 000004  | `000004_widen_winning_number`   | Widen `draw_results.winning_number` to `varchar(12)` for N3 Jackpot                              |
 | 000005  | `000005_notification_logs`      | Notification logs — table for auditing outgoing push/reply messages                              |
+| 000006  | `000006_user_language`          | Add language setting preference column (defaults to `'en'`) to the `users` table                 |
+| 000007  | `000007_add_notification_types` | Add new notification type enum values (`language_changed`, `help_add`, `help_notify`) to audit log enum |
