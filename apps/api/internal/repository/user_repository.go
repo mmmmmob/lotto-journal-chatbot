@@ -11,6 +11,7 @@ const (
 	UserColID         = "id"
 	UserColLineUserID = "line_user_id"
 	UserColStatus     = "status"
+	UserColLanguage   = "language"
 )
 
 type UserRepository struct {
@@ -54,11 +55,21 @@ func (r *UserRepository) FindOrCreate(lineUserID string) (*models.User, bool, er
 }
 
 // UpdateStatus sets the account_status for the user with the given LINE user ID.
+// Called when a user unfollows the LINE Official Account.
 func (r *UserRepository) UpdateStatus(lineUserID string, status string) error {
 	return r.db.
 		Model(&models.User{}).
 		Where(UserColLineUserID+" = ?", lineUserID).
 		Update(UserColStatus, status).
+		Error
+}
+
+// UpdateLanguage sets the language for the user with the given LINE user ID.
+func (r *UserRepository) UpdateLanguage(lineUserID string, language string) error {
+	return r.db.
+		Model(&models.User{}).
+		Where(UserColLineUserID+" = ?", lineUserID).
+		Update(UserColLanguage, language).
 		Error
 }
 
