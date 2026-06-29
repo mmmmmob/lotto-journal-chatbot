@@ -206,3 +206,60 @@ func (_c *MockUserServiceInterface_Reactivate_Call) RunAndReturn(run func(lineUs
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateLanguage provides a mock function for the type MockUserServiceInterface
+func (_mock *MockUserServiceInterface) UpdateLanguage(lineUserID string, language string) error {
+	ret := _mock.Called(lineUserID, language)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLanguage")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = returnFunc(lineUserID, language)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserServiceInterface_UpdateLanguage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateLanguage'
+type MockUserServiceInterface_UpdateLanguage_Call struct {
+	*mock.Call
+}
+
+// UpdateLanguage is a helper method to define mock.On call
+//   - lineUserID string
+//   - language string
+func (_e *MockUserServiceInterface_Expecter) UpdateLanguage(lineUserID any, language any) *MockUserServiceInterface_UpdateLanguage_Call {
+	return &MockUserServiceInterface_UpdateLanguage_Call{Call: _e.mock.On("UpdateLanguage", lineUserID, language)}
+}
+
+func (_c *MockUserServiceInterface_UpdateLanguage_Call) Run(run func(lineUserID string, language string)) *MockUserServiceInterface_UpdateLanguage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserServiceInterface_UpdateLanguage_Call) Return(err error) *MockUserServiceInterface_UpdateLanguage_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserServiceInterface_UpdateLanguage_Call) RunAndReturn(run func(lineUserID string, language string) error) *MockUserServiceInterface_UpdateLanguage_Call {
+	_c.Call.Return(run)
+	return _c
+}

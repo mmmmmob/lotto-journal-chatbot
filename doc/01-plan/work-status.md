@@ -1,40 +1,40 @@
 <!-- AI-CONTEXT
-src: v0.2
-phase: M3
-direction: LINE Push Notifications
+src: v0.3
+phase: M4
+direction: Multi-language & Localization
 focus: []
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023, T-022]
-future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP, T-021 Multi-language — post-MVP]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023, T-022, T-021]
+future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP]
 blocked: none
 next: none
 risk: none
 adr: ADR-001
 read_more:
-  prd: doc/00-source/versions/v0.2/01-prd.md
+  prd: doc/00-source/versions/v0.3/01-prd.md
   migration_design: doc/06-extensions/T-004-migration-002-design.md
   architecture: doc/07-decisions/README.md
   entities: doc/07-decisions/entity-register.md
-  source_current: doc/00-source/versions/v0.2/
+  source_current: doc/00-source/versions/v0.3/
   walkthrough: apps/api/walkthrough.md
-updated: 2026-06-28
+updated: 2026-06-29
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-06-28 (session 17)
+Last updated: 2026-06-29 (session 18)
 
 ## Source References
 
-- `doc/00-source/versions/v0.2/01-prd.md` — current PRD (LINE-based)
+- `doc/00-source/versions/v0.3/01-prd.md` — current PRD (LINE-based with Localization)
 - `doc/07-decisions/ADR-001-line-messaging-pivot.md` — Accepted
 
 ---
 
 ## Phase and Direction
 
-**Current phase:** M3 — LINE Push Notifications (Complete)
+**Current phase:** M4 — Hardening / Post-MVP (T-021 Complete)
 
 With **T-022** complete, the LINE Push Notifications engine is fully implemented. Active users receive automated win/loss notifications shortly after a draw is verified in `ResultService`. Logs are written to `notification_logs` table for tracking.
 
@@ -42,12 +42,13 @@ With **T-022** complete, the LINE Push Notifications engine is fully implemented
 
 ## Active Tasks
 
-None. All PRD v0.2 MVP features are fully implemented and verified!
+None. All PRD v0.3 localization features are fully implemented and verified!
 
 ---
 
 ## Completed Tasks
 
+- `T-021` — Multi-language & Localization support (EN/TH) — done (2026-06-29)
 - `T-022` — Implement win notification via LINE push message — done (2026-06-28)
 - `T-023` — Swagger Documentation and Mockery Setup — done (2026-06-27)
 - `T-003` — Design and implement cronjob: lottery result fetch + comparison flow — done (2026-06-27)

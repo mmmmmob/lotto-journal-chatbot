@@ -7,6 +7,7 @@ package mocks
 import (
 	"lotto-journal/api/internal/models"
 	"lotto-journal/api/internal/service"
+	"time"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -40,7 +41,7 @@ func (_m *MockTicketServiceInterface) EXPECT() *MockTicketServiceInterface_Expec
 }
 
 // ListTickets provides a mock function for the type MockTicketServiceInterface
-func (_mock *MockTicketServiceInterface) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, error) {
+func (_mock *MockTicketServiceInterface) ListTickets(ownerID uuid.UUID) ([]*models.Ticket, time.Time, error) {
 	ret := _mock.Called(ownerID)
 
 	if len(ret) == 0 {
@@ -48,8 +49,9 @@ func (_mock *MockTicketServiceInterface) ListTickets(ownerID uuid.UUID) ([]*mode
 	}
 
 	var r0 []*models.Ticket
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) ([]*models.Ticket, error)); ok {
+	var r1 time.Time
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) ([]*models.Ticket, time.Time, error)); ok {
 		return returnFunc(ownerID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(uuid.UUID) []*models.Ticket); ok {
@@ -59,12 +61,17 @@ func (_mock *MockTicketServiceInterface) ListTickets(ownerID uuid.UUID) ([]*mode
 			r0 = ret.Get(0).([]*models.Ticket)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(uuid.UUID) time.Time); ok {
 		r1 = returnFunc(ownerID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(time.Time)
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(uuid.UUID) error); ok {
+		r2 = returnFunc(ownerID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockTicketServiceInterface_ListTickets_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTickets'
@@ -91,12 +98,12 @@ func (_c *MockTicketServiceInterface_ListTickets_Call) Run(run func(ownerID uuid
 	return _c
 }
 
-func (_c *MockTicketServiceInterface_ListTickets_Call) Return(tickets []*models.Ticket, err error) *MockTicketServiceInterface_ListTickets_Call {
-	_c.Call.Return(tickets, err)
+func (_c *MockTicketServiceInterface_ListTickets_Call) Return(tickets []*models.Ticket, time1 time.Time, err error) *MockTicketServiceInterface_ListTickets_Call {
+	_c.Call.Return(tickets, time1, err)
 	return _c
 }
 
-func (_c *MockTicketServiceInterface_ListTickets_Call) RunAndReturn(run func(ownerID uuid.UUID) ([]*models.Ticket, error)) *MockTicketServiceInterface_ListTickets_Call {
+func (_c *MockTicketServiceInterface_ListTickets_Call) RunAndReturn(run func(ownerID uuid.UUID) ([]*models.Ticket, time.Time, error)) *MockTicketServiceInterface_ListTickets_Call {
 	_c.Call.Return(run)
 	return _c
 }

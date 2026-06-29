@@ -12,6 +12,7 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"gorm.io/gorm"
 
+	"lotto-journal/api/internal/localization"
 	"lotto-journal/api/internal/models"
 	"lotto-journal/api/internal/repository"
 )
@@ -74,10 +75,11 @@ func (s *NotificationService) SendDrawNotifications(ctx context.Context, drawID 
 	type UserInfo struct {
 		ID         uuid.UUID
 		LineUserID string
+		Language   string
 	}
 	userTickets := make(map[UserInfo][]repository.DrawTicketWithOwner)
 	for _, t := range tickets {
-		u := UserInfo{ID: t.OwnerID, LineUserID: t.LineUserID}
+		u := UserInfo{ID: t.OwnerID, LineUserID: t.LineUserID, Language: t.Language}
 		userTickets[u] = append(userTickets[u], t)
 	}
 
@@ -100,66 +102,57 @@ func (s *NotificationService) SendDrawNotifications(ctx context.Context, drawID 
 		totalPrize := 0
 		hasN3Straight := false
 
+		dict := localization.GetDictionary(u.Language)
+
 		for _, t := range tkts {
 			wins, isWinner := ticketWinnings[t.ID]
 			if isWinner {
 				for _, w := range wins {
 					totalPrize += w.PrizeMoney
-					winDetails = append(winDetails, fmt.Sprintf("• เลข %s (%s)\n  - %s x%d ใบ\n  - เงินรางวัล %s บาท",
-						t.Number, t.Type, getPrizeNameTH(w.PrizeCategory), t.Quantity, formatMoney(w.PrizeMoney)))
+					detail := fmt.Sprintf(dict.DrawWinDetail,
+						t.Number, t.Type, localization.GetPrizeName(w.PrizeCategory, u.Language), t.Quantity, formatMoney(w.PrizeMoney))
+					winDetails = append(winDetails, detail)
 
 					if w.PrizeCategory == "n3_straight_three" {
 						hasN3Straight = true
 					}
 				}
 			} else {
-				loseDetails = append(loseDetails, fmt.Sprintf("• เลข %s (%s) x%d ใบ", t.Number, t.Type, t.Quantity))
+				detail := fmt.Sprintf(dict.DrawLoseDetail, t.Number, t.Type, t.Quantity)
+				loseDetails = append(loseDetails, detail)
 			}
 		}
 
 		var messageText string
 		if len(winDetails) > 0 {
 			// User is a winner!
-			var sb strings.Builder
-			sb.WriteString(fmt.Sprintf("🏆 ยินดีด้วย! คุณถูกรางวัลสลากกินแบ่งรัฐบาล\nงวดประจำวันที่ %s\n\n", formattedDrawDate))
-			sb.WriteString("สลากที่ถูกรางวัล:\n")
-			sb.WriteString(strings.Join(winDetails, "\n"))
-			sb.WriteString(fmt.Sprintf("\n\nยอดเงินรางวัลรวมทั้งหมด: %s บาท 🎉", formatMoney(totalPrize)))
+			winDetailsText := strings.Join(winDetails, "\n")
+			messageText = fmt.Sprintf(dict.DrawWinMessage, formattedDrawDate, winDetailsText, formatMoney(totalPrize))
 
 			if hasN3Straight && hasSpecial {
-				sb.WriteString("\n\n--------------------\n")
-				sb.WriteString("ℹ️ ลุ้นรางวัลพิเศษสามตัวท้าย (N3 Jackpot)\n")
-				sb.WriteString(fmt.Sprintf("เลขรางวัลพิเศษงวดนี้คือ %s (เงินรางวัล %s บาท)\n", specialResult.WinningNumber, formatMoney(specialResult.PrizeAmount)))
-				sb.WriteString("หากหมายเลข 12 หลักบนสลาก/แอปเป๋าตังของคุณตรงกับเลขนี้ คุณคือผู้ถูกรางวัลพิเศษ!\n")
-				sb.WriteString("--------------------")
+				messageText += fmt.Sprintf(dict.DrawJackpotInfo, specialResult.WinningNumber, formatMoney(specialResult.PrizeAmount))
 			}
 
-			sb.WriteString("\n\n*กรุณาตรวจสอบผลรางวัลอย่างเป็นทางการอีกครั้งเพื่อความถูกต้อง*")
-			messageText = sb.String()
+			messageText += dict.DrawFootnote
 		} else if len(loseDetails) > 0 {
 			// User didn't win anything
-			var sb strings.Builder
-			sb.WriteString(fmt.Sprintf("งวดประจำวันที่ %s\n\n", formattedDrawDate))
-			sb.WriteString("เสียใจด้วยครับ งวดนี้คุณยังไม่ถูกรางวัล 😢\n")
-			sb.WriteString("สลากที่ตรวจ:\n")
-			sb.WriteString(strings.Join(loseDetails, "\n"))
-			sb.WriteString("\n\nเป็นกำลังใจให้ในงวดถัดไปนะครับ! ✌️")
-			messageText = sb.String()
+			loseDetailsText := strings.Join(loseDetails, "\n")
+			messageText = fmt.Sprintf(dict.DrawLoseMessage, formattedDrawDate, loseDetailsText)
 		}
 
 		if messageText != "" {
 			err := s.pushMessageWithRetry(ctx, u.LineUserID, messageText)
-			status := "success"
+			status := models.NotifStatusSuccess
 			var errStr *string
 			if err != nil {
-				status = "failed"
+				status = models.NotifStatusFailed
 				msg := err.Error()
 				errStr = &msg
 				log.Printf("[notification_service] Failed to send push message to %s: %v", u.LineUserID, err)
 			}
 
 			// Log this notification in database
-			if logErr := s.LogNotification(u.ID, u.LineUserID, "draw_result", &drawID, status, errStr); logErr != nil {
+			if logErr := s.LogNotification(u.ID, u.LineUserID, models.NotifTypeDrawResult, &drawID, status, errStr); logErr != nil {
 				log.Printf("[notification_service] Failed to write notification log: %v", logErr)
 			}
 		}
@@ -169,7 +162,7 @@ func (s *NotificationService) SendDrawNotifications(ctx context.Context, drawID 
 }
 
 // LogNotification writes a record to the notification_logs table.
-func (s *NotificationService) LogNotification(userID uuid.UUID, lineUserID string, notifType string, drawID *uuid.UUID, status string, errStr *string) error {
+func (s *NotificationService) LogNotification(userID uuid.UUID, lineUserID string, notifType models.NotificationType, drawID *uuid.UUID, status models.NotificationStatus, errStr *string) error {
 	logRecord := &models.NotificationLog{
 		UserID:           userID,
 		LineUserID:       lineUserID,
@@ -222,38 +215,6 @@ func (s *NotificationService) pushMessageWithRetry(ctx context.Context, to, text
 	return lastErr
 }
 
-func getPrizeNameTH(category string) string {
-	switch category {
-	case "l6_first":
-		return "รางวัลที่ 1"
-	case "l6_second":
-		return "รางวัลที่ 2"
-	case "l6_third":
-		return "รางวัลที่ 3"
-	case "l6_fourth":
-		return "รางวัลที่ 4"
-	case "l6_fifth":
-		return "รางวัลที่ 5"
-	case "l6_last2":
-		return "เลขท้าย 2 ตัว"
-	case "l6_last3f":
-		return "เลขหน้า 3 ตัว"
-	case "l6_last3b":
-		return "เลขท้าย 3 ตัว"
-	case "l6_near_first":
-		return "รางวัลข้างเคียงรางวัลที่ 1"
-	case "n3_straight_three":
-		return "3 ตัวตรง"
-	case "n3_shuffle":
-		return "3 ตัวสลับ (โต๊ด)"
-	case "n3_straight_two":
-		return "2 ตัวตรง"
-	case "n3_special":
-		return "รางวัลพิเศษ (แจ็กพอต)"
-	default:
-		return category
-	}
-}
 
 func formatMoney(amount int) string {
 	str := strconv.Itoa(amount)

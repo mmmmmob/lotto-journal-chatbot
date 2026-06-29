@@ -17,6 +17,7 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 
+	"lotto-journal/api/internal/localization"
 	"lotto-journal/api/internal/models"
 	"lotto-journal/api/internal/repository"
 	"lotto-journal/api/internal/service"
@@ -136,19 +137,36 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 		return
 	}
 
+	var displayName string
+	var detectedLanguage string
+
+	profile, err := h.bot.GetProfile(lineUserID)
+	if err == nil && profile != nil {
+		displayName = strings.TrimSpace(profile.DisplayName)
+		detectedLanguage = strings.TrimSpace(profile.Language)
+	} else {
+		log.Printf("[profile] GetProfile %s: %v", lineUserID, err)
+	}
+
 	if isNew {
 		log.Printf("[follow] new user created: %s", lineUserID)
+		lang := "en"
+		if strings.ToLower(detectedLanguage) == "th" {
+			lang = "th"
+		}
+		user.Language = lang
+		if err := h.userSvc.UpdateLanguage(lineUserID, lang); err != nil {
+			log.Printf("[follow] UpdateLanguage %s to %s: %v", lineUserID, lang, err)
+		}
 	} else {
 		// User was previously inactive (unfollowed) — restore active status.
 		if err := h.userSvc.Reactivate(lineUserID); err != nil {
 			log.Printf("[follow] Reactivate %s: %v", lineUserID, err)
-			// Non-fatal: still send the welcome reply even if reactivation fails.
 		}
 		log.Printf("[follow] existing user re-followed: %s", lineUserID)
 	}
 
-	displayName := h.getDisplayName(lineUserID)
-	h.replyAndLogText(e.ReplyToken, user, "welcome", nil, buildWelcomeMessage(displayName))
+	h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeWelcome, nil, buildWelcomeMessage(displayName, user.Language, isNew), localization.GetQuickReplies(user.Language))
 }
 
 func (h *LineHandler) handleUnfollow(e webhook.UnfollowEvent) {
@@ -204,37 +222,90 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 	}(lineUserID, processingDone)
 
 	// Ensure the user record exists (edge case: message before follow event).
-	user, _, err := h.userSvc.FindOrCreate(lineUserID)
+	user, isNew, err := h.userSvc.FindOrCreate(lineUserID)
 	if err != nil {
 		log.Printf("[message] FindOrCreate %s: %v", lineUserID, err)
 		return
 	}
 
-	if isTicketListCmd(textMsg.Text) {
-		userTickets, err := h.ticketSvc.ListTickets(user.ID)
+	if isNew {
+		log.Printf("[message] new user created: %s", lineUserID)
+		lang := "en"
+		profile, err := h.bot.GetProfile(lineUserID)
+		if err == nil && profile != nil {
+			if strings.ToLower(profile.Language) == "th" {
+				lang = "th"
+			}
+		}
+		user.Language = lang
+		if err := h.userSvc.UpdateLanguage(lineUserID, lang); err != nil {
+			log.Printf("[message] UpdateLanguage %s to %s: %v", lineUserID, lang, err)
+		}
+	}
+
+	msgText := textMsg.Text
+
+	if isThaiSwitchCmd(msgText) {
+		if err := h.userSvc.UpdateLanguage(lineUserID, "th"); err != nil {
+			log.Printf("[message] UpdateLanguage to th for %s: %v", lineUserID, err)
+		}
+		user.Language = "th"
+		dict := localization.GetDictionary("th")
+		h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeLanguageChanged, nil, dict.LanguageSwitched, localization.GetQuickReplies("th"))
+		return
+	}
+
+	if isEnglishSwitchCmd(msgText) {
+		if err := h.userSvc.UpdateLanguage(lineUserID, "en"); err != nil {
+			log.Printf("[message] UpdateLanguage to en for %s: %v", lineUserID, err)
+		}
+		user.Language = "en"
+		dict := localization.GetDictionary("en")
+		h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeLanguageChanged, nil, dict.LanguageSwitched, localization.GetQuickReplies("en"))
+		return
+	}
+
+	if isTicketListCmd(msgText) {
+		userTickets, drawDate, err := h.ticketSvc.ListTickets(user.ID)
 		if err != nil {
 			log.Printf("[message] error retrieving %s tickets: %v", user.ID, err)
-			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
+			dict := localization.GetDictionary(user.Language)
+			h.replyText(e.ReplyToken, dict.GenericError)
 			return
 		}
 		var drawIDPtr *uuid.UUID
 		if len(userTickets) > 0 {
 			drawIDPtr = &userTickets[0].DrawID
 		}
-		h.replyAndLogText(e.ReplyToken, user, "ticket_list", drawIDPtr, buildTicketListReply(userTickets))
-	} else {
-		saved, invalid, drawID, err := h.ticketSvc.SubmitTickets(user.ID, textMsg.Text)
-		if err != nil {
-			log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
-			h.replyText(e.ReplyToken, "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง 🙏")
-			return
-		}
-		var drawIDPtr *uuid.UUID
-		if drawID != uuid.Nil {
-			drawIDPtr = &drawID
-		}
-		h.replyAndLogText(e.ReplyToken, user, "ticket_submitted", drawIDPtr, buildReply(saved, invalid))
+		h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeTicketList, drawIDPtr, buildTicketListReply(userTickets, drawDate, user.Language), localization.GetQuickReplies(user.Language))
+		return
 	}
+
+	if isAddHelpCmd(msgText) {
+		dict := localization.GetDictionary(user.Language)
+		h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeHelpAdd, nil, dict.AddHelp, localization.GetQuickReplies(user.Language))
+		return
+	}
+
+	if isNotifyHelpCmd(msgText) {
+		dict := localization.GetDictionary(user.Language)
+		h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeHelpNotify, nil, dict.NotifyHelp, localization.GetQuickReplies(user.Language))
+		return
+	}
+
+	// Default to parsing tickets
+	saved, invalid, drawID, err := h.ticketSvc.SubmitTickets(user.ID, msgText)
+	if err != nil {
+		log.Printf("[message] SubmitTickets for %s: %v", lineUserID, err)
+		dict := localization.GetDictionary(user.Language)
+		h.replyText(e.ReplyToken, dict.GenericError)
+		return
+	}
+	var drawIDPtr *uuid.UUID
+	if drawID != uuid.Nil {
+		drawIDPtr = &drawID
+	}
+	h.replyAndLogTextWithQuickReplies(e.ReplyToken, user, models.NotifTypeTicketSubmitted, drawIDPtr, buildReply(saved, invalid, user.Language), localization.GetQuickReplies(user.Language))
 }
 
 // --- helpers ---
@@ -250,19 +321,28 @@ func (h *LineHandler) replyText(replyToken, text string) {
 	}
 }
 
-func (h *LineHandler) replyAndLogText(replyToken string, user *models.User, notifType string, drawID *uuid.UUID, text string) {
+func (h *LineHandler) replyAndLogText(replyToken string, user *models.User, notifType models.NotificationType, drawID *uuid.UUID, text string) {
+	h.replyAndLogTextWithQuickReplies(replyToken, user, notifType, drawID, text, nil)
+}
+
+func (h *LineHandler) replyAndLogTextWithQuickReplies(replyToken string, user *models.User, notifType models.NotificationType, drawID *uuid.UUID, text string, quickReplies *messaging_api.QuickReply) {
 	var errStr *string
-	status := "success"
+	status := models.NotifStatusSuccess
+
+	msg := messaging_api.TextMessage{Text: text}
+	if quickReplies != nil {
+		msg.QuickReply = quickReplies
+	}
 
 	if _, err := h.bot.ReplyMessage(&messaging_api.ReplyMessageRequest{
 		ReplyToken: replyToken,
 		Messages: []messaging_api.MessageInterface{
-			messaging_api.TextMessage{Text: text},
+			msg,
 		},
 	}); err != nil {
-		status = "failed"
-		msg := err.Error()
-		errStr = &msg
+		status = models.NotifStatusFailed
+		errMsg := err.Error()
+		errStr = &errMsg
 		log.Printf("[reply] error: %v", err)
 	}
 
@@ -285,18 +365,23 @@ func (h *LineHandler) getDisplayName(lineUserID string) string {
 	return strings.TrimSpace(profile.DisplayName)
 }
 
-func buildWelcomeMessage(displayName string) string {
-	greeting := "👋 สวัสดี!"
+func buildWelcomeMessage(displayName string, lang string, isNew bool) string {
+	dict := localization.GetDictionary(lang)
+	var greeting string
 	if displayName != "" {
-		greeting = fmt.Sprintf("👋 สวัสดีคุณ %s!", displayName)
+		greeting = fmt.Sprintf(dict.WelcomeGreetingPersonal, displayName)
+	} else {
+		greeting = dict.WelcomeGreetingGeneric
 	}
 
-	return greeting + "\n\n" +
-		"🎟️ ยินดีต้อนรับสู่ Lotto Journal!\n" +
-		"ตัวอย่าง: 123456 หรือ 456\n" +
-		"ส่งหลายเลขได้ เช่น 123456 789012\n" +
-		"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
-		"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
+	var template string
+	if isNew {
+		template = dict.WelcomeFirstTime
+	} else {
+		template = dict.WelcomeReturning
+	}
+
+	return greeting + "\n\n" + template
 }
 
 func (h *LineHandler) showLoading(chatID string, loadingSeconds int32) {
@@ -323,36 +408,30 @@ func (h *LineHandler) showLoading(chatID string, loadingSeconds int32) {
 }
 
 // buildReply constructs the confirmation (or error) text for a ticket submission.
-func buildReply(saved []service.ParsedTicket, invalid []string) string {
+func buildReply(saved []service.ParsedTicket, invalid []string, lang string) string {
+	dict := localization.GetDictionary(lang)
 	if len(saved) == 0 && len(invalid) == 0 {
-		// No digit tokens found at all — unrecognised message.
-		return "🎟️ ส่งเลขสลากของคุณมาได้เลย\n\n" +
-			"ตัวอย่าง: 123456 หรือ 456\n" +
-			"ส่งหลายเลขได้ เช่น 123456 789012\n" +
-			"ระบุจำนวนตั๋วด้วย x เช่น 123456x2\n\n" +
-			"📝 หากต้องการดูสลากที่บันทึกไว้ พิมพ์ 'โพย'"
+		return buildWelcomeMessage("", lang, true)
 	}
 
 	if len(saved) == 0 {
-		return fmt.Sprintf(
-			"ไม่พบเลขสลากที่ถูกต้อง ❌\nกรุณาส่งเลข 3 หรือ 6 หลักเท่านั้น\nเลขที่ไม่ถูกต้อง: %s",
-			strings.Join(invalid, ", "),
-		)
+		return fmt.Sprintf(dict.SubmitInvalid, strings.Join(invalid, ", "))
 	}
 
-	lines := []string{"บันทึกสลากเรียบร้อย ✅"}
+	var ticketsListLines []string
 	for _, t := range saved {
 		if t.Quantity > 1 {
-			lines = append(lines, fmt.Sprintf("  • %s x%d (%s)", t.Number, t.Quantity, t.Type))
+			ticketsListLines = append(ticketsListLines, fmt.Sprintf("  • %s x%d (%s)", t.Number, t.Quantity, t.Type))
 		} else {
-			lines = append(lines, fmt.Sprintf("  • %s (%s)", t.Number, t.Type))
+			ticketsListLines = append(ticketsListLines, fmt.Sprintf("  • %s (%s)", t.Number, t.Type))
 		}
 	}
-	if len(invalid) > 0 {
-		lines = append(lines, fmt.Sprintf("\nเลขที่ไม่ถูกต้อง (ข้ามไป): %s", strings.Join(invalid, ", ")))
-	}
+	ticketsList := strings.Join(ticketsListLines, "\n")
 
-	return strings.Join(lines, "\n")
+	if len(invalid) > 0 {
+		return fmt.Sprintf(dict.SubmitMixed, ticketsList, strings.Join(invalid, ", "))
+	}
+	return fmt.Sprintf(dict.SubmitConfirm, ticketsList)
 }
 
 // sourceUserID extracts the LINE userId from a SourceInterface.
@@ -368,9 +447,33 @@ func sourceUserID(src webhook.SourceInterface) string {
 }
 
 // Return if message sent is command for "List all tickets" or not.
-// Accepts extra spaces (including internal/Unicode spaces), e.g. "โ พย".
 func isTicketListCmd(text string) bool {
-	normalized := strings.Map(func(r rune) rune {
+	normalized := normalizeCmd(text)
+	return normalized == "โพย" || normalized == "list" || normalized == "tickets"
+}
+
+func isThaiSwitchCmd(text string) bool {
+	normalized := normalizeCmd(text)
+	return normalized == "ไทย" || normalized == "thai"
+}
+
+func isEnglishSwitchCmd(text string) bool {
+	normalized := normalizeCmd(text)
+	return normalized == "english" || normalized == "en"
+}
+
+func isAddHelpCmd(text string) bool {
+	normalized := normalizeCmd(text)
+	return normalized == "เพิ่ม" || normalized == "add"
+}
+
+func isNotifyHelpCmd(text string) bool {
+	normalized := normalizeCmd(text)
+	return normalized == "แจ้งเตือน" || normalized == "notify"
+}
+
+func normalizeCmd(text string) string {
+	return strings.Map(func(r rune) rune {
 		switch {
 		case unicode.IsSpace(r):
 			return -1
@@ -379,17 +482,17 @@ func isTicketListCmd(text string) bool {
 		default:
 			return r
 		}
-	}, strings.TrimSpace(text))
-
-	return normalized == "โพย"
+	}, strings.ToLower(strings.TrimSpace(text)))
 }
 
-func buildTicketListReply(tickets []*models.Ticket) string {
+func buildTicketListReply(tickets []*models.Ticket, drawDate time.Time, lang string) string {
+	dict := localization.GetDictionary(lang)
 	if len(tickets) == 0 {
-		return "คุณยังไม่ได้บันทึกสลากในงวดนี้"
+		return dict.ListEmpty
 	}
 
-	lines := []string{"สลากที่คุณบันทึกไว้ในงวดนี้ 📝"}
+	dateStr := drawDate.Format("02/01/2006")
+	lines := []string{fmt.Sprintf(dict.ListHeader, dateStr)}
 
 	for _, t := range tickets {
 		if t.Quantity > 1 {

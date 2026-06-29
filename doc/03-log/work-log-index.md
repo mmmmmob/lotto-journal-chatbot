@@ -1,19 +1,19 @@
 <!-- AI-CONTEXT
-last_session: 2026-06-28 (session 17)
+last_session: 2026-06-29 (session 18)
 tool: Antigravity
-completed: [T-022]
+completed: [T-021]
 in_progress: []
-checkpoint: LINE Win/Loss Push Notifications, GORM Query Cleanups, Outbound Logging, and integration tests build tag separation complete
+checkpoint: Multi-language & Localization (EN/TH) preference persistence, automatic locale detection on follow, switcher commands, and dynamic Quick Replies navigation complete
 next_from_last: none
-notes: Implemented NotificationService, automated LINE push notifications, logged webhook replies and pushes to notification_logs, moved GORM logic to repos, and isolated integration tests using standard build tags.
-deep_context: doc/00-source/versions/v0.2/01-prd.md
+notes: Persisted user language preference in users.language, automatically detected profile language from LINE Profile API, implemented switcher commands, and localized text messages and win/loss push notifications.
+deep_context: doc/00-source/versions/v0.3/01-prd.md
 -->
 
 ---
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-06-28 (session 17)
+Last updated: 2026-06-29 (session 18)
 
 ---
 
@@ -23,6 +23,28 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-06-29 — Session 18 — [Antigravity]
+
+- **Session summary:** T-021 completed. Implemented Multi-language & Localization (EN/TH) preference persistence, automatic profile language detection on follow, manual toggling commands, and dynamic Quick Replies navigation.
+- **Work done:**
+  - Created migration `000006_user_language` to provision `language` column on `users` table, and `000007_add_notification_types` to register new audit notification types (`language_changed`, `help_add`, `help_notify`) in the DB enum.
+  - Updated GORM models `User` and `DrawTicketWithOwner` repository struct to map user language preferences.
+  - Implemented `UpdateLanguage` on `UserRepository` and `UserService` to persist language settings.
+  - Modified `ListTickets` signature on `TicketServiceInterface` and `TicketService` to return the draw date for localized headers.
+  - Regenerated mockery mocks using `pnpm mock`.
+  - Created `localization/localizer.go` providing dynamic bilingual (EN/TH) templates and LINE Quick Replies.
+  - Updated `LineHandler` to query profile language on follow, switch settings on toggles, return bilingual error replies, format list output with draw date, handle quick replies instructions, and attach Quick Replies to text messages.
+  - Localised win/loss notifications inside `NotificationService`.
+  - Updated unit tests in `line_handler_test.go` to cover localized greetings.
+- **Validation evidence:**
+  - `pnpm test:api` passes successfully (with DB integration transaction verification)
+  - `pnpm build` passes successfully
+- **Tasks changed:**
+  - T-021: done
+- **Next priority:** none (Awaiting next lottery period verification or proceeding to T-020 OCR OCR+R2)
 
 ---
 
