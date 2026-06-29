@@ -22,9 +22,9 @@ RUN addgroup -S app && adduser -S app -G app && \
     apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
-COPY --from=builder /out/lotto-api /app/lotto-api
-COPY --from=builder /out/migrate /app/migrate
-COPY apps/api/migrations /app/migrations
+COPY --from=builder --chown=app:app /out/lotto-api /app/lotto-api
+COPY --from=builder --chown=app:app /out/migrate /app/migrate
+COPY --chown=app:app apps/api/migrations /app/migrations
 
 # Non-secret runtime defaults (Fly can override)
 ENV APP_ENV=production

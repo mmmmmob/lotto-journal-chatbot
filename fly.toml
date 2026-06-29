@@ -13,7 +13,7 @@ primary_region = "sin"
   CRON_VERIFY_SCHEDULE = "*/5 16-23 * * *"
 
 [deploy]
-  release_command = "/app/migrate -path /app/migrations -database \"$DB_DSN\" up"
+  release_command = "sh -c 'exec /app/migrate -path /app/migrations -database \"$DB_DSN\" up'"
 
 [http_service]
   internal_port = 8080
