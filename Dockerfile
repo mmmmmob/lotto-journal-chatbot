@@ -33,4 +33,4 @@ ENV PORT=:8080
 EXPOSE 8080
 
 USER app
-ENTRYPOINT ["/app/lotto-api"]
+CMD ["/app/lotto-api"]
