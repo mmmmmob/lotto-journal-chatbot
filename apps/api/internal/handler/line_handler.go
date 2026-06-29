@@ -141,7 +141,7 @@ func (h *LineHandler) handleFollow(e webhook.FollowEvent) {
 	var detectedLanguage string
 
 	profile, err := h.bot.GetProfile(lineUserID)
-	if err == nil {
+	if err == nil && profile != nil {
 		displayName = strings.TrimSpace(profile.DisplayName)
 		detectedLanguage = strings.TrimSpace(profile.Language)
 	} else {
@@ -232,7 +232,7 @@ func (h *LineHandler) handleMessage(e webhook.MessageEvent) {
 		log.Printf("[message] new user created: %s", lineUserID)
 		lang := "en"
 		profile, err := h.bot.GetProfile(lineUserID)
-		if err == nil {
+		if err == nil && profile != nil {
 			if strings.ToLower(profile.Language) == "th" {
 				lang = "th"
 			}
