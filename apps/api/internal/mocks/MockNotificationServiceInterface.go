@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"lotto-journal/api/internal/models"
 
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
@@ -39,7 +40,7 @@ func (_m *MockNotificationServiceInterface) EXPECT() *MockNotificationServiceInt
 }
 
 // LogNotification provides a mock function for the type MockNotificationServiceInterface
-func (_mock *MockNotificationServiceInterface) LogNotification(userID uuid.UUID, lineUserID string, notifType string, drawID *uuid.UUID, status string, errStr *string) error {
+func (_mock *MockNotificationServiceInterface) LogNotification(userID uuid.UUID, lineUserID string, notifType models.NotificationType, drawID *uuid.UUID, status models.NotificationStatus, errStr *string) error {
 	ret := _mock.Called(userID, lineUserID, notifType, drawID, status, errStr)
 
 	if len(ret) == 0 {
@@ -47,7 +48,7 @@ func (_mock *MockNotificationServiceInterface) LogNotification(userID uuid.UUID,
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(uuid.UUID, string, string, *uuid.UUID, string, *string) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(uuid.UUID, string, models.NotificationType, *uuid.UUID, models.NotificationStatus, *string) error); ok {
 		r0 = returnFunc(userID, lineUserID, notifType, drawID, status, errStr)
 	} else {
 		r0 = ret.Error(0)
@@ -63,15 +64,15 @@ type MockNotificationServiceInterface_LogNotification_Call struct {
 // LogNotification is a helper method to define mock.On call
 //   - userID uuid.UUID
 //   - lineUserID string
-//   - notifType string
+//   - notifType models.NotificationType
 //   - drawID *uuid.UUID
-//   - status string
+//   - status models.NotificationStatus
 //   - errStr *string
 func (_e *MockNotificationServiceInterface_Expecter) LogNotification(userID any, lineUserID any, notifType any, drawID any, status any, errStr any) *MockNotificationServiceInterface_LogNotification_Call {
 	return &MockNotificationServiceInterface_LogNotification_Call{Call: _e.mock.On("LogNotification", userID, lineUserID, notifType, drawID, status, errStr)}
 }
 
-func (_c *MockNotificationServiceInterface_LogNotification_Call) Run(run func(userID uuid.UUID, lineUserID string, notifType string, drawID *uuid.UUID, status string, errStr *string)) *MockNotificationServiceInterface_LogNotification_Call {
+func (_c *MockNotificationServiceInterface_LogNotification_Call) Run(run func(userID uuid.UUID, lineUserID string, notifType models.NotificationType, drawID *uuid.UUID, status models.NotificationStatus, errStr *string)) *MockNotificationServiceInterface_LogNotification_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 uuid.UUID
 		if args[0] != nil {
@@ -81,17 +82,17 @@ func (_c *MockNotificationServiceInterface_LogNotification_Call) Run(run func(us
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 models.NotificationType
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(models.NotificationType)
 		}
 		var arg3 *uuid.UUID
 		if args[3] != nil {
 			arg3 = args[3].(*uuid.UUID)
 		}
-		var arg4 string
+		var arg4 models.NotificationStatus
 		if args[4] != nil {
-			arg4 = args[4].(string)
+			arg4 = args[4].(models.NotificationStatus)
 		}
 		var arg5 *string
 		if args[5] != nil {
@@ -114,7 +115,7 @@ func (_c *MockNotificationServiceInterface_LogNotification_Call) Return(err erro
 	return _c
 }
 
-func (_c *MockNotificationServiceInterface_LogNotification_Call) RunAndReturn(run func(userID uuid.UUID, lineUserID string, notifType string, drawID *uuid.UUID, status string, errStr *string) error) *MockNotificationServiceInterface_LogNotification_Call {
+func (_c *MockNotificationServiceInterface_LogNotification_Call) RunAndReturn(run func(userID uuid.UUID, lineUserID string, notifType models.NotificationType, drawID *uuid.UUID, status models.NotificationStatus, errStr *string) error) *MockNotificationServiceInterface_LogNotification_Call {
 	_c.Call.Return(run)
 	return _c
 }
