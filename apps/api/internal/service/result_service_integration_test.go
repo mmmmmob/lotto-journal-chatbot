@@ -319,7 +319,7 @@ func TestVerifyLatestDrawResults(t *testing.T) {
 			"statusCode": 200,
 			"status": true,
 			"response": {
-				"date": "2026-06-16",
+				"date": "2026-06-17",
 				"data": {
 					"first": { "price": "6000000.00", "number": [] }
 				}
@@ -334,7 +334,7 @@ func TestVerifyLatestDrawResults(t *testing.T) {
 	ticketRepo := repository.NewTicketRepository(tx)
 	winningRepo := repository.NewUserWinningRepository(tx)
 	mockNotifSvc := mocks.NewMockNotificationServiceInterface(t)
-	mockNotifSvc.On("SendDrawNotifications", mock.Anything, mock.Anything, "2026-06-16").Return(nil)
+	mockNotifSvc.On("SendDrawNotifications", mock.Anything, mock.Anything, "2026-06-17").Return(nil)
 
 	resultSvc := service.NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, mockNotifSvc)
 
@@ -344,10 +344,82 @@ func TestVerifyLatestDrawResults(t *testing.T) {
 	}
 
 	var draw models.Draw
-	if err := tx.First(&draw, "draw_date = ?", "2026-06-16").Error; err != nil {
+	if err := tx.First(&draw, "draw_date = ?", "2026-06-17").Error; err != nil {
 		t.Fatalf("failed to find draw record: %v", err)
 	}
 	if !draw.IsVerified {
 		t.Errorf("expected draw to be marked verified, but got false")
+	}
+}
+
+func TestVerifyDrawResults_AlreadyVerified(t *testing.T) {
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable"
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping integration test; cannot connect to DB: %v", err)
+		return
+	}
+
+	tx := db.Begin()
+	defer tx.Rollback()
+
+	// Seed a verified draw
+	drawDate, _ := time.Parse("2006-01-02", "2026-06-16")
+	drawRepo := repository.NewDrawRepository(tx)
+
+	// Create draw and mark it verified
+	draw, err := drawRepo.FindOrCreate(drawDate)
+	if err != nil {
+		t.Fatalf("failed to create draw: %v", err)
+	}
+	if err := drawRepo.MarkVerifiedInTransaction(tx, draw.ID); err != nil {
+		t.Fatalf("failed to mark draw verified: %v", err)
+	}
+
+	// Double check that FindOrCreate now correctly returns it with IsVerified = true
+	drawCheck, err := drawRepo.FindOrCreate(drawDate)
+	if err != nil {
+		t.Fatalf("failed to find or create draw: %v", err)
+	}
+	if !drawCheck.IsVerified {
+		t.Errorf("expected draw to have IsVerified = true, but got false (GORM OnConflict bug)")
+	}
+
+	// Set up a mock GLO server that returns the expected draw date
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"statusMessage": "getLatestLottery - Success",
+			"statusCode": 200,
+			"status": true,
+			"response": {
+				"date": "2026-06-16",
+				"data": {
+					"first": { "price": "6000000.00", "number": [] }
+				}
+			}
+		}`))
+	}))
+	defer mockServer.Close()
+
+	// Initialize ResultService with mocks that should NOT be called (since it should return early)
+	lotteryClient := client.NewLotteryClient(mockServer.URL)
+	drawResultRepo := repository.NewDrawResultRepository(tx)
+	ticketRepo := repository.NewTicketRepository(tx)
+	winningRepo := repository.NewUserWinningRepository(tx)
+	mockNotifSvc := mocks.NewMockNotificationServiceInterface(t)
+	// We do NOT set up any expectation on SendDrawNotifications, so if it gets called, mock mockNotifSvc will panic/fail the test.
+
+	resultSvc := service.NewResultService(tx, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, mockNotifSvc)
+
+	// This call should return early with no error and no mock expectations triggered.
+	err = resultSvc.VerifyDrawResults(context.Background(), drawDate)
+	if err != nil {
+		t.Fatalf("expected early return with no error, got: %v", err)
 	}
 }

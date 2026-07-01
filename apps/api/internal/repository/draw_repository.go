@@ -65,7 +65,14 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 		return nil, result.Error
 	}
 
-	return &draw, nil
+	// Re-fetch the complete record. GORM's Create with OnConflict does not populate
+	// unmodified fields (like IsVerified) in the Go struct when a conflict occurs.
+	var fullDraw models.Draw
+	if err := r.db.Where("id = ?", draw.ID).First(&fullDraw).Error; err != nil {
+		return nil, err
+	}
+
+	return &fullDraw, nil
 }
 
 // FindLatestUnverified returns the most recent draw on or before the given date that is not yet verified.
@@ -83,4 +90,3 @@ func (r *DrawRepository) FindLatestUnverified(date time.Time) (*models.Draw, err
 func (r *DrawRepository) MarkVerifiedInTransaction(tx *gorm.DB, drawID uuid.UUID) error {
 	return tx.Model(&models.Draw{}).Where("id = ?", drawID).Update(DrawColIsVerified, true).Error
 }
-
