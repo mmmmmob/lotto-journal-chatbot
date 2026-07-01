@@ -68,7 +68,7 @@ func (r *DrawRepository) FindOrCreate(date time.Time) (*models.Draw, error) {
 	// Re-fetch the complete record. GORM's Create with OnConflict does not populate
 	// unmodified fields (like IsVerified) in the Go struct when a conflict occurs.
 	var fullDraw models.Draw
-	if err := r.db.Where("id = ?", draw.ID).First(&fullDraw).Error; err != nil {
+	if err := r.db.Where(DrawColDrawDate+" = ?", dateOnly).First(&fullDraw).Error; err != nil {
 		return nil, err
 	}
 
