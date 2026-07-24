@@ -5,6 +5,8 @@ on:
     - cron: '0 20 * * *' # Daily at 20:00 UTC (03:00 AM Bangkok ICT)
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   sync:
     name: Sync Draw Schedule
