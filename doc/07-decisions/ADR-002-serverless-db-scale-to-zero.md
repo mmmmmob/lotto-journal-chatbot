@@ -81,3 +81,9 @@ Modify the system to let both the compute (Fly.io) and database (Neon Postgres) 
   * **Manual Post-Deployment verification**: As part of the release checklist, developers must manually ping `https://lotto-journal-api.fly.dev/health` right after a deploy (which forces a cold start and verifies both the API server and database connectivity).
   * **Alerting limits**: We cannot use active external monitoring (like Uptime Robot checking every minute) on the `/health` endpoint because periodic pings will keep the VM awake 24/7, defeating scale-to-zero.
   * **Log-based observability**: We should rely on log-based alerting (e.g. scanning Fly.io log streams or Sentry error exceptions) to detect runtime issues without waking up the VM.
+* **VM Wake-Up Abuse Threat Model & Edge Mitigation**:
+  * **Threat**: Any public HTTP request to `https://lotto-journal-api.fly.dev` (including unauthenticated spam on `/jobs/*` or `/health`) will cause the Fly.io load balancer to wake up the sleeping VM, consuming compute resources and potentially leaking database connections or depleting quotas.
+  * **Mitigation (App Layer)**: The Go API handles authorization failures fast (checking headers and SHA-256 hashes immediately at the start of handlers) to prevent waking up the database connections or running expensive services when unauthenticated.
+  * **Mitigation (Edge Layer)**: To prevent VM wake-up altogether, we plan to place a CDN/proxy layer (e.g. **Cloudflare Free Tier**) in front of Fly.io. On Cloudflare, we will configure:
+    1. **Edge Firewall Rules (WAF)**: Block or challenge any traffic to `/jobs/*` unless it contains specific tokens or originates from trusted GitHub Actions runner IP blocks, dropping requests before they reach the Fly.io origin.
+    2. **Edge Rate Limiting**: Limit requests on `/health` and `/webhook` to block scraper bots from triggering cold starts.

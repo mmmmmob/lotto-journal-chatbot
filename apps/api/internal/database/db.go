@@ -18,17 +18,16 @@ type PoolConfig struct {
 	ConnMaxIdleTime time.Duration
 }
 
-// ConnectDatabase establishes the connection to Postgres via GORM and applies connection pool optimizations.
-func ConnectDatabase(dsn string, poolCfg PoolConfig) {
-	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// ConnectDatabase establishes the connection to Postgres via GORM, applies connection pool optimizations, and returns the DB instance.
+func ConnectDatabase(dsn string, poolCfg PoolConfig) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("Failed to connect to database: " + err.Error())
+		return nil, err
 	}
 
-	sqlDB, err := DB.DB()
+	sqlDB, err := db.DB()
 	if err != nil {
-		panic("Failed to get sql.DB from gorm: " + err.Error())
+		return nil, err
 	}
 
 	maxIdle := poolCfg.MaxIdleConns
@@ -58,4 +57,7 @@ func ConnectDatabase(dsn string, poolCfg PoolConfig) {
 
 	log.Printf("Database connection successful (pool config: maxOpen=%d, maxIdle=%d, maxLifetime=%v, maxIdleTime=%v)",
 		maxOpen, maxIdle, maxLifetime, maxIdleTime)
+
+	DB = db // Populate global for backward compatibility
+	return db, nil
 }

@@ -16,6 +16,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/air-verse/air v1.63.0 // indirect
 	github.com/andybalholm/brotli v1.2.1 // indirect

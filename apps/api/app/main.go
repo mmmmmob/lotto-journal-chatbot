@@ -40,8 +40,7 @@ func main() {
 		log.Println("[main] WARNING: CRON_SECRET is empty. Job routes (/jobs/*) will return 401 Unauthorized for all requests. Please configure CRON_SECRET in your environment or .env file.")
 	}
 
-	// Connect to database
-	database.ConnectDatabase(
+	db, err := database.ConnectDatabase(
 		cfg.DB_DSN,
 		database.PoolConfig{
 			MaxIdleConns:    cfg.DBMaxIdleConns,
@@ -50,7 +49,9 @@ func main() {
 			ConnMaxIdleTime: cfg.DBConnMaxIdleTime,
 		},
 	)
-	db := database.DB
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
 
 	// LINE bot client
 	bot, err := messaging_api.NewMessagingApiAPI(cfg.LineChannelAccessToken)
