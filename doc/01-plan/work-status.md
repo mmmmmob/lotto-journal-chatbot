@@ -34,9 +34,11 @@ Last updated: 2026-07-24
 
 ## Phase and Direction
 
-**Current phase:** M4 — Hardening / Post-MVP (T-021 Complete)
+**Current phase:** M4 — Hardening / Post-MVP (T-024 Complete)
 
-With **T-022** complete, the LINE Push Notifications engine is fully implemented. Active users receive automated win/loss notifications shortly after a draw is verified in `ResultService`. Logs are written to `notification_logs` table for tracking.
+With **T-024** complete, the API database connection pool is optimized for scale-to-zero (Neon DB), the internal scheduler is migrated to scheduled GitHub Actions workflows, and job endpoints are secured with precomputed SHA-256 token authorization checks. 
+
+Historically, **T-021** (Multi-language & Localization support) and **T-022** (LINE Win Notification) are completed, allowing users to receive localized win/loss notifications shortly after a draw is verified in `ResultService`, with full transaction logs audited in the `notification_logs` table.
 
 ---
 
