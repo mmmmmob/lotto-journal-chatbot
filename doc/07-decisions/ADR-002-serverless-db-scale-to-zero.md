@@ -68,8 +68,16 @@ Modify the system to let both the compute (Fly.io) and database (Neon Postgres) 
 - A LINE Bot has extremely sporadic traffic (mostly on the 1st and 16th of the month, or occasionally when users add ticket numbers). Cold start latencies of 3-4 seconds are fully acceptable for a chatbot environment compared to a real-time web application.
 - Exposed job endpoints are secure and simple.
 
-## Consequences
+## Consequences & Operational Trade-offs
 
-- The in-process cron scheduler will not start in production (`APP_ENV == "production"`).
-- We must configure a secret token `CRON_SECRET` on both GitHub Secrets and Fly.io Secrets to authenticate the cron runners.
-- The Fly VM will shut down after a few minutes of inactivity. When a webhook event (LINE) arrives, Fly will automatically restart the machine to handle it.
+* **In-process scheduler removal**: The in-process cron scheduler is completely removed from the codebase, reducing runtime complexity and dependency size (`github.com/robfig/cron/v3`).
+* **Secrets configuration requirement**: We must configure the secret token `CRON_SECRET` on both GitHub Secrets and Fly.io Secrets to authenticate the cron runners.
+* **Autosleep behavior**: The Fly VM will shut down after a few minutes of inactivity. When a webhook event (LINE) or a scheduled GitHub Action cron trigger arrives, Fly.io will automatically start the machine (cold start) to handle it.
+* **Loss of application-level rollback signals during deployment**:
+  * Because `[[http_service.checks]]` is commented out, Fly.io will only perform its **default TCP readiness check** (verifying that the machine accepts TCP connections on port 8080) when deploying a new version.
+  * If a new deployment panics on start and fails to bind to port 8080, Fly.io will still fail the deployment and trigger a rollback.
+  * However, if the application successfully boots but suffers from a degraded status (e.g. database connection credentials are misconfigured, so `/health` would return a `503`), Fly.io will still consider the TCP check successful and promote the broken release.
+* **Mitigation & Observability**:
+  * **Manual Post-Deployment verification**: As part of the release checklist, developers must manually ping `https://lotto-journal-api.fly.dev/health` right after a deploy (which forces a cold start and verifies both the API server and database connectivity).
+  * **Alerting limits**: We cannot use active external monitoring (like Uptime Robot checking every minute) on the `/health` endpoint because periodic pings will keep the VM awake 24/7, defeating scale-to-zero.
+  * **Log-based observability**: We should rely on log-based alerting (e.g. scanning Fly.io log streams or Sentry error exceptions) to detect runtime issues without waking up the VM.
