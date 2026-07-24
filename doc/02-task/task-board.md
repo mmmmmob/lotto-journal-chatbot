@@ -1,11 +1,11 @@
 <!-- AI-CONTEXT
 active: none
 blocked: none
-done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023 T-022 T-021
+done: T-000 T-001 T-005 T-008 T-004 T-007 T-006 T-002 T-010 T-011 T-012 T-013 T-014 T-016 T-018 T-015 T-017 T-019 T-003 T-023 T-022 T-021 T-024
 future: T-009(liff-planning post-MVP), T-020(photo-ocr-openai-r2 post-MVP)
 priority_next: none
 src: v0.3
-updated: 2026-06-29
+updated: 2026-07-24
 -->
 
 ---
@@ -53,6 +53,7 @@ Last updated: 2026-06-29
 | DB_DSN                    | Neon dashboard → Connection string | Fly.io secrets         | Runtime DB connection key used by current Go config loader        |
 | LINE_CHANNEL_SECRET       | Production LINE channel            | Fly.io secrets         | Runtime webhook signature verification — production channel only |
 | LINE_CHANNEL_ACCESS_TOKEN | Production LINE channel            | Fly.io secrets         | Runtime push/reply API calls — production channel only           |
+| CRON_SECRET               | User-defined secure token          | Fly.io secrets & GitHub | Authentication secret for secure scheduled triggers from GitHub Actions |
 | APP_ENV                   | Hardcoded value: production        | fly.toml [env] section | Non-secret; safe to commit                                       |
 | FLY_API_TOKEN             | Fly.io dashboard → Access Tokens   | GitHub Actions secret  | Only needed by CI/CD to run flyctl deploy; never touches the app |
 
@@ -85,6 +86,7 @@ None currently.
 
 | ID    | Task                                                         | Closed     | Evidence                                                                                                            |
 | ----- | ------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| T-024 | Neon DB connection leak and Fly.io sleep optimization        | 2026-07-24 | Configured `MaxIdleConns(0)` on `sql.DB` to release Neon connections immediately. Changed `fly.toml` to `min_machines_running = 0` and commented out periodic health checks to allow VM autosleep. Created secured triggers (`POST /jobs/sync-schedule`, `POST /jobs/verify-results`) protected by `CRON_SECRET` Bearer authentication. Scheduled triggers in GitHub Actions cron workflows (`0 20 * * *` and `*/15 9-16 * * *`). Added unit tests in `job_handler_test.go` and verified everything compiles and passes tests. |
 | T-021 | Multi-language & Localization support (EN/TH)                | 2026-06-29 | Persisted user language preference in `users.language`; automatically detected profile language from LINE Profile API on follow; handled manual switcher commands (`ไทย`/`english`); localized text messages and win/loss push notifications; enabled one-tap Quick Replies navigation buttons. |
 | T-022 | Implement win notification via LINE push message             | 2026-06-28 | Implemented NotificationService to check and group winnings per active user, format push texts, handle 3-attempt backoff retries, and write success/failed audits to notification_logs table. |
 | T-023 | Swagger Documentation and Mockery Setup                      | 2026-06-27 | Extracted interface layers; configured Mockery v3 with `.mockery.yml`; added Swagger specs and Fiber v3 swaggo middleware; set up dev-only access; automated compilation reloads in `air`; updated package scripts/READMEs |
