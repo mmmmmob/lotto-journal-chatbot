@@ -1,0 +1,19 @@
+name: Cron - Sync Draw Schedule
+
+on:
+  schedule:
+    - cron: '0 20 * * *' # Daily at 20:00 UTC (03:00 AM Bangkok ICT)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync Draw Schedule
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Sync Endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -X POST "https://lotto-journal-api.fly.dev/jobs/sync-schedule" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -f --retry 3
