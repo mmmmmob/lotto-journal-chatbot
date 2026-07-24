@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"log"
 	"strings"
@@ -35,10 +36,9 @@ func NewJobHandler(
 	}
 }
 
-// authorize checks if the request contains the correct CRON_SECRET token using constant-time comparison
+// authorize checks if the request contains the correct CRON_SECRET token using constant-time comparison on SHA-256 hashes
 func (h *JobHandler) authorize(c fiber.Ctx) bool {
 	if h.cronSecret == "" {
-		log.Println("[job_handler] Warning: CRON_SECRET is not configured. Request rejected.")
 		return false
 	}
 
@@ -53,7 +53,12 @@ func (h *JobHandler) authorize(c fiber.Ctx) bool {
 		return false
 	}
 
-	return subtle.ConstantTimeCompare([]byte(token), []byte(h.cronSecret)) == 1
+	// Hash both tokens to ensure the comparison operates on fixed-length (32-byte) inputs,
+	// preventing leaking the length of the expected h.cronSecret through timing side channels.
+	tokenHash := sha256.Sum256([]byte(token))
+	secretHash := sha256.Sum256([]byte(h.cronSecret))
+
+	return subtle.ConstantTimeCompare(tokenHash[:], secretHash[:]) == 1
 }
 
 // SyncSchedule triggers the daily draw schedule sync

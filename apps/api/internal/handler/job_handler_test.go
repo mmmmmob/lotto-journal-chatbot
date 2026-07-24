@@ -43,6 +43,9 @@ func TestJobHandler_Authorize(t *testing.T) {
 		req := httptest.NewRequest("POST", "/jobs/sync-schedule", nil)
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
@@ -51,6 +54,9 @@ func TestJobHandler_Authorize(t *testing.T) {
 		req.Header.Set("Authorization", "Basic super-secret-token")
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
@@ -59,6 +65,9 @@ func TestJobHandler_Authorize(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer wrong-token")
 		resp, err := app.Test(req)
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
@@ -71,6 +80,9 @@ func TestJobHandler_Authorize(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer ")
 		resp, err := appEmpty.Test(req)
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 }
@@ -87,6 +99,9 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.True(t, drawSvc.syncCalled)
 	})
@@ -102,6 +117,9 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.True(t, resultSvc.verifyCalled)
 	})
@@ -117,6 +135,9 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.True(t, drawSvc.syncCalled)
 	})
@@ -131,6 +152,9 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 
@@ -144,6 +168,9 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		resp, err := app.Test(req)
 
 		assert.NoError(t, err)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 }
