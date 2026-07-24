@@ -28,5 +28,5 @@ Use this checklist for every release tag.
 ## 5) Post-release checks
 
 - [ ] Verify deploy status on Fly.io (if release deploys automatically).
-- [ ] Verify app health endpoint and key bot smoke flow.
+- [ ] Verify app health endpoint (`https://lotto-journal-api.fly.dev/health`) and key bot smoke flow. *Note: Since automated HTTP checks are disabled in fly.toml to allow autosleep, manually pinging the /health endpoint is critical to ensure database connectivity is working.*
 - [ ] Record any noteworthy release notes/risks in `doc/03-log/work-log-index.md`.

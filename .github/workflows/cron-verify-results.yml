@@ -1,0 +1,25 @@
+name: Cron - Verify Draw Results
+
+on:
+  schedule:
+    - cron: '*/15 9-16 * * *' # Every 15 minutes between 16:00 and 23:45 Bangkok time (09:00 to 16:45 UTC)
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  verify:
+    name: Verify Latest Draw Results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Verification Endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sS -X POST "https://lotto-journal-api.fly.dev/jobs/verify-results" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --connect-timeout 30 \
+            --max-time 120 \
+            --retry 3 \
+            --retry-all-errors \
+            --fail-with-body
