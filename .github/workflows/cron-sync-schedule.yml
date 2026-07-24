@@ -14,6 +14,10 @@ jobs:
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl -X POST "https://lotto-journal-api.fly.dev/jobs/sync-schedule" \
+          curl -sS -X POST "https://lotto-journal-api.fly.dev/jobs/sync-schedule" \
             -H "Authorization: Bearer $CRON_SECRET" \
-            -f --retry 3
+            --connect-timeout 30 \
+            --max-time 120 \
+            --retry 3 \
+            --retry-all-errors \
+            --fail-with-body
