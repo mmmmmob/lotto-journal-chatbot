@@ -19,9 +19,10 @@ type ResultServiceInterface interface {
 }
 
 type JobHandler struct {
-	drawService   DrawServiceInterface
-	resultService ResultServiceInterface
-	cronSecret    string
+	drawService    DrawServiceInterface
+	resultService  ResultServiceInterface
+	cronSecretHash [32]byte
+	hasSecret      bool
 }
 
 func NewJobHandler(
@@ -29,16 +30,22 @@ func NewJobHandler(
 	resultService ResultServiceInterface,
 	cronSecret string,
 ) *JobHandler {
+	var secretHash [32]byte
+	hasSecret := cronSecret != ""
+	if hasSecret {
+		secretHash = sha256.Sum256([]byte(cronSecret))
+	}
 	return &JobHandler{
-		drawService:   drawService,
-		resultService: resultService,
-		cronSecret:    cronSecret,
+		drawService:    drawService,
+		resultService:  resultService,
+		cronSecretHash: secretHash,
+		hasSecret:      hasSecret,
 	}
 }
 
 // authorize checks if the request contains the correct CRON_SECRET token using constant-time comparison on SHA-256 hashes
 func (h *JobHandler) authorize(c fiber.Ctx) bool {
-	if h.cronSecret == "" {
+	if !h.hasSecret {
 		return false
 	}
 
@@ -53,12 +60,11 @@ func (h *JobHandler) authorize(c fiber.Ctx) bool {
 		return false
 	}
 
-	// Hash both tokens to ensure the comparison operates on fixed-length (32-byte) inputs,
+	// Hash the incoming token to ensure the comparison operates on fixed-length (32-byte) inputs,
 	// preventing leaking the length of the expected h.cronSecret through timing side channels.
 	tokenHash := sha256.Sum256([]byte(token))
-	secretHash := sha256.Sum256([]byte(h.cronSecret))
 
-	return subtle.ConstantTimeCompare(tokenHash[:], secretHash[:]) == 1
+	return subtle.ConstantTimeCompare(tokenHash[:], h.cronSecretHash[:]) == 1
 }
 
 // SyncSchedule triggers the daily draw schedule sync

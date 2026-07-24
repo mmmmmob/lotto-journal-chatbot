@@ -59,7 +59,8 @@ func (h *HealthHandler) Handle(c fiber.Ctx) error {
 	}
 
 	return c.JSON(HealthResponse{
-		Status: "ok",
-		DB:     "ok",
+		Status:    "ok",
+		DB:        "ok",
+		RequestID: c.Get(fiber.HeaderXRequestID),
 	})
 }

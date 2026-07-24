@@ -22,6 +22,20 @@ func ConnectDatabase(dsn string, maxIdle, maxOpen int, maxLifetime, maxIdleTime 
 		panic("Failed to get sql.DB from gorm: " + err.Error())
 	}
 
+	// Validate and clamp parameters defensively inside ConnectDatabase to ensure safe limits
+	if maxIdle < 0 {
+		maxIdle = 0
+	}
+	if maxOpen < 1 {
+		maxOpen = 1
+	}
+	if maxLifetime < 30*time.Second {
+		maxLifetime = 3 * time.Minute // Safe default fallback to prevent infinite lifetime connection leaks
+	}
+	if maxIdleTime < 10*time.Second {
+		maxIdleTime = 1 * time.Minute // Safe default fallback to prevent infinite idle connection leaks
+	}
+
 	// Optimize connection settings for serverless database (Neon) and scale-to-zero autoscaling (Fly.io)
 	sqlDB.SetMaxIdleConns(maxIdle)
 	sqlDB.SetMaxOpenConns(maxOpen)

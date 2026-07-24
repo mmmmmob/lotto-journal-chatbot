@@ -33,9 +33,11 @@ func main() {
 	// Load config
 	cfg := config.LoadConfig()
 
-	// Enforce CRON_SECRET is configured in production to fail fast
-	if cfg.APP_ENV == "production" && cfg.CronSecret == "" {
-		log.Fatal("[main] CRON_SECRET environment variable is required in production environment.")
+	// Enforce CRON_SECRET is configured in production and staging to fail fast
+	if cfg.APP_ENV != "development" && cfg.CronSecret == "" {
+		log.Fatal("[main] CRON_SECRET environment variable is required in production and staging environments.")
+	} else if cfg.CronSecret == "" {
+		log.Println("[main] WARNING: CRON_SECRET is empty. Job routes (/jobs/*) will return 401 Unauthorized for all requests. Please configure CRON_SECRET in your environment or .env file.")
 	}
 
 	// Connect to database
