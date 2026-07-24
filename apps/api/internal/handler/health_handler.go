@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"gorm.io/gorm"
 )
 
@@ -41,7 +42,7 @@ func (h *HealthHandler) Handle(c fiber.Ctx) error {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(HealthResponse{
 			Status:    "degraded",
 			DB:        "unhealthy",
-			RequestID: c.Get(fiber.HeaderXRequestID),
+			RequestID: requestid.FromContext(c),
 		})
 	}
 
@@ -54,13 +55,13 @@ func (h *HealthHandler) Handle(c fiber.Ctx) error {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(HealthResponse{
 			Status:    "degraded",
 			DB:        "unhealthy",
-			RequestID: c.Get(fiber.HeaderXRequestID),
+			RequestID: requestid.FromContext(c),
 		})
 	}
 
 	return c.JSON(HealthResponse{
 		Status:    "ok",
 		DB:        "ok",
-		RequestID: c.Get(fiber.HeaderXRequestID),
+		RequestID: requestid.FromContext(c),
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/requestid"
 )
 
 type DrawServiceInterface interface {
@@ -87,16 +88,17 @@ func (h *JobHandler) SyncSchedule(c fiber.Ctx) error {
 		log.Println("[job_handler] Error: drawService dependency is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Internal Server Error",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+			"request_id": requestid.FromContext(c),
 		})
 	}
 
-	log.Printf("[job_handler] Triggering draw schedule sync (request_id: %s)...", c.Get(fiber.HeaderXRequestID))
+	reqID := requestid.FromContext(c)
+	log.Printf("[job_handler] Triggering draw schedule sync (request_id: %s)...", reqID)
 	if err := h.drawService.SyncDrawSchedule(c.Context()); err != nil {
-		log.Printf("[job_handler] Draw schedule sync failed (request_id: %s): %v", c.Get(fiber.HeaderXRequestID), err)
+		log.Printf("[job_handler] Draw schedule sync failed (request_id: %s): %v", reqID, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Failed to sync draw schedule",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+			"request_id": reqID,
 		})
 	}
 
@@ -123,16 +125,17 @@ func (h *JobHandler) VerifyResults(c fiber.Ctx) error {
 		log.Println("[job_handler] Error: resultService dependency is nil")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Internal Server Error",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+			"request_id": requestid.FromContext(c),
 		})
 	}
 
-	log.Printf("[job_handler] Triggering lottery results check (request_id: %s)...", c.Get(fiber.HeaderXRequestID))
+	reqID := requestid.FromContext(c)
+	log.Printf("[job_handler] Triggering lottery results check (request_id: %s)...", reqID)
 	if err := h.resultService.VerifyLatestDrawResults(c.Context()); err != nil {
-		log.Printf("[job_handler] Verification check failed (request_id: %s): %v", c.Get(fiber.HeaderXRequestID), err)
+		log.Printf("[job_handler] Verification check failed (request_id: %s): %v", reqID, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Failed to verify draw results",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+			"request_id": reqID,
 		})
 	}
 
