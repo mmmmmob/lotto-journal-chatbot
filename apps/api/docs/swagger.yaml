@@ -28,6 +28,74 @@ paths:
       summary: Perform health check
       tags:
       - System
+  /jobs/sync-schedule:
+    post:
+      description: Syncs the lottery draw dates from the GLO API for the current year.
+        Secured with CRON_SECRET.
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Draw schedule sync complete
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sync draw schedule
+      tags:
+      - Jobs
+  /jobs/verify-results:
+    post:
+      description: Fetches the latest lottery results from GLO API and processes unchecked
+        user tickets. Secured with CRON_SECRET.
+      parameters:
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Result check trigger complete
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify lottery results
+      tags:
+      - Jobs
   /webhook:
     post:
       consumes:
