@@ -135,6 +135,22 @@ func TestJobHandler_Endpoints(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		assert.True(t, drawSvc.syncCalled)
 	})
+	t.Run("verify-results service failure returns 500", func(t *testing.T) {
+		app := fiber.New()
+		resultSvc := &stubResultService{verifyErr: assert.AnError}
+		h := NewJobHandler(nil, resultSvc, "super-secret-token")
+		app.Post("/jobs/verify-results", h.VerifyResults)
+
+		req := httptest.NewRequest("POST", "/jobs/verify-results", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		require.NotNil(t, resp)
+		t.Cleanup(func() { resp.Body.Close() })
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.True(t, resultSvc.verifyCalled)
+	})
 
 	t.Run("sync-schedule nil service returns 500", func(t *testing.T) {
 		app := fiber.New()

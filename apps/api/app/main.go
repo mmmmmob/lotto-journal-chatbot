@@ -34,7 +34,7 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// Enforce CRON_SECRET is configured in production and staging to fail fast
-	if cfg.APP_ENV != "development" && cfg.CronSecret == "" {
+	if (cfg.APP_ENV == "production" || cfg.APP_ENV == "staging") && cfg.CronSecret == "" {
 		log.Fatal("[main] CRON_SECRET environment variable is required in production and staging environments.")
 	} else if cfg.CronSecret == "" {
 		log.Println("[main] WARNING: CRON_SECRET is empty. Job routes (/jobs/*) will return 401 Unauthorized for all requests. Please configure CRON_SECRET in your environment or .env file.")
@@ -43,10 +43,12 @@ func main() {
 	// Connect to database
 	database.ConnectDatabase(
 		cfg.DB_DSN,
-		cfg.DBMaxIdleConns,
-		cfg.DBMaxOpenConns,
-		cfg.DBConnMaxLifetime,
-		cfg.DBConnMaxIdleTime,
+		database.PoolConfig{
+			MaxIdleConns:    cfg.DBMaxIdleConns,
+			MaxOpenConns:    cfg.DBMaxOpenConns,
+			ConnMaxLifetime: cfg.DBConnMaxLifetime,
+			ConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+		},
 	)
 	db := database.DB
 
