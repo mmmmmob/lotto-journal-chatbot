@@ -3,12 +3,12 @@ src: v0.3
 phase: M4
 direction: Multi-language & Localization
 focus: []
-done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023, T-022, T-021]
+done: [T-000, T-001, T-005, T-008, T-004, T-007, T-006, T-002, T-010, T-011, T-012, T-013, T-014, T-016, T-018, T-015, T-017, T-019, T-003, T-023, T-022, T-021, T-024]
 future: [T-020 Photo OCR+R2 — post-MVP, T-009 LIFF — post-MVP]
 blocked: none
 next: none
 risk: none
-adr: ADR-001
+adr: ADR-001, ADR-002
 read_more:
   prd: doc/00-source/versions/v0.3/01-prd.md
   migration_design: doc/06-extensions/T-004-migration-002-design.md
@@ -16,14 +16,14 @@ read_more:
   entities: doc/07-decisions/entity-register.md
   source_current: doc/00-source/versions/v0.3/
   walkthrough: apps/api/walkthrough.md
-updated: 2026-06-29
+updated: 2026-07-24
 -->
 
 ---
 
 # Project Status — Lotto Journal
 
-Last updated: 2026-06-29 (session 18)
+Last updated: 2026-07-24
 
 ## Source References
 
@@ -34,9 +34,11 @@ Last updated: 2026-06-29 (session 18)
 
 ## Phase and Direction
 
-**Current phase:** M4 — Hardening / Post-MVP (T-021 Complete)
+**Current phase:** M4 — Hardening / Post-MVP (T-024 Complete)
 
-With **T-022** complete, the LINE Push Notifications engine is fully implemented. Active users receive automated win/loss notifications shortly after a draw is verified in `ResultService`. Logs are written to `notification_logs` table for tracking.
+With **T-024** complete, the API database connection pool is optimized for scale-to-zero (Neon DB), the internal scheduler is migrated to scheduled GitHub Actions workflows, and job endpoints are secured with precomputed SHA-256 token authorization checks. 
+
+Historically, **T-021** (Multi-language & Localization support) and **T-022** (LINE Win Notification) are completed, allowing users to receive localized win/loss notifications shortly after a draw is verified in `ResultService`, with full transaction logs audited in the `notification_logs` table.
 
 ---
 
@@ -48,6 +50,7 @@ None. All PRD v0.3 localization features are fully implemented and verified!
 
 ## Completed Tasks
 
+- `T-024` — Neon DB connection leak and Fly.io sleep optimization — done (2026-07-24)
 - `T-021` — Multi-language & Localization support (EN/TH) — done (2026-06-29)
 - `T-022` — Implement win notification via LINE push message — done (2026-06-28)
 - `T-023` — Swagger Documentation and Mockery Setup — done (2026-06-27)

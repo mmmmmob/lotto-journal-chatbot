@@ -25,3 +25,4 @@ ADRs that are Accepted are source of truth for technical direction.
 | ID                                         | Title                                             | Status   | Date       | Supersedes |
 | ------------------------------------------ | ------------------------------------------------- | -------- | ---------- | ---------- |
 | [ADR-001](ADR-001-line-messaging-pivot.md) | Architecture Pivot: Web App vs LINE Messaging API | Accepted | 2026-04-30 | —          |
+| [ADR-002](ADR-002-serverless-db-scale-to-zero.md) | Neon DB Scale-to-Zero & External Cron Scheduling Trigger | Accepted | 2026-07-24 | —          |

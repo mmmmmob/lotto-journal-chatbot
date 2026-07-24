@@ -1,19 +1,19 @@
 <!-- AI-CONTEXT
-last_session: 2026-06-29 (session 18)
+last_session: 2026-07-24 (session 19)
 tool: Antigravity
-completed: [T-021]
+completed: [T-024]
 in_progress: []
-checkpoint: Multi-language & Localization (EN/TH) preference persistence, automatic locale detection on follow, switcher commands, and dynamic Quick Replies navigation complete
+checkpoint: Neon DB connection leak and Fly.io VM sleep optimization (scale-to-zero) complete
 next_from_last: none
-notes: Persisted user language preference in users.language, automatically detected profile language from LINE Profile API, implemented switcher commands, and localized text messages and win/loss push notifications.
-deep_context: doc/00-source/versions/v0.3/01-prd.md
+notes: Optimized database connection pooling and Fly.io VM scaling settings to allow full scale-to-zero (sleep) for the serverless Neon Postgres database and Fly compute. Migrated cron schedules from in-process timers to secure HTTP endpoints triggered via GitHub Actions.
+deep_context: doc/07-decisions/ADR-002-serverless-db-scale-to-zero.md
 -->
 
 ---
 
 # Work Log Index — Lotto Journal
 
-Last updated: 2026-06-29 (session 18)
+Last updated: 2026-07-24 (session 19)
 
 ---
 
@@ -23,6 +23,28 @@ _(Updated when milestones close — never archived)_
 
 - **M0 complete (2026-04-30):** ADR-001 accepted (Option B — LINE Messaging API).
   PRD v0.2 written. Entity register updated. doc/ structure established.
+
+---
+
+### 2026-07-24 — Session 19 — [Antigravity]
+
+- **Session summary:** T-024 completed. Optimised database connection pooling and Fly.io VM scaling settings to allow full scale-to-zero (sleep) for the serverless Neon Postgres database and Fly compute. Migrated cron schedules from in-process timers to secure HTTP endpoints triggered via GitHub Actions.
+- **Work done:**
+  - Modified `apps/api/internal/database/db.go` to set `MaxIdleConns(0)`, `MaxOpenConns(5)`, and `ConnMaxLifetime(3 * time.Minute)`.
+  - Added `CRON_SECRET` variable in `config.go` and documented in `.env.example` (both root and api).
+  - Created `job_handler.go` and registered trigger endpoints `/jobs/sync-schedule` and `/jobs/verify-results` in `main.go`.
+  - Secured endpoints using `Authorization: Bearer <CRON_SECRET>` token checks.
+  - Deleted the in-process `CronScheduler` (`cron_scheduler.go`) and removed the `github.com/robfig/cron/v3` dependency completely from `go.mod` (ran `go mod tidy`).
+  - Updated `main.go` to run a one-off startup schedule sync in development instead of a running background scheduler thread.
+  - Modified `fly.toml` to set `min_machines_running = 0` and comment out the periodic health checks.
+  - Created two GitHub Actions workflows (`cron-sync-schedule.yml` and `cron-verify-results.yml`) with secure environment secrets passing to trigger endpoints on Bangkok time (ICT).
+  - Added unit tests in `job_handler_test.go` verifying the token authorization middleware logic, all tests passing.
+  - Documented architectural decisions in `doc/07-decisions/ADR-002-serverless-db-scale-to-zero.md` and updated route details in `apps/api/README.md` and root `README.md`.
+- **Validation evidence:**
+  - `go test -v ./internal/handler/...` runs and passes successfully.
+- **Tasks changed:**
+  - T-024: done
+- **Next priority:** none (Awaiting deployment and PR review)
 
 ---
 
