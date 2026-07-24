@@ -76,7 +76,9 @@ func main() {
 	if cfg.APP_ENV != "production" {
 		go func() {
 			log.Println("[main] Executing startup draw schedule sync...")
-			if err := drawSvc.SyncDrawSchedule(context.Background()); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			if err := drawSvc.SyncDrawSchedule(ctx); err != nil {
 				log.Printf("[main] Startup draw schedule sync failed: %v", err)
 			}
 		}()
