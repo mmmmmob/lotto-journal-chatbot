@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -8,6 +9,26 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 )
+
+type stubDrawService struct {
+	syncCalled bool
+	syncErr    error
+}
+
+func (s *stubDrawService) SyncDrawSchedule(ctx context.Context) error {
+	s.syncCalled = true
+	return s.syncErr
+}
+
+type stubResultService struct {
+	verifyCalled bool
+	verifyErr    error
+}
+
+func (s *stubResultService) VerifyLatestDrawResults(ctx context.Context) error {
+	s.verifyCalled = true
+	return s.verifyErr
+}
 
 func TestJobHandler_Authorize(t *testing.T) {
 	app := fiber.New()
@@ -51,5 +72,78 @@ func TestJobHandler_Authorize(t *testing.T) {
 		resp, err := appEmpty.Test(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+}
+
+func TestJobHandler_Endpoints(t *testing.T) {
+	t.Run("sync-schedule success happy path", func(t *testing.T) {
+		app := fiber.New()
+		drawSvc := &stubDrawService{}
+		h := NewJobHandler(drawSvc, nil, "super-secret-token")
+		app.Post("/jobs/sync-schedule", h.SyncSchedule)
+
+		req := httptest.NewRequest("POST", "/jobs/sync-schedule", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.True(t, drawSvc.syncCalled)
+	})
+
+	t.Run("verify-results success happy path", func(t *testing.T) {
+		app := fiber.New()
+		resultSvc := &stubResultService{}
+		h := NewJobHandler(nil, resultSvc, "super-secret-token")
+		app.Post("/jobs/verify-results", h.VerifyResults)
+
+		req := httptest.NewRequest("POST", "/jobs/verify-results", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.True(t, resultSvc.verifyCalled)
+	})
+
+	t.Run("sync-schedule service failure returns 500", func(t *testing.T) {
+		app := fiber.New()
+		drawSvc := &stubDrawService{syncErr: assert.AnError}
+		h := NewJobHandler(drawSvc, nil, "super-secret-token")
+		app.Post("/jobs/sync-schedule", h.SyncSchedule)
+
+		req := httptest.NewRequest("POST", "/jobs/sync-schedule", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		assert.True(t, drawSvc.syncCalled)
+	})
+
+	t.Run("sync-schedule nil service returns 500", func(t *testing.T) {
+		app := fiber.New()
+		h := NewJobHandler(nil, nil, "super-secret-token")
+		app.Post("/jobs/sync-schedule", h.SyncSchedule)
+
+		req := httptest.NewRequest("POST", "/jobs/sync-schedule", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+	t.Run("verify-results nil service returns 500", func(t *testing.T) {
+		app := fiber.New()
+		h := NewJobHandler(nil, nil, "super-secret-token")
+		app.Post("/jobs/verify-results", h.VerifyResults)
+
+		req := httptest.NewRequest("POST", "/jobs/verify-results", nil)
+		req.Header.Set("Authorization", "Bearer super-secret-token")
+		resp, err := app.Test(req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	})
 }

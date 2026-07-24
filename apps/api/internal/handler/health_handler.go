@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"log"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -26,16 +28,20 @@ func NewHealthHandler(db *gorm.DB) *HealthHandler {
 func (h *HealthHandler) Handle(c fiber.Ctx) error {
 	sqlDB, err := h.db.DB()
 	if err != nil {
+		log.Printf("[health] failed to get underlying sql.DB: %v", err)
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"status": "degraded",
-			"db":     err.Error(),
+			"status":     "degraded",
+			"db":         "error",
+			"request_id": c.Get(fiber.HeaderXRequestID),
 		})
 	}
 
 	if err := sqlDB.Ping(); err != nil {
+		log.Printf("[health] database ping failed: %v", err)
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"status": "degraded",
-			"db":     err.Error(),
+			"status":     "degraded",
+			"db":         "unhealthy",
+			"request_id": c.Get(fiber.HeaderXRequestID),
 		})
 	}
 

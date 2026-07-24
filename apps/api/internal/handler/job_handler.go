@@ -1,23 +1,31 @@
 package handler
 
 import (
+	"context"
+	"crypto/subtle"
 	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
-
-	"lotto-journal/api/internal/service"
 )
 
+type DrawServiceInterface interface {
+	SyncDrawSchedule(ctx context.Context) error
+}
+
+type ResultServiceInterface interface {
+	VerifyLatestDrawResults(ctx context.Context) error
+}
+
 type JobHandler struct {
-	drawService   *service.DrawService
-	resultService *service.ResultService
+	drawService   DrawServiceInterface
+	resultService ResultServiceInterface
 	cronSecret    string
 }
 
 func NewJobHandler(
-	drawService *service.DrawService,
-	resultService *service.ResultService,
+	drawService DrawServiceInterface,
+	resultService ResultServiceInterface,
 	cronSecret string,
 ) *JobHandler {
 	return &JobHandler{
@@ -27,7 +35,7 @@ func NewJobHandler(
 	}
 }
 
-// authorize checks if the request contains the correct CRON_SECRET token
+// authorize checks if the request contains the correct CRON_SECRET token using constant-time comparison
 func (h *JobHandler) authorize(c fiber.Ctx) bool {
 	if h.cronSecret == "" {
 		log.Println("[job_handler] Warning: CRON_SECRET is not configured. Request rejected.")
@@ -35,16 +43,17 @@ func (h *JobHandler) authorize(c fiber.Ctx) bool {
 	}
 
 	authHeader := c.Get("Authorization")
-	if authHeader == "" {
+	const prefix = "Bearer "
+	if len(authHeader) < len(prefix) || !strings.EqualFold(authHeader[:len(prefix)], prefix) {
 		return false
 	}
 
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
+	token := strings.TrimSpace(authHeader[len(prefix):])
+	if token == "" {
 		return false
 	}
 
-	return parts[1] == h.cronSecret
+	return subtle.ConstantTimeCompare([]byte(token), []byte(h.cronSecret)) == 1
 }
 
 // SyncSchedule triggers the daily draw schedule sync
@@ -63,10 +72,21 @@ func (h *JobHandler) SyncSchedule(c fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
 
+	if h.drawService == nil {
+		log.Println("[job_handler] Error: drawService dependency is nil")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":      "Internal Server Error",
+			"request_id": c.Get(fiber.HeaderXRequestID),
+		})
+	}
+
 	log.Println("[job_handler] Triggering manually initiated draw schedule sync...")
 	if err := h.drawService.SyncDrawSchedule(c.Context()); err != nil {
 		log.Printf("[job_handler] Draw schedule sync failed: %v", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":      "Failed to sync draw schedule",
+			"request_id": c.Get(fiber.HeaderXRequestID),
+		})
 	}
 
 	return c.JSON(fiber.Map{"status": "success", "message": "Draw schedule sync complete"})
@@ -88,10 +108,21 @@ func (h *JobHandler) VerifyResults(c fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
 
+	if h.resultService == nil {
+		log.Println("[job_handler] Error: resultService dependency is nil")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":      "Internal Server Error",
+			"request_id": c.Get(fiber.HeaderXRequestID),
+		})
+	}
+
 	log.Println("[job_handler] Triggering manually initiated lottery results check...")
 	if err := h.resultService.VerifyLatestDrawResults(c.Context()); err != nil {
 		log.Printf("[job_handler] Verification check failed: %v", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":      "Failed to verify draw results",
+			"request_id": c.Get(fiber.HeaderXRequestID),
+		})
 	}
 
 	return c.JSON(fiber.Map{"status": "success", "message": "Result check trigger complete"})
