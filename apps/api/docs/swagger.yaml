@@ -1,4 +1,17 @@
 basePath: /
+definitions:
+  handler.HealthResponse:
+    properties:
+      db:
+        example: ok
+        type: string
+      request_id:
+        example: req-123
+        type: string
+      status:
+        example: ok
+        type: string
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -14,17 +27,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful health status
+          description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/handler.HealthResponse'
         "503":
-          description: Database connection is unhealthy
+          description: Service Unavailable
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/handler.HealthResponse'
       summary: Perform health check
       tags:
       - System

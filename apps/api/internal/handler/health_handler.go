@@ -9,6 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// HealthResponse represents the structured JSON response of the health check endpoint.
+type HealthResponse struct {
+	Status    string `json:"status" example:"ok"`
+	DB        string `json:"db" example:"ok"`
+	RequestID string `json:"request_id,omitempty" example:"req-123"`
+}
+
 // HealthHandler handles GET /health.
 type HealthHandler struct {
 	db *gorm.DB
@@ -24,17 +31,17 @@ func NewHealthHandler(db *gorm.DB) *HealthHandler {
 // @Description Checks if the API server is live and the database connection is healthy.
 // @Tags System
 // @Produce json
-// @Success 200 {object} map[string]string "Successful health status"
-// @Failure 503 {object} map[string]string "Database connection is unhealthy"
+// @Success 200 {object} HealthResponse
+// @Failure 503 {object} HealthResponse
 // @Router /health [get]
 func (h *HealthHandler) Handle(c fiber.Ctx) error {
 	sqlDB, err := h.db.DB()
 	if err != nil {
 		log.Printf("[health] failed to get underlying sql.DB: %v", err)
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"status":     "degraded",
-			"db":         "error",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+		return c.Status(fiber.StatusServiceUnavailable).JSON(HealthResponse{
+			Status:    "degraded",
+			DB:        "unhealthy",
+			RequestID: c.Get(fiber.HeaderXRequestID),
 		})
 	}
 
@@ -44,15 +51,15 @@ func (h *HealthHandler) Handle(c fiber.Ctx) error {
 
 	if err := sqlDB.PingContext(ctx); err != nil {
 		log.Printf("[health] database ping failed: %v", err)
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"status":     "degraded",
-			"db":         "unhealthy",
-			"request_id": c.Get(fiber.HeaderXRequestID),
+		return c.Status(fiber.StatusServiceUnavailable).JSON(HealthResponse{
+			Status:    "degraded",
+			DB:        "unhealthy",
+			RequestID: c.Get(fiber.HeaderXRequestID),
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"status": "ok",
-		"db":     "ok",
+	return c.JSON(HealthResponse{
+		Status: "ok",
+		DB:     "ok",
 	})
 }

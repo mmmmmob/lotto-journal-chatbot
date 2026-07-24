@@ -27,21 +27,15 @@ const docTemplate = `{
                 "summary": "Perform health check",
                 "responses": {
                     "200": {
-                        "description": "Successful health status",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/handler.HealthResponse"
                         }
                     },
                     "503": {
-                        "description": "Database connection is unhealthy",
+                        "description": "Service Unavailable",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/handler.HealthResponse"
                         }
                     }
                 }
@@ -188,6 +182,25 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error"
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "db": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "req-123"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
                 }
             }
         }
