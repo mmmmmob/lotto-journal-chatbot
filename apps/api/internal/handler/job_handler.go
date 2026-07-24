@@ -85,9 +85,9 @@ func (h *JobHandler) SyncSchedule(c fiber.Ctx) error {
 		})
 	}
 
-	log.Println("[job_handler] Triggering manually initiated draw schedule sync...")
+	log.Printf("[job_handler] Triggering draw schedule sync (request_id: %s)...", c.Get(fiber.HeaderXRequestID))
 	if err := h.drawService.SyncDrawSchedule(c.Context()); err != nil {
-		log.Printf("[job_handler] Draw schedule sync failed: %v", err)
+		log.Printf("[job_handler] Draw schedule sync failed (request_id: %s): %v", c.Get(fiber.HeaderXRequestID), err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Failed to sync draw schedule",
 			"request_id": c.Get(fiber.HeaderXRequestID),
@@ -121,9 +121,9 @@ func (h *JobHandler) VerifyResults(c fiber.Ctx) error {
 		})
 	}
 
-	log.Println("[job_handler] Triggering manually initiated lottery results check...")
+	log.Printf("[job_handler] Triggering lottery results check (request_id: %s)...", c.Get(fiber.HeaderXRequestID))
 	if err := h.resultService.VerifyLatestDrawResults(c.Context()); err != nil {
-		log.Printf("[job_handler] Verification check failed: %v", err)
+		log.Printf("[job_handler] Verification check failed (request_id: %s): %v", c.Get(fiber.HeaderXRequestID), err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error":      "Failed to verify draw results",
 			"request_id": c.Get(fiber.HeaderXRequestID),
