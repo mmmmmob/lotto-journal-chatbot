@@ -10,7 +10,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase(dsn string) {
+func ConnectDatabase(dsn string, maxIdle, maxOpen int, maxLifetime, maxIdleTime time.Duration) {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -23,9 +23,11 @@ func ConnectDatabase(dsn string) {
 	}
 
 	// Optimize connection settings for serverless database (Neon) and scale-to-zero autoscaling (Fly.io)
-	sqlDB.SetMaxIdleConns(0)
-	sqlDB.SetMaxOpenConns(5)
-	sqlDB.SetConnMaxLifetime(3 * time.Minute)
+	sqlDB.SetMaxIdleConns(maxIdle)
+	sqlDB.SetMaxOpenConns(maxOpen)
+	sqlDB.SetConnMaxLifetime(maxLifetime)
+	sqlDB.SetConnMaxIdleTime(maxIdleTime)
 
-	log.Println("Database connection successful")
+	log.Printf("Database connection successful (pool config: maxOpen=%d, maxIdle=%d, maxLifetime=%v, maxIdleTime=%v)",
+		maxOpen, maxIdle, maxLifetime, maxIdleTime)
 }

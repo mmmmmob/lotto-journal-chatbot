@@ -34,7 +34,13 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// Connect to database
-	database.ConnectDatabase(cfg.DB_DSN)
+	database.ConnectDatabase(
+		cfg.DB_DSN,
+		cfg.DBMaxIdleConns,
+		cfg.DBMaxOpenConns,
+		cfg.DBConnMaxLifetime,
+		cfg.DBConnMaxIdleTime,
+	)
 	db := database.DB
 
 	// LINE bot client
