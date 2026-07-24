@@ -55,11 +55,15 @@ Key variables:
 | `DB_PASSWORD`               | docker-compose | `yourpassword`                                                                  |
 | `DB_NAME`                   | docker-compose | `lotto_journal`                                                                 |
 | `DB_DSN`                    | Go app         | `postgres://postgres:yourpassword@localhost:5432/lotto_journal?sslmode=disable` |
+| `DB_MAX_IDLE_CONNS`         | Go app         | Maximum idle connections in pool (default: `0`). *Keep at 0 for serverless databases (Neon) to close idle links immediately.* |
+| `DB_MAX_OPEN_CONNS`         | Go app         | Maximum open connections in pool (default: `5`). |
+| `DB_CONN_MAX_LIFETIME`      | Go app         | Maximum lifetime duration of a connection (default: `"3m"`). |
+| `DB_CONN_MAX_IDLE_TIME`      | Go app         | Maximum idle duration of a connection before closure (default: `"1m"`). *Highly recommended for scale-to-zero databases.* |
 | `PORT`                      | Go app         | `:3000`                                                                         |
 | `LINE_CHANNEL_SECRET`       | Go app         | from LINE Developers console → Basic Settings                                   |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Go app         | from LINE Developers console → Messaging API                                    |
 | `APP_ENV`                   | Go app         | App environment: `development`, `staging`, `production` (default: `development`) |
-| `CRON_SECRET`               | Go app         | Secret token used to authenticate request triggers for scheduled jobs (default: `"local-cron-secret-change-me"`) |
+| `CRON_SECRET`               | Go app         | Secret token used to authenticate request triggers for scheduled jobs. Default is empty (disabled) in application config, but is set to `"local-cron-secret-change-me"` in `.env.example` templates for local development. |
 
 ### 2. Start the database (Optional)
 
@@ -139,9 +143,12 @@ migrate -path apps/api/migrations -database "postgres://...sslmode=require" up
 
 ```shell
 flyctl status -a lotto-journal-api
-flyctl checks list -a lotto-journal-api
 curl -i https://lotto-journal-api.fly.dev/health
 ```
+
+> [!NOTE]
+> * Since we want the VM to scale-to-zero (sleep) when idle, active periodic health checks are commented out in `fly.toml`.
+> * The first request (like the `curl` above) will trigger a VM cold start, booting the VM back up (which takes 2–4 seconds). Subsequent requests will respond instantly.
 
 ### 6. Configure LINE production webhook
 
@@ -167,7 +174,6 @@ In LINE Developers Console (production channel):
 | `APP_ENV`                   | `fly.toml` `[env]`   | Non-secret (`production`)                                      |
 | `PORT`                      | `fly.toml` `[env]`   | Non-secret (`:8080`)                                           |
 | `FLY_API_TOKEN`             | GitHub Actions secret | Used only by CI/CD deploy workflow (not app runtime)           |
-| `ENABLE_IN_PROCESS_SCHEDULER` | Fly secrets / env  | Set to `true` to force in-process scheduler (default: false in prod) |
 
 > Current production config supports **autoscaling to zero (sleep)** in primary region `sin` when there is no traffic. When active, it manages connection pooling aggressively to avoid compute leaks in Neon DB.
 
