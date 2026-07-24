@@ -59,8 +59,7 @@ Key variables:
 | `LINE_CHANNEL_SECRET`       | Go app         | from LINE Developers console → Basic Settings                                   |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Go app         | from LINE Developers console → Messaging API                                    |
 | `APP_ENV`                   | Go app         | App environment: `development`, `staging`, `production` (default: `development`) |
-| `CRON_SYNC_SCHEDULE`        | Go app         | Cron spec for draw schedule sync (default: `"0 3 * * *"`)                       |
-| `CRON_VERIFY_SCHEDULE`      | Go app         | Cron spec for draw results check (default: `"*/5 16-23 * * *"`)                  |
+| `CRON_SECRET`               | Go app         | Secret token used to authenticate request triggers for scheduled jobs (default: `"local-cron-secret-change-me"`) |
 
 ### 2. Start the database (Optional)
 
@@ -118,6 +117,7 @@ flyctl secrets set \
   DB_DSN="postgres://...sslmode=require" \
   LINE_CHANNEL_SECRET="..." \
   LINE_CHANNEL_ACCESS_TOKEN="..." \
+  CRON_SECRET="..." \
   -a lotto-journal-api
 ```
 
@@ -163,13 +163,13 @@ In LINE Developers Console (production channel):
 | `DB_DSN`                    | Fly secrets          | Neon connection string (`sslmode=require`)                     |
 | `LINE_CHANNEL_SECRET`       | Fly secrets          | Production channel secret                                      |
 | `LINE_CHANNEL_ACCESS_TOKEN` | Fly secrets          | Production channel access token                                |
+| `CRON_SECRET`               | Fly secrets          | Secret token used to authorize GitHub Actions cron trigger requests |
 | `APP_ENV`                   | `fly.toml` `[env]`   | Non-secret (`production`)                                      |
 | `PORT`                      | `fly.toml` `[env]`   | Non-secret (`:8080`)                                           |
-| `CRON_SYNC_SCHEDULE`        | `fly.toml` `[env]`   | Optional: Cron spec for draw sync (default: `"0 3 * * *"`)                     |
-| `CRON_VERIFY_SCHEDULE`      | `fly.toml` `[env]`   | Optional: Cron spec for results check (default: `"*/5 16-23 * * *"`)            |
 | `FLY_API_TOKEN`             | GitHub Actions secret | Used only by CI/CD deploy workflow (not app runtime)           |
+| `ENABLE_IN_PROCESS_SCHEDULER` | Fly secrets / env  | Set to `true` to force in-process scheduler (default: false in prod) |
 
-> Current production config keeps **1 machine running** in primary region `sin`.
+> Current production config supports **autoscaling to zero (sleep)** in primary region `sin` when there is no traffic. When active, it manages connection pooling aggressively to avoid compute leaks in Neon DB.
 
 ---
 
