@@ -81,7 +81,10 @@ func (h *JobHandler) authorize(c fiber.Ctx) bool {
 // @Router /jobs/sync-schedule [post]
 func (h *JobHandler) SyncSchedule(c fiber.Ctx) error {
 	if !h.authorize(c) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":      "Unauthorized",
+			"request_id": requestid.FromContext(c),
+		})
 	}
 
 	if h.drawService == nil {
@@ -118,7 +121,10 @@ func (h *JobHandler) SyncSchedule(c fiber.Ctx) error {
 // @Router /jobs/verify-results [post]
 func (h *JobHandler) VerifyResults(c fiber.Ctx) error {
 	if !h.authorize(c) {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error":      "Unauthorized",
+			"request_id": requestid.FromContext(c),
+		})
 	}
 
 	if h.resultService == nil {

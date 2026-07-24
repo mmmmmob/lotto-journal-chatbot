@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,6 +35,7 @@ func (s *stubResultService) VerifyLatestDrawResults(ctx context.Context) error {
 
 func TestJobHandler_Authorize(t *testing.T) {
 	app := fiber.New()
+	app.Use(requestid.New())
 
 	// Create job handler with empty services (nil) since we only want to test auth first
 	h := NewJobHandler(nil, nil, "super-secret-token")
@@ -47,6 +50,12 @@ func TestJobHandler_Authorize(t *testing.T) {
 		require.NotNil(t, resp)
 		t.Cleanup(func() { resp.Body.Close() })
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		var body map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+		assert.Equal(t, "Unauthorized", body["error"])
+		assert.NotEmpty(t, body["request_id"])
 	})
 
 	t.Run("invalid token prefix", func(t *testing.T) {
@@ -57,6 +66,12 @@ func TestJobHandler_Authorize(t *testing.T) {
 		require.NotNil(t, resp)
 		t.Cleanup(func() { resp.Body.Close() })
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		var body map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+		assert.Equal(t, "Unauthorized", body["error"])
+		assert.NotEmpty(t, body["request_id"])
 	})
 
 	t.Run("incorrect token", func(t *testing.T) {
@@ -67,11 +82,18 @@ func TestJobHandler_Authorize(t *testing.T) {
 		require.NotNil(t, resp)
 		t.Cleanup(func() { resp.Body.Close() })
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		var body map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+		assert.Equal(t, "Unauthorized", body["error"])
+		assert.NotEmpty(t, body["request_id"])
 	})
 
 	t.Run("empty configured secret blocks all", func(t *testing.T) {
 		hEmpty := NewJobHandler(nil, nil, "")
 		appEmpty := fiber.New()
+		appEmpty.Use(requestid.New())
 		appEmpty.Post("/jobs/sync-schedule", hEmpty.SyncSchedule)
 
 		req := httptest.NewRequest("POST", "/jobs/sync-schedule", nil)
@@ -81,6 +103,12 @@ func TestJobHandler_Authorize(t *testing.T) {
 		require.NotNil(t, resp)
 		t.Cleanup(func() { resp.Body.Close() })
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+		var body map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		assert.NoError(t, err)
+		assert.Equal(t, "Unauthorized", body["error"])
+		assert.NotEmpty(t, body["request_id"])
 	})
 }
 
