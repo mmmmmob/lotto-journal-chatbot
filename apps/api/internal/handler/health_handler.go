@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -36,7 +38,11 @@ func (h *HealthHandler) Handle(c fiber.Ctx) error {
 		})
 	}
 
-	if err := sqlDB.Ping(); err != nil {
+	// Enforce a 5-second timeout on the database ping to prevent hanging
+	ctx, cancel := context.WithTimeout(c.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := sqlDB.PingContext(ctx); err != nil {
 		log.Printf("[health] database ping failed: %v", err)
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"status":     "degraded",

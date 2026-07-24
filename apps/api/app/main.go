@@ -33,6 +33,11 @@ func main() {
 	// Load config
 	cfg := config.LoadConfig()
 
+	// Enforce CRON_SECRET is configured in production to fail fast
+	if cfg.APP_ENV == "production" && cfg.CronSecret == "" {
+		log.Fatal("[main] CRON_SECRET environment variable is required in production environment.")
+	}
+
 	// Connect to database
 	database.ConnectDatabase(
 		cfg.DB_DSN,

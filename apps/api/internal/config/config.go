@@ -38,7 +38,7 @@ func LoadConfig() *Config {
 	if appEnv == "" {
 		appEnv = "development"
 	}
-	return &Config{
+	cfg := &Config{
 		DB_DSN:                 os.Getenv("DB_DSN"),
 		PORT:                   os.Getenv("PORT"),
 		LineChannelSecret:      os.Getenv("LINE_CHANNEL_SECRET"),
@@ -51,11 +51,38 @@ func LoadConfig() *Config {
 		R2PublicURLPrefix:      os.Getenv("R2_PUBLIC_URL_PREFIX"),
 		OpenAIAPIKey:           os.Getenv("OPENAI_API_KEY"),
 		CronSecret:             os.Getenv("CRON_SECRET"),
-		DBMaxIdleConns:         getEnvInt("DB_MAX_IDLE_CONNS", 0),
-		DBMaxOpenConns:         getEnvInt("DB_MAX_OPEN_CONNS", 5),
-		DBConnMaxLifetime:      getEnvDuration("DB_CONN_MAX_LIFETIME", 3*time.Minute),
-		DBConnMaxIdleTime:      getEnvDuration("DB_CONN_MAX_IDLE_TIME", 1*time.Minute),
 	}
+
+	// Validate and clamp DB connection pool configurations to prevent connection leaks
+	maxIdle := getEnvInt("DB_MAX_IDLE_CONNS", 0)
+	if maxIdle < 0 {
+		log.Printf("[config] Warning: DB_MAX_IDLE_CONNS (%d) cannot be negative. Clamping to 0.", maxIdle)
+		maxIdle = 0
+	}
+	cfg.DBMaxIdleConns = maxIdle
+
+	maxOpen := getEnvInt("DB_MAX_OPEN_CONNS", 5)
+	if maxOpen < 1 {
+		log.Printf("[config] Warning: DB_MAX_OPEN_CONNS (%d) must be at least 1 to prevent unlimited connection leaks. Clamping to default: 5.", maxOpen)
+		maxOpen = 5
+	}
+	cfg.DBMaxOpenConns = maxOpen
+
+	maxLifetime := getEnvDuration("DB_CONN_MAX_LIFETIME", 3*time.Minute)
+	if maxLifetime < 30*time.Second {
+		log.Printf("[config] Warning: DB_CONN_MAX_LIFETIME (%v) is below safe minimum (30s). Clamping to default: 3m.", maxLifetime)
+		maxLifetime = 3 * time.Minute
+	}
+	cfg.DBConnMaxLifetime = maxLifetime
+
+	maxIdleTime := getEnvDuration("DB_CONN_MAX_IDLE_TIME", 1*time.Minute)
+	if maxIdleTime < 10*time.Second {
+		log.Printf("[config] Warning: DB_CONN_MAX_IDLE_TIME (%v) is below safe minimum (10s). Clamping to default: 1m.", maxIdleTime)
+		maxIdleTime = 1 * time.Minute
+	}
+	cfg.DBConnMaxIdleTime = maxIdleTime
+
+	return cfg
 }
 
 func getEnvInt(key string, defaultVal int) int {
