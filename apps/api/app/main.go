@@ -61,14 +61,19 @@ func main() {
 	notificationSvc := service.NewNotificationService(db, bot, ticketRepo, winningRepo, drawResultRepo)
 	resultSvc := service.NewResultService(db, lotteryClient, drawRepo, drawResultRepo, ticketRepo, winningRepo, notificationSvc)
 
-	// Start background cron scheduler
-	scheduler := service.NewCronScheduler(drawSvc, resultSvc, cfg.CronSyncSchedule, cfg.CronVerifySchedule)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go scheduler.Start(ctx)
+	// Start startup draw schedule sync (only in development/non-production for convenience)
+	if cfg.APP_ENV != "production" {
+		go func() {
+			log.Println("[main] Executing startup draw schedule sync...")
+			if err := drawSvc.SyncDrawSchedule(context.Background()); err != nil {
+				log.Printf("[main] Startup draw schedule sync failed: %v", err)
+			}
+		}()
+	}
 
 	// Handlers
 	healthHandler := handler.NewHealthHandler(db)
+	jobHandler := handler.NewJobHandler(drawSvc, resultSvc, cfg.CronSecret)
 	lineHandler := handler.NewLineHandler(
 		cfg.LineChannelSecret,
 		bot,
@@ -91,6 +96,10 @@ func main() {
 
 	// Routes
 	app.Get("/health", healthHandler.Handle)
+
+	// Cron / Scheduled Job Trigger Routes
+	app.Post("/jobs/sync-schedule", jobHandler.SyncSchedule)
+	app.Post("/jobs/verify-results", jobHandler.VerifyResults)
 
 	if cfg.APP_ENV != "production" {
 		log.Println("[main] Swagger UI available at /swagger/index.html")
