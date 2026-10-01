@@ -2,7 +2,7 @@ name: Cron - Verify Draw Results
 
 on:
   schedule:
-    - cron: '*/15 9-16 * * *' # Every 15 minutes between 16:00 and 23:45 Bangkok time (09:00 to 16:45 UTC)
+    - cron: '0,30 16-23 1-2,15-17,31 * *' # Every 15 minutes between 16:00 and 23:45 Bangkok time (09:00 to 16:45 UTC)
   workflow_dispatch:
 
 permissions: {}
